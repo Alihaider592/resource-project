@@ -16,26 +16,29 @@ export default function Hero() {
                     Optimize every stage of your growth by building a progressive culture with All in one HR solution from Resourceinn.
                 </p>
             </div>
+            <div>
+                
+            </div>
             <Button 
-        text="Free Trial" 
+        text="↓Free Trial" 
         textColor=" text-white hover:text-white" 
         bgColor="bg-orange-500 hover:bg-purple-500 transition-all duration-300 ease-in-out" 
-        className=" w-[130px] m-5 ml-0 h-[50px] border-3 hover:border-purple-500 transition-all duration-300 ease-in-out border-orange-500"
+        className=" hover:-translate-y-2 hover:shadow-lg w-[130px] m-5 ml-0 h-[50px]  border-3 hover:border-purple-500 transition-all duration-300 ease-in-out border-orange-500"
         />
       <Button 
         text="Get Free Consultation" 
         textColor=" text-white hover:text-white" 
-        bgColor="bg-prple-500  transition-all duration-300 ease-in-out" 
-        className=" w-[210px] m-5 ml-0 h-[50px] border-3 transition-all duration-300 ease-in-out border-white-500"
+        bgColor=" hover:-translate-y-2 hover:shadow-lg bg-prple-500  transition-all duration-300 ease-in-out" 
+        className=" w-[210px] m-5 ml-0 h-[50px] border-3 transition-all  duration-300 ease-in-out border-white-500"
         />
-        <p>* No credit card required</p>
+        <p>* No credit  card required</p>
             </div>
             {/* right session */}
             <div className="w-[50%] right-0 h-[555px] z-30  absolute top-[85px]">
-                <img className="z-20 w-[55%] h-[555px] right-32 absolute  " src="https://resourceinn.com/wp-content/uploads/2022/12/header-image-side.webp" alt="" />
+                <img className="z-20 w-[55%] h-[555px] right-32 absolute " src="https://resourceinn.com/wp-content/uploads/2022/12/header-image-side.webp" alt="" />
             
             </div>
             </div>
         </div>
     )
-}
+} 

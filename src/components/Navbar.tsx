@@ -2,7 +2,7 @@ import Link from "next/link"
 import Button from "./buttons"
 export default function Navbar() {
     return(
-        <div >
+        <div className="sticky top-0 z-50 bg-white shadow" >
             <div className=" p-5 items-center justify-between flex ">
             <div className="flex gap-7 items-center ">
             <img  src="https://resourceinn.com/wp-content/uploads/2020/01/LOGO-01-TM.svg" className="w-50 wp-image-25823" alt="Resourceinn HR software logo - Smart business empowerment solutions."></img>
