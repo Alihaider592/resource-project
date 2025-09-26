@@ -38,14 +38,14 @@ export default function Navbar() {
             <div className="flex gap-3 ">
              <Button 
         text="Book a Demo" 
-        textColor="text-sm text-orange-500 hover:text-white" 
-        bgColor="hover:bg-orange-500" 
+        textColor="text-sm transition-all duration-300 ease-in-out text-orange-500 hover:text-white" 
+        bgColor="transition-all duration-300 ease-in-out hover:bg-orange-500" 
         className="   border-3"
       />
       <Button 
         text="Get Support" 
-        textColor="text-sm text-white " 
-        bgColor="bg-purple-800 hover:bg-purple-700" 
+        textColor="text-sm text-white transition-all duration-300 ease-in-out" 
+        bgColor="bg-purple-800 hover:bg-purple-500 transition-all duration-300 ease-in-out" 
         className="  "
       />
       </div>

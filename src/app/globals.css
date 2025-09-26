@@ -1,2 +1,12 @@
 @import "tailwindcss";
+@layer components {
+  .non-blinking-cursor::after {
+    content: "|";              
+    @apply opacity-100;        
+    animation: none !important;
+    display: inline-block;     
+    margin-left: 2px;          
+    font-weight: normal !important; 
+  }
+}
 

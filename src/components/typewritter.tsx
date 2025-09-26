@@ -5,17 +5,18 @@ import { TypeAnimation } from "react-type-animation";
 const Typewriter = () => {
   return (
     <TypeAnimation
-      className="text-typing"
+      className="m-3 non-blinking-cursor font-bold ml-1"
       sequence={[
-        "Empowering Businesses Smartly", 
-        2000,                            
-        "",                              
-        500,                           
+        "Empowering Businesses Smartly",
+        1000,  
+        "",    
+        100,   
       ]}
       wrapper="span"
-      speed={80} 
-      style={{ fontSize: "40px", display: "inline-block" }}
-      repeat={Infinity} 
+      speed={85}          
+      deletionSpeed={85}  
+      style={{ fontSize: "32px", display: "inline-block" }}
+      repeat={Infinity}   
     />
   );
 };
