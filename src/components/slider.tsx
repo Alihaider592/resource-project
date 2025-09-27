@@ -1,4 +1,5 @@
 import React from 'react';
+import Cardslider from './cardslider';
 
 const Slider = () => {
     
@@ -38,7 +39,7 @@ const Slider = () => {
     `;
 
     return (
-        <div className="w-full">
+        <div className="w-full flex">
             <style dangerouslySetInnerHTML={{ __html: carouselStyles }} />
 
             <div className="bg-white py-6 overflow-hidden logo-carousel-container border-b border-gray-200 shadow-md">
@@ -66,6 +67,7 @@ const Slider = () => {
                     ))}
                 </div>
             </div>
+            <Cardslider/>
         </div>
     );
 };
