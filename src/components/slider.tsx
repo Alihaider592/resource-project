@@ -1,6 +1,6 @@
 import React from 'react';
 import Cardslider from './cardslider';
-
+import { div } from 'framer-motion/client';
 const Slider = () => {
     
     const clientLogos = [
@@ -23,6 +23,7 @@ const Slider = () => {
     const wrapperWidth = logos.length * slideWidthRem;
 
     const carouselStyles = `
+        /* Continuous horizontal scroll animation */
         @keyframes scroll-logos {
             from { transform: translateX(0); }
             to { transform: translateX(-50%); }
@@ -36,13 +37,38 @@ const Slider = () => {
         .logo-carousel-container:hover .logo-carousel-wrapper {
             animation-play-state: paused;
         }
+
+        /* Single-run animation for entrance from the right */
+        @keyframes slideInFromRight {
+            0% { 
+                transform: translateX(100%); /* Start 100% off-screen to the right */
+                opacity: 0;
+            }
+            100% { 
+                transform: translateX(0); /* End in final position */
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-in-right {
+            /* Smooth 1s duration, 0.3s delay, runs once */
+            animation: slideInFromRight 1s ease-out 0.3s 1 forwards;
+            /* Ensure the component is hidden before animation starts */
+            opacity: 0; 
+        }
     `;
 
     return (
-        <div className="w-full flex">
+        // The main container now only holds the logo carousel div.
+        // The 'flex' class is still important for the animation to work correctly.
+        <div className='h-[100px] flex'>
+            <Cardslider/>
+        <div className=" overflow-hidden animate-slide-in-right">
+            
             <style dangerouslySetInnerHTML={{ __html: carouselStyles }} />
 
-            <div className="bg-white py-6 overflow-hidden logo-carousel-container border-b border-gray-200 shadow-md">
+            {/* The primary logo carousel container takes up the full width */}
+            <div className="bg-white py-6 overflow-hidden logo-carousel-container border-b border-gray-200 shadow-md w-full">
                 
                 <div 
                     className="flex logo-carousel-wrapper" 
@@ -67,8 +93,8 @@ const Slider = () => {
                     ))}
                 </div>
             </div>
-            <Cardslider/>
         </div>
+      </div>
     );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const FeatureAlert = () => {
+const Cardslider = () => {
     // State to track the currently visible slide index (1-based for easy display)
     const [activeSlide, setActiveSlide] = useState(1);
 
@@ -52,7 +52,7 @@ const FeatureAlert = () => {
         return () => clearInterval(intervalId);
     }, [slides.length]); 
 
-    // Calculate the translation percentage for the scroll effect.
+    // Calculate the translation percentage for the vertical scroll effect.
     // E.g., for 2 slides, (100 / 2) = 50% shift per slide.
     const transformStyle = {
         transform: `translateY(-${(activeSlide - 1) * (100 / slides.length)}%)`,
@@ -60,35 +60,35 @@ const FeatureAlert = () => {
 
     // Define the custom CSS for the animations
     const animationStyles = `
-        /* Continuous, subtle tilt and float animation for the whole card (circular-like movement) */
-        @keyframes circularTilt {
+        /* Single-run animation for initial appearance (Smooth Slide-in from Left) */
+        @keyframes slideInFromLeft {
             0% { 
-                transform: translateY(0) rotateZ(0deg); 
-            }
-            50% { 
-                transform: translateY(-4px) rotateZ(0.2deg); /* Reduced movement for smaller size */
+                transform: translateX(-100%);
+                opacity: 0;
             }
             100% { 
-                transform: translateY(0) rotateZ(0deg); 
+                transform: translateX(0);
+                opacity: 1;
             }
         }
-
-        .animate-circular-tilt {
-            animation: circularTilt 8s ease-in-out infinite alternate;
+        
+        .animate-slide-in {
+            /* Now runs over 1s for smoother entrance */
+            animation: slideInFromLeft 1s ease-out 0.3s 1 forwards; 
         }
         
         /* Styling for the pagination dots */
         .pagination-item {
             cursor: pointer;
             transition: all 0.3s ease;
-            width: 1.5rem; /* Smaller touch area */
+            width: 1.5rem; 
             height: 1.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 9999px; /* Full rounded/circle */
-            font-weight: 500; /* Slightly lighter weight for small size */
-            font-size: 0.75rem; /* Text size reduced to xs */
+            border-radius: 9999px; 
+            font-weight: 500; 
+            font-size: 0.75rem; 
         }
 
         .pagination-item.is-current {
@@ -99,23 +99,23 @@ const FeatureAlert = () => {
     `;
 
     return (
-        <div className="w-full max-w-sm mx-auto py-8 px-2">
+        <div className="w-full max-w-sm mx-auto py-2 px-2 ">
             <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
 
-            {/* Main Slide Container - Reduced height and padding for smaller size, with animated border */}
-            <div className="slideshow-slide-caption bg-white text-gray-900 rounded-xl shadow-xl p-4 animate-circular-tilt overflow-hidden h-40 md:h-44">
+            {/* Outer Wrapper: Applies initial slide-in animation and manages vertical scroll viewport */}
+            <div className="slideshow-slide-caption text-gray-900 overflow-hidden h-40 md:h-44 opacity-0 animate-slide-in">
                 
-                {/* Scrollable Track: ADDED smooth transition classes. Sets total height for all slides. */}
+                {/* Scrollable Track: Contains the transition for the smooth vertical scroll */}
                 <div 
                     className={`h-[200%] transition-transform duration-500 ease-in-out`}
                     style={transformStyle}
                 >
                     {slides.map((slide) => (
-                        // Individual Slide Content Block: Takes up half the track height (100% of the visible container).
+                        // Individual Slide Content Block: Each slide takes up 50% of the total track height.
                         <div key={slide.id} className="h-1/2 shrink-0">
-                            {/* Inner Content Container */}
-                            <div className="slideshow-slide-caption-text text-center flex flex-col justify-center h-full">
-                                {/* Title Section - Reduced font size */}
+                            {/* Inner Content Container - Added padding for spacing */}
+                            <div className="slideshow-slide-caption-text text-center flex flex-col justify-center h-full p-2"> 
+                                {/* Title Section */}
                                 <h2 className="text-xl font-extrabold mb-1">
                                     <span id={`slide-title-${slide.id}`} className="inline-flex items-center space-x-1">
                                         {slide.title} 
@@ -125,7 +125,7 @@ const FeatureAlert = () => {
                                     </span>
                                 </h2>
 
-                                {/* Description Section - Reduced font size and margin */}
+                                {/* Description Section */}
                                 <div className="text-xs text-gray-700 max-w-xs mx-auto mb-3">
                                     <p className={`font-bold text-sm text-purple-600 ${slide.details ? 'mb-1' : 'mb-0'}`}>
                                         {slide.subTitle} 
@@ -138,7 +138,7 @@ const FeatureAlert = () => {
                                     )}
                                 </div>
                                 
-                                {/* Call to Action Link - Reduced padding and font size */}
+                                {/* Call to Action Link */}
                                 <a 
                                     className="inline-block px-4 py-1.5 text-sm font-medium text-white bg-purple-600 rounded-full transition duration-300 ease-in-out hover:bg-purple-700 shadow-md transform hover:scale-105" 
                                     href={slide.link}
@@ -174,4 +174,4 @@ const FeatureAlert = () => {
     );
 };
 
-export default FeatureAlert;
+export default Cardslider;
