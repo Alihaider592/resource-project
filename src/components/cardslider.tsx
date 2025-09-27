@@ -4,21 +4,21 @@ const FeatureAlert = () => {
     // State to track the currently visible slide index (1-based for easy display)
     const [activeSlide, setActiveSlide] = useState(1);
 
-    // Data structure for the two slides
+    // Data structure for the two slides, using Unicode escape sequences for robust rendering
     const slides = [
         {
             id: 1,
             title: "New Feature Alert",
-            icon: "🔔",
-            subTitle: "Facial Recognition Attendance ✨",
-            details: "Manage attendance with advanced face recognition technology combined with geofencing to ensure location-based accuracy 📍.",
+            icon: "\uD83D\uDD14", // Bell Emoji 🔔
+            subTitle: "Facial Recognition Attendance \u2728", // Sparkles Emoji ✨
+            details: "Manage attendance with advanced face recognition technology combined with geofencing to ensure location-based accuracy \uD83D\uDCCD.", // Round Pushpin Emoji 📍
             link: "https://resourceinn.com/face-recognition-resourceinn-mobile-app/",
             linkText: "Learn More",
         },
         {
             id: 2,
             title: "Resourceinn v9.0!", 
-            icon: "🔔",
+            icon: "\uD83D\uDD14", // Bell Emoji 🔔
             subTitle: "Resourceinn v9.0 is live",
             details: "", 
             link: "https://resourceinn.com/offers/resourceinn-9.0",
@@ -37,6 +37,9 @@ const FeatureAlert = () => {
     // Automatic Slide Switching Logic
     // ---------------------------------------------------------------------
     useEffect(() => {
+        // Only start the interval if there's more than one slide
+        if (slides.length <= 1) return;
+
         const intervalId = setInterval(() => {
             setActiveSlide(prevSlide => {
                 // If at the last slide, go to 1, otherwise advance
@@ -50,6 +53,7 @@ const FeatureAlert = () => {
     }, [slides.length]); 
 
     // Calculate the translation percentage for the scroll effect.
+    // E.g., for 2 slides, (100 / 2) = 50% shift per slide.
     const transformStyle = {
         transform: `translateY(-${(activeSlide - 1) * (100 / slides.length)}%)`,
     };
@@ -98,10 +102,10 @@ const FeatureAlert = () => {
         <div className="w-full max-w-sm mx-auto py-8 px-2">
             <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
 
-            {/* Main Slide Container - Reduced height and padding for smaller size */}
+            {/* Main Slide Container - Reduced height and padding for smaller size, with animated border */}
             <div className="slideshow-slide-caption bg-white text-gray-900 rounded-xl shadow-xl p-4 animate-circular-tilt overflow-hidden h-40 md:h-44">
                 
-                {/* Scrollable Track: ADDED smooth transition classes */}
+                {/* Scrollable Track: ADDED smooth transition classes. Sets total height for all slides. */}
                 <div 
                     className={`h-[200%] transition-transform duration-500 ease-in-out`}
                     style={transformStyle}
