@@ -16,10 +16,9 @@ const Slider = () => {
         "https://resourceinn.com/wp-content/uploads/2022/12/haball.webp",
     ];
 
-    // Duplicates list for seamless infinite scroll
     const logos = [...clientLogos, ...clientLogos];
     
-    const slideWidthRem = 10; // w-40 = 10rem
+    const slideWidthRem = 10; 
     const wrapperWidth = logos.length * slideWidthRem;
 
     const carouselStyles = `
@@ -59,15 +58,13 @@ const Slider = () => {
     `;
 
     return (
-        // The main container now only holds the logo carousel div.
-        // The 'flex' class is still important for the animation to work correctly.
+
         <div className='h-[100px] flex'>
             <Cardslider/>
         <div className=" overflow-hidden animate-slide-in-right">
             
             <style dangerouslySetInnerHTML={{ __html: carouselStyles }} />
 
-            {/* The primary logo carousel container takes up the full width */}
             <div className="bg-white py-6 overflow-hidden logo-carousel-container border-b border-gray-200 shadow-md w-full">
                 
                 <div 
@@ -83,7 +80,6 @@ const Slider = () => {
                                 src={src} 
                                 alt={`Client Logo ${index + 1}`} 
                                 className="max-w-full max-h-full object-contain" 
-                                // Explicitly type the event for robust error handling in TypeScript
                                 onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { 
                                     (e.target as HTMLImageElement).onerror = null; 
                                     (e.target as HTMLImageElement).src = "https://placehold.co/100x40/374151/f97316?text=Logo"; 
