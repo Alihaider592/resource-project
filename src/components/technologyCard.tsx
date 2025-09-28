@@ -89,7 +89,7 @@ const Technology = () => {
                 <div className="w-full">
                   <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
                     <span id="Powered_by_Smart_Flow_Technology">
-                      <span className="text-blue-700"> Powered by</span> Smart Flow Technology
+                      <span className="text-purple-700"> Powered by</span> Smart Flow Technology
                     </span>
                   </h2>
                 </div>
@@ -129,7 +129,7 @@ const Technology = () => {
                         width="250" 
                         height="250" 
                         src={feature.url} 
-                        className="w-full max-w-[150px] h-auto object-contain rounded-full border-4 border-blue-600 hover:border-blue-800 transition duration-300"
+                        className="w-full max-w-[150px] h-auto object-contain rounded-full border-4 border-purple-600 hover:border-blue-800 transition duration-300"
                         alt={`Feature icon ${index + 1}`} 
                        
                       />
