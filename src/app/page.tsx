@@ -1,6 +1,6 @@
 "use client"
 import Slider from "@/components/slider"
-import Place from "@/components/place"
+import CardsGrid from "@/components/placeCards/displayCards/display"
 import Multicards from "@/components/malitiCards"
 import Source from "@/components/sourceImg"
 import Features from "@/components/features"
@@ -15,8 +15,9 @@ export default function Home() {
  <Technology/>
  <Features/>
  <Source />
- <Multicards/>
- <Place/>
+ <Multicards/>a
+ <CardsGrid/>
+
 
  </div>
     </div>
