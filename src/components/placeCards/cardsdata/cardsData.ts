@@ -116,6 +116,6 @@ export const cardsData = [
     getStartedLink: "https://resourceinn.com/free-trial-td",
     learnMoreLink: "https://resourceinn.com/employee-training-and-development-software/",
     className: "bg-white hover:shadow-sky-300",
-     buttonColor: "sky",
+     buttonColor: "blue",
   },
 ];

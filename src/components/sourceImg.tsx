@@ -4,7 +4,7 @@ import { div } from "framer-motion/client";
 export default function Source() {
     return(
 <div>
-    <img className="w-[1000px] ml-28 h-auto" src="https://resourceinn.com/wp-content/uploads/2024/01/dashboard-resourceinn-8.0.webp" alt=""/>
+    <img className="w-[1000px] ml-20 h-auto" src="https://resourceinn.com/wp-content/uploads/2024/01/dashboard-resourceinn-8.0.webp" alt=""/>
 </div>        
     )
 }
