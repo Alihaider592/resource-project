@@ -2,7 +2,7 @@ import Image from "next/image";
 import { FaCheck, FaArrowRight } from "react-icons/fa";
 export default function Core() {
     return(
-        <div className="w-full max-w-xs hover:shadow-lg transition-all ease-in-out duration-1000 hover:shadow-purple-400 p-6 rounded-xl shadow-lg bg-white">
+        <div className="w-full max-w-xs hover:shadow-lg ml-5 transition-all ease-in-out duration-1000 hover:shadow-purple-400 p-6 rounded-xl shadow-lg bg-white">
       <div className="flex items-center gap-3">
         <Image
           src="https://resourceinn.com/wp-content/uploads/2024/04/core-hr.svg"

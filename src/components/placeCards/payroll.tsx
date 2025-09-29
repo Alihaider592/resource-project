@@ -5,7 +5,7 @@ import { FaCheck, FaArrowRight } from "react-icons/fa";
 
 export default function PayrollCard() {
   return (
-    <div className="w-full max-w-xs hover:shadow-lg transition-all ease-in-out duration-1000 hover:shadow-green-700 p-6 rounded-xl shadow-lg bg-white">
+    <div className="w-full max-w-xs hover:shadow-lg transition-all ease-in-out duration-1000 hover:shadow-green-700 ml-5 p-6 rounded-xl shadow-lg bg-white">
       <div className="flex items-center gap-4">
         <img
           src="https://resourceinn.com/wp-content/uploads/2024/04/payroll.svg"
