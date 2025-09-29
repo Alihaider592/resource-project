@@ -93,11 +93,11 @@ const SmartFlowFeature = () => {
           <div className="col-span-1 space-y-8">
             
             <div className={`${baseTransitionClasses} ${animationStateClasses} delay-100`}>
-              <h2 className="text-xs  font-semibold tracking-tight text-gray-900 sm:text-4xl mb-4">
-                <span id="Bringing_HR_Business_Goals_Together_to_Drive_an_Impact">
-                  Bringing <span className="text-purple-700">HR &amp; Business</span> Goals Together to <span className="text-purple-700">Drive an Impact</span>
+              <div className=" font-semibold tracking-tight text-gray-900 sm:text-4xl mb-4">
+                <span className='text-3xl' id="Bringing_HR_Business_Goals_Together_to_Drive_an_Impact">
+                  Bringing <span className="text-2xl text-purple-700">HR &amp; Business</span> Goals Together to <span className="text-2xl text-purple-700">Drive an Impact</span>
                 </span>
-              </h2>
+              </div>
             </div>
             
   
@@ -138,7 +138,7 @@ const SmartFlowFeature = () => {
                     width="669" 
                     height="967" 
                     src="https://resourceinn.com/wp-content/uploads/2022/11/Asset-1.webp" 
-                    className="w-full max-w-[200px] h-auto object-contain mx-auto lg:mr-0 rounded-xl"
+                    className="w-full max-w-[220px] h-auto object-contain mx-auto lg:mr-0 rounded-xl"
                     alt="Happy businesswoman celebrating business growth with Resourceinn HR software." 
                     onError={(e) => { 
                       const target = e.target as HTMLImageElement;
@@ -149,7 +149,7 @@ const SmartFlowFeature = () => {
                 <div className={`pt-4 relative right-[30rem] ${baseTransitionClasses} ${animationStateClasses} delay-[1200ms]`}>
               <a 
                 href="#demo-form-footer" 
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 transform hover:scale-105"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-lg text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-300 transform hover:scale-105"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 13l-7 7m0 0l-7-7m7 7V3"></path></svg>
                 Book a Demo

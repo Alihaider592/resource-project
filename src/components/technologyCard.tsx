@@ -149,3 +149,4 @@ const Technology = () => {
 };
 
 export default Technology;
+{/* <img loading="lazy" decoding="async" width="1887" height="1292" src="" class="attachment-full size-full wp-image-42662" alt="Resourceinn HR software dashboard with charts, graphs, and performance indicators" srcset="https://resourceinn.com/wp-content/uploads/2024/01/dashboard-resourceinn-8.0.webp 1887w, https://resourceinn.com/wp-content/uploads/2024/01/dashboard-resourceinn-8.0-300x205.webp 300w, https://resourceinn.com/wp-content/uploads/2024/01/dashboard-resourceinn-8.0-1024x701.webp 1024w, https://resourceinn.com/wp-content/uploads/2024/01/dashboard-resourceinn-8.0-768x526.webp 768w, https://resourceinn.com/wp-content/uploads/2024/01/dashboard-resourceinn-8.0-1536x1052.webp 1536w, https://resourceinn.com/wp-content/uploads/2024/01/dashboard-resourceinn-8.0-440x301.webp 440w" sizes="(max-width: 1887px) 100vw, 1887px"></img> */}
