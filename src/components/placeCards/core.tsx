@@ -55,7 +55,7 @@ export default function Core() {
         </a>
         <a
           href="https://resourceinn.com/core-hr/"
-          className="flex items-center gap-2 p-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition"
+          className="flex items-center gap-2 p-2 border border-purple-600 text-sm text-purple-600 rounded-lg hover:bg-purple-50 transition"
         >
           <FaArrowRight />
           Learn More
