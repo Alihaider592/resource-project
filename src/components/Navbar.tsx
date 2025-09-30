@@ -117,7 +117,7 @@ export default function Navbar() {
         text="Book a Demo" 
         textColor="text-sm transition-all duration-300 ease-in-out text-orange-500 hover:text-white" 
         bgColor="transition-all duration-300 ease-in-out hover:bg-orange-500" 
-        className="   border-3"
+        className=" hover:border-none  border-3"
       />
       </a>
       <a href="https://resourceinn.com/support/">
