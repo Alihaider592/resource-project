@@ -19,8 +19,6 @@ export default function Home() {
  <Multicards/>
  <CardsGrid/>
  <Cando/>
-
-
  </div>
     </div>
        )
