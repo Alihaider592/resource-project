@@ -64,19 +64,17 @@ const Technology = () => {
   
   return (
   
-    <div className="w-full bg-gray-100 sm:py-36 rounded-lg shadow-inner flex justify-center">
+    <div className="w-full sm:py-36 rounded-lg shadow-inner flex justify-center">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center"> 
           
-          <div className="flex justify-center w-full">
+          <div className="flex shadow-2xl bg-white rounded-4xl justify-center w-full">
             
   
             <div className={`
                 p-8 md:p-12 
-                bg-white 
+                 rounded-4xl
                 shadow-3xl shadow-blue-500/20 
-                rounded-[2rem] 
-                border border-blue-100 
                 w-full max-w-7xl 
                 flex flex-col items-center text-center 
                 transition duration-700 

@@ -7,18 +7,22 @@ import Source from "@/components/sourceImg"
 import Features from "@/components/features"
 import Hero from "@/components/hero"
 import Technology from "@/components/technologyCard"
+// import Crds from "@/components/widthCards/widthMap/map"
+import Sessions from "@/components/widthCards/widthMap/map"
+// import {Map}
 export default function Home() {
   return( 
   <div>
  <Hero/>
  <Slider/>
- <div className="m-20 rounded-2xl flex flex-col justify-center items-center bg-gray-100">
+ <div className=" rounded-2xl bg-gray-100 flex flex-col justify-center items-center m-20">
  <Technology/>
  <Features/>
  <Source />
  <Multicards/>
  <CardsGrid/>
  <Cando/>
+ <Sessions/>
  </div>
     </div>
        )

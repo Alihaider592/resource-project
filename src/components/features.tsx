@@ -50,7 +50,7 @@ const SmartFlowFeature = () => {
     return (
       <div 
         className={`
-          flex items-center space-x-4 p-4 rounded-xl bg-white shadow-md border border-gray-100 
+          flex items-center space-x-4 p-4 rounded-xl bg-white shadow-md 
           ${baseTransitionClasses} 
           ${delay} 
           ${animationStateClasses}
@@ -114,7 +114,7 @@ const SmartFlowFeature = () => {
             
           </div>
           
-          <div className={`lg:col-span-2 flex space-y-6 lg:space-y-8 p-6 lg:p-12 rounded-[2rem] bg-white shadow-3xl shadow-blue-500/20 border border-blue-100 
+          <div className={`lg:col-span-2 flex space-y-6 lg:space-y-8 p-6 lg:p-12 rounded-[2rem] bg-white shadow-3xl  shadow-lg
             ${baseTransitionClasses} ${animationStateClasses} delay-[1000ms]`}> 
             
             <div className="space-y-4">
@@ -149,7 +149,7 @@ const SmartFlowFeature = () => {
                 <div className={`pt-4 relative right-[30rem] ${baseTransitionClasses} ${animationStateClasses} delay-[1200ms]`}>
               <a 
                 href="#demo-form-footer" 
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-lg text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-300 transform hover:scale-105"
+                className="inline-flex items-center px-6 py-3 shadow-lg border-transparent text-base font-medium rounded-xl  text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-300 transform hover:scale-105"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 13l-7 7m0 0l-7-7m7 7V3"></path></svg>
                 Book a Demo
