@@ -31,14 +31,14 @@ export default function Structure({
   return (
     <div
       className={` w-full flex flex-col  `}>  
-        <div className={`flex items-center${className}`}>
+        <div className={`flex gap-40 items-center${className}`}>
         <div className="w-[60%] flex flex-col gap-5 p-5">
         <p className="text-4xl font-extrabold">{title}</p>
         <p className="text-2xl font-bold text-purple-700">{subtitle}</p>
         <p className="text-gray-600">{description}</p>
         <div>
               {useCases.map((item) => (
-                <li key={item} className="flex items-center ">
+                <li key={item} className="flex text-[17px] items-center ">
                   <Check className="w-4 h-4" style={{ color: buttonColor }} />
                   {item}
                 </li>

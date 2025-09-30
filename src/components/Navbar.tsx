@@ -112,12 +112,15 @@ export default function Navbar() {
             </ul>
             </div>
             <div className="flex gap-3 ">
+                <a href="https://resourceinn.com/demo/">
              <Button 
         text="Book a Demo" 
         textColor="text-sm transition-all duration-300 ease-in-out text-orange-500 hover:text-white" 
         bgColor="transition-all duration-300 ease-in-out hover:bg-orange-500" 
         className="   border-3"
       />
+      </a>
+      <a href=""></a>
       <Button 
         text="Get Support" 
         textColor="text-sm text-white transition-all duration-300 ease-in-out" 
