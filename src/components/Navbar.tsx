@@ -120,13 +120,14 @@ export default function Navbar() {
         className="   border-3"
       />
       </a>
-      <a href=""></a>
+      <a href="https://resourceinn.com/support/">
       <Button 
         text="Get Support" 
         textColor="text-sm text-white transition-all duration-300 ease-in-out" 
         bgColor="bg-purple-800 hover:bg-purple-500 transition-all duration-300 ease-in-out" 
         className="  "
       />
+      </a>
       </div>
       </div>
         </div>
