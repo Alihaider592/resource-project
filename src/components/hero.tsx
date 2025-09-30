@@ -7,7 +7,6 @@ import Button from "./buttons";
 export default function Hero() {
   return (
     <div className="text-white">
-      {/* Background image with fade-in */}
       <motion.img
         className="z-10 relative"
         src="https://resourceinn.com/wp-content/uploads/2022/12/header-cover.webp"
@@ -18,7 +17,6 @@ export default function Hero() {
       />
 
       <div className="flex justify-between">
-        {/* Left section with delayed animation */}
         <motion.div
           className="w-[50%]  h-[555px] p-8 z-30  absolute top-[85px]"
           initial={{ opacity: 0, x: -80 }}
@@ -36,22 +34,24 @@ export default function Hero() {
             </p>
           </div>
           <div></div>
+          <a href="https://resourceinn.com/free-trial/">
           <Button
             text="↓Free Trial"
             textColor=" text-white hover:text-white"
             bgColor="bg-orange-500 hover:bg-purple-500 transition-all duration-300 ease-in-out"
-            className=" hover:-translate-y-2 hover:shadow-lg w-[130px] m-5 ml-0 h-[50px]  border-3 hover:border-purple-500 transition-all duration-300 ease-in-out border-orange-500"
+            className=" hover:-translate-y-2 cursor-pointer hover:shadow-lg w-[130px] m-5 ml-0 h-[50px]  border-3 hover:border-purple-500 transition-all duration-300 ease-in-out border-orange-500"
           />
+          </a>
+          <a href="#demo-form-footer">
           <Button
             text="Get Free Consultation"
             textColor=" text-white hover:text-white"
             bgColor=" hover:-translate-y-2 hover:shadow-lg bg-prple-500  transition-all duration-300 ease-in-out"
-            className=" w-[210px] m-5 ml-0 h-[50px] border-3 transition-all  duration-300 ease-in-out border-white-500"
-          />
+            className=" w-[210px] cursor-pointer m-5 ml-0 h-[50px] border-3 transition-all  duration-300 ease-in-out border-white-500"
+          /></a>
           <p>* No credit  card required</p>
         </motion.div>
 
-        {/* Right section with delayed animation */}
         <motion.div
           className="w-[50%] right-0 h-[555px] z-30  absolute top-[85px]"
           initial={{ opacity: 0, x: 80 }}
