@@ -1,5 +1,6 @@
 "use client"
 import Slider from "@/components/slider"
+import Conection from "@/components/form/conection"
 import Cando from "@/components/cando"
 import CardsGrid from "@/components/placeCards/displayCards/display"
 import Multicards from "@/components/malitiCards"
@@ -10,6 +11,7 @@ import Technology from "@/components/technologyCard"
 import Sessions from "@/components/widthCards/widthMap/map"
 import Frame from "@/components/frame/iframe"
 import Service from "@/components/hrmCards/hrmCards"
+import { Connection } from "mongoose"
 export default function Home() {
   return( 
   <div>
@@ -26,6 +28,7 @@ export default function Home() {
  <Frame/>
  <Service/>
  </div>
+ <Conection/>
     </div>
        )
 }
