@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
- const connecttodatabase=async()=>{
+ const connectdatabase=async()=>{
 try{
     await mongoose.connect(process.env.mongooUrl)
     console.log("connected")
@@ -7,4 +7,4 @@ try{
     console.log(err)
 }
 }
-export default connecttodatabase;
+export default connectdatabase;
