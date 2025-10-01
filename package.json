@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "axios": "^1.12.2",
+    "bcrypt": "^6.0.0",
     "framer-motion": "^12.23.22",
     "icons": "^1.0.0",
     "lucide-react": "^0.544.0",
