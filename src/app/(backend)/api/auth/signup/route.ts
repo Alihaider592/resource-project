@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-// import connectToDatabase from "@/lib/db";
-// import User from "@/models/User";
-import connectdatabase from "@/app/(backend)/lib/db";
+import connectDatabase from "@/app/(backend)/lib/db";
 import User from "@/app/(backend)/models/signupuser";
 
 export async function POST(req: Request) {
   try {
-    await connectdatabase();
+    await connectDatabase();
 
     const { name, email, password } = await req.json();
 
@@ -18,7 +16,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
@@ -27,23 +24,29 @@ export async function POST(req: Request) {
       );
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Save new user
-    const user = new User({
+    const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: "user",
+      role: "user", 
     });
-    await user.save();
 
     return NextResponse.json(
-      { message: "Signup successful", user: { name: user.name, email: user.email } },
+      {
+        message: "Signup successful",
+        user: {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
       { status: 201 }
     );
   } catch (err: unknown) {
+    console.error("Signup error:", err);
     if (err instanceof Error) {
       return NextResponse.json({ error: err.message }, { status: 500 });
     }

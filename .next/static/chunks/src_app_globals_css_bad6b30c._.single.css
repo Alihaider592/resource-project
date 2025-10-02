@@ -97,6 +97,7 @@
   :root, :host {
     --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --color-red-100: #ffe2e2;
     --color-red-500: #fb2c36;
     --color-red-600: #e40014;
     --color-orange-300: #ffb96d;
@@ -105,6 +106,7 @@
     --color-orange-600: #f05100;
     --color-orange-700: #c53c00;
     --color-yellow-500: #edb200;
+    --color-green-100: #dcfce7;
     --color-green-500: #00c758;
     --color-green-600: #00a544;
     --color-sky-300: #77d4ff;
@@ -114,6 +116,9 @@
     --color-blue-600: #155dfc;
     --color-blue-800: #193cb8;
     --color-blue-950: #162456;
+    --color-indigo-400: #7d87ff;
+    --color-indigo-600: #4f39f6;
+    --color-indigo-700: #432dd7;
     --color-purple-400: #c07eff;
     --color-purple-500: #ac4bff;
     --color-purple-600: #9810fa;
@@ -182,6 +187,7 @@
 
   @supports (color: color(display-p3 0 0 0)) {
     :root, :host {
+      --color-red-100: color(display-p3 .980386 .889727 .887779);
       --color-red-500: color(display-p3 .903738 .262579 .253307);
       --color-red-600: color(display-p3 .830323 .140383 .133196);
       --color-orange-300: color(display-p3 .96801 .734346 .464159);
@@ -190,6 +196,7 @@
       --color-orange-600: color(display-p3 .887467 .341665 .0219962);
       --color-orange-700: color(display-p3 .729844 .257256 .0511062);
       --color-yellow-500: color(display-p3 .903651 .703062 .0745389);
+      --color-green-100: color(display-p3 .885269 .984329 .910368);
       --color-green-500: color(display-p3 .308734 .774754 .374307);
       --color-green-600: color(display-p3 .243882 .640824 .294808);
       --color-sky-300: color(display-p3 .546356 .822561 .990576);
@@ -199,6 +206,9 @@
       --color-blue-600: color(display-p3 .174493 .358974 .950247);
       --color-blue-800: color(display-p3 .134023 .230647 .695537);
       --color-blue-950: color(display-p3 .0993202 .141621 .323413);
+      --color-indigo-400: color(display-p3 .494992 .525291 .985107);
+      --color-indigo-600: color(display-p3 .297656 .227891 .929242);
+      --color-indigo-700: color(display-p3 .251282 .180274 .81203);
       --color-purple-400: color(display-p3 .719919 .492497 .995173);
       --color-purple-500: color(display-p3 .629519 .30089 .990817);
       --color-purple-600: color(display-p3 .546729 .130167 .94439);
@@ -220,6 +230,7 @@
 
   @supports (color: lab(0% 0 0)) {
     :root, :host {
+      --color-red-100: lab(92.243% 10.2865 3.83865);
       --color-red-500: lab(55.4814% 75.0732 48.8528);
       --color-red-600: lab(48.4493% 77.4328 61.5452);
       --color-orange-300: lab(80.8059% 21.7313 50.4455);
@@ -228,6 +239,7 @@
       --color-orange-600: lab(57.1026% 64.2584 89.8886);
       --color-orange-700: lab(46.4615% 57.7275 70.8507);
       --color-yellow-500: lab(76.3898% 14.5258 98.4589);
+      --color-green-100: lab(96.1861% -13.8464 6.52365);
       --color-green-500: lab(70.5521% -66.5147 45.8073);
       --color-green-600: lab(59.0978% -58.6621 41.2579);
       --color-sky-300: lab(80.3307% -20.2945 -31.385);
@@ -237,6 +249,9 @@
       --color-blue-600: lab(44.0605% 29.0279 -86.0352);
       --color-blue-800: lab(30.2514% 27.7853 -70.2699);
       --color-blue-950: lab(15.6723% 8.86232 -32.2945);
+      --color-indigo-400: lab(59.866% 22.4834 -64.4485);
+      --color-indigo-600: lab(38.4009% 52.6132 -92.3857);
+      --color-indigo-700: lab(32.4486% 49.2217 -84.6695);
       --color-purple-400: lab(63.6946% 47.6127 -59.2066);
       --color-purple-500: lab(52.0183% 66.11 -78.2316);
       --color-purple-600: lab(43.0295% 75.21 -86.5669);
@@ -824,6 +839,10 @@
 
   .ml-\[50\%\] {
     margin-left: 50%;
+  }
+
+  .block {
+    display: block;
   }
 
   .flex {
@@ -1573,6 +1592,14 @@
     background-color: var(--color-gray-900);
   }
 
+  .bg-green-100 {
+    background-color: var(--color-green-100);
+  }
+
+  .bg-indigo-600 {
+    background-color: var(--color-indigo-600);
+  }
+
   .bg-orange-500 {
     background-color: var(--color-orange-500);
   }
@@ -1595,6 +1622,10 @@
 
   .bg-purple-800 {
     background-color: var(--color-purple-800);
+  }
+
+  .bg-red-100 {
+    background-color: var(--color-red-100);
   }
 
   .bg-white {
@@ -2062,6 +2093,11 @@
     transition-timing-function: var(--ease-out);
   }
 
+  .outline-none {
+    --tw-outline-style: none;
+    outline-style: none;
+  }
+
   @media (hover: hover) {
     .hover\:-translate-y-2:hover {
       --tw-translate-y: calc(var(--spacing) * -2);
@@ -2112,6 +2148,12 @@
   @media (hover: hover) {
     .hover\:border-purple-500:hover {
       border-color: var(--color-purple-500);
+    }
+  }
+
+  @media (hover: hover) {
+    .hover\:bg-indigo-700:hover {
+      background-color: var(--color-indigo-700);
     }
   }
 
@@ -2334,6 +2376,10 @@
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
 
+  .focus\:ring-indigo-400:focus {
+    --tw-ring-color: var(--color-indigo-400);
+  }
+
   .focus\:ring-purple-500:focus {
     --tw-ring-color: var(--color-purple-500);
   }
@@ -2350,6 +2396,10 @@
   .focus\:outline-none:focus {
     --tw-outline-style: none;
     outline-style: none;
+  }
+
+  .disabled\:opacity-50:disabled {
+    opacity: .5;
   }
 
   @media (min-width: 40rem) {
