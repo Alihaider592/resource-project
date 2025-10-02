@@ -63,8 +63,9 @@
 //   return NextResponse.json({ message: "API is working!" });
 // }
 import { NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db";
-import User from "@/models/User";
+// import connectToDatabase from "@/lib/db";
+import connectToDatabase from "@/app/(backend)/lib/db";
+import User from "@/app/(backend)/models/User";
 
 // TypeScript interface for request body
 interface UserBody {

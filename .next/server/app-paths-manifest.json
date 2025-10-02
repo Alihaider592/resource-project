@@ -1,1 +1,5 @@
-{}
+{
+  "/(backend)/api/auth/signup/route": "app/(backend)/api/auth/signup/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js"
+}
