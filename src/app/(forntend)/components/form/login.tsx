@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -8,7 +7,7 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [adminKey, setAdminKey] = useState(""); // only for admin
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false); // toggle state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -16,7 +15,7 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError(""); 
     setSuccess("");
 
     try {
@@ -28,50 +27,46 @@ export default function LoginForm() {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.error || "Login failed");
-      } else {
+      if (!res.ok) setError(data.error || "Login failed");
+      else {
         setSuccess("Login successful ✅");
         if (data.token) localStorage.setItem("token", data.token);
-
-        if (isAdmin) {
-          router.push("/admin");
-        } else {
-          router.push("/");
-        }
+        router.push(data.user.role === "admin" ? "/admin" : "/");
       }
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    } catch {
+      setError("Something went wrong");
+    } finally { setLoading(false); }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md flex flex-col gap-6"
+      <form 
+        onSubmit={handleSubmit} 
+        className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md flex flex-col gap-4"
       >
-        <h2 className="text-3xl font-bold text-center text-purple-800">
-          {isAdmin ? "Admin Login" : "User Login"}
-        </h2>
-
-        {/* Toggle Admin/User */}
-        <div className="flex items-center justify-center mb-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isAdmin}
-              onChange={() => setIsAdmin(!isAdmin)}
-              className="w-5 h-5"
-            />
-            <span className="text-gray-700">Login as Admin</span>
-          </label>
-        </div>
+        <h2 className="text-3xl font-bold mb-4 text-center text-purple-800">Login</h2>
 
         {error && <p className="text-red-600 text-sm mb-2 bg-red-100 p-2 rounded">{error}</p>}
         {success && <p className="text-green-600 text-sm mb-2 bg-green-100 p-2 rounded">{success}</p>}
+
+        {/* Toggle */}
+        <div className="flex items-center justify-center mb-4">
+          <span className={`mr-2 font-medium ${!isAdmin ? "text-gray-800" : "text-gray-400"}`}>User</span>
+          <button
+            type="button"
+            onClick={() => setIsAdmin(!isAdmin)}
+            className={`relative w-14 h-8 rounded-full transition-colors ${
+              isAdmin ? "bg-purple-700" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform ${
+                isAdmin ? "translate-x-6" : "translate-x-0"
+              }`}
+            ></span>
+          </button>
+          <span className={`ml-2 font-medium ${isAdmin ? "text-gray-800" : "text-gray-400"}`}>Admin</span>
+        </div>
 
         <input
           type="email"
@@ -90,14 +85,14 @@ export default function LoginForm() {
           className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
 
-        {/* Admin Key field shown only if Admin toggled */}
+        {/* Admin Key Input */}
         {isAdmin && (
           <input
             type="password"
             placeholder="Admin Key"
             value={adminKey}
             onChange={(e) => setAdminKey(e.target.value)}
-            required
+            required={isAdmin}
             className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         )}
@@ -105,16 +100,10 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-purple-700 text-white py-3 rounded-lg hover:bg-purple-800 transition disabled:opacity-50"
+          className="bg-purple-700 text-white py-3 rounded-lg hover:bg-purple-800 transition"
         >
           {loading ? "Logging in..." : "Login"}
         </button>
-
-        {!isAdmin && (
-          <p className="text-sm text-gray-500 text-center mt-4">
-            Dont have an account? <a href="/signup" className="text-purple-700 font-medium">Sign up</a>
-          </p>
-        )}
       </form>
     </div>
   );
