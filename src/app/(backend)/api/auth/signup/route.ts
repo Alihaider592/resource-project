@@ -7,12 +7,20 @@ export async function POST(req: Request) {
   try {
     await connectDatabase();
 
-    const { name, email, password } = await req.json();
+    const { name, email, password, adminKey } = await req.json();
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !adminKey) {
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: "All fields including admin code are required" },
         { status: 400 }
+      );
+    }
+
+    // Check if adminKey matches your secret
+    if (adminKey !== process.env.ADMIN_SECRET_CODE) {
+      return NextResponse.json(
+        { error: "Invalid admin key" },
+        { status: 403 }
       );
     }
 
@@ -30,12 +38,12 @@ export async function POST(req: Request) {
       name,
       email,
       password: hashedPassword,
-      role: "user", 
+      role: "admin", // assign admin role
     });
 
     return NextResponse.json(
       {
-        message: "Signup successful",
+        message: "Admin signup successful",
         user: {
           id: user._id.toString(),
           name: user.name,

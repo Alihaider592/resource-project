@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function SignUpForm() {
+export default function AdminSignUpForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminKey, setAdminKey] = useState(""); 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const router = useRouter(); // router instance
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,16 +22,22 @@ export default function SignUpForm() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, adminKey }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("Sign-Up successful! You can now sign in.");
+        setMessage("Admin Sign-Up successful! Redirecting...");
         setName("");
         setEmail("");
         setPassword("");
+        setAdminKey("");
+
+        // Navigate to admin dashboard after 1 second
+        setTimeout(() => {
+          router.push("/admin"); 
+        }, 1000);
       } else {
         setMessage(data.error || "Something went wrong");
       }
@@ -41,7 +51,7 @@ export default function SignUpForm() {
   return (
     <div className="max-w-md mx-auto mt-20 p-8 bg-white shadow-xl rounded-2xl">
       <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">
-        Sign Up
+        Admin Sign Up
       </h2>
       {message && (
         <p
@@ -74,6 +84,14 @@ export default function SignUpForm() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+        <input
+          type="password"
+          placeholder="Admin Key"
+          value={adminKey}
+          onChange={(e) => setAdminKey(e.target.value)}
           required
           className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />

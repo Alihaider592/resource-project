@@ -1,23 +1,14 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import connectDatabase from "@/app/(backend)/lib/db";
-import SignupUser from "@/app/(backend)/models/signupuser";
+import User from "@/app/(backend)/models/signupuser";
 import jwt from "jsonwebtoken";
-
-// Define the expected body type
-interface LoginRequestBody {
-  email: string;
-  password: string;
-}
 
 export async function POST(req: Request) {
   try {
-    // ✅ Connect to DB
     await connectDatabase();
 
-    // ✅ Parse and type body
-    const body: LoginRequestBody = await req.json();
-    const { email, password } = body;
+    const { email, password, adminKey } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -26,8 +17,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Check if user exists
-    const user = await SignupUser.findOne({ email });
+    const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -35,7 +25,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Validate password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return NextResponse.json(
@@ -44,9 +33,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Ensure JWT_SECRET exists
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
+    // Determine role based on adminKey
+    let role = "user";
+    if (adminKey) {
+      if (adminKey !== process.env.ADMIN_SECRET_CODE) {
+        return NextResponse.json(
+          { error: "Invalid admin key" },
+          { status: 403 }
+        );
+      }
+      role = "admin";
+    }
+
+    if (!process.env.JWT_SECRET) {
       console.error("❌ Missing JWT_SECRET in environment variables");
       return NextResponse.json(
         { error: "Server misconfiguration" },
@@ -54,37 +53,30 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Generate JWT token
     const token = jwt.sign(
-      { id: user._id.toString(), role: user.role },
-      secret,
+      { id: user._id.toString(), role },
+      process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // ✅ Send response
     return NextResponse.json(
       {
-        message: "Login successful",
+        message: `${role === "admin" ? "Admin" : "User"} login successful`,
         token,
         user: {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
-          role: user.role,
+          role,
         },
       },
       { status: 200 }
     );
   } catch (err: unknown) {
     console.error("Login error:", err);
-
     if (err instanceof Error) {
       return NextResponse.json({ error: err.message }, { status: 500 });
     }
-
-    return NextResponse.json(
-      { error: "Unknown server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Unknown server error" }, { status: 500 });
   }
 }
