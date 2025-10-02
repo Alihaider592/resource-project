@@ -1,4 +1,6 @@
 {
-  "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
-  "/(backend)/api/auth/signup/route": "app/(backend)/api/auth/signup/route.js"
+  "/(pages)/Ourclient/page": "app/(pages)/Ourclient/page.js",
+  "/(pages)/Ourstory/page": "app/(pages)/Ourstory/page.js",
+  "/(pages)/partnersprogram/page": "app/(pages)/partnersprogram/page.js",
+  "/page": "app/page.js"
 }

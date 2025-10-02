@@ -6,8 +6,8 @@ export default function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [adminKey, setAdminKey] = useState(""); // only for admin
-  const [isAdmin, setIsAdmin] = useState(false); // toggle state
+  const [adminKey, setAdminKey] = useState(""); 
+  const [isAdmin, setIsAdmin] = useState(false); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -49,7 +49,6 @@ export default function LoginForm() {
         {error && <p className="text-red-600 text-sm mb-2 bg-red-100 p-2 rounded">{error}</p>}
         {success && <p className="text-green-600 text-sm mb-2 bg-green-100 p-2 rounded">{success}</p>}
 
-        {/* Toggle */}
         <div className="flex items-center justify-center mb-4">
           <span className={`mr-2 font-medium ${!isAdmin ? "text-gray-800" : "text-gray-400"}`}>User</span>
           <button
@@ -84,8 +83,6 @@ export default function LoginForm() {
           required
           className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
-
-        {/* Admin Key Input */}
         {isAdmin && (
           <input
             type="password"

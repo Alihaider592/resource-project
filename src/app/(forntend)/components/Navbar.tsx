@@ -213,11 +213,12 @@ export default function Navbar() {
                     Our Client
                  </Link> 
                   <a
-                    className="cursor-pointer hover:text-purple-700 menu-link"
+                    className=""
                     href="https://resourceinn.com/become-a-partner/"
                   >
-                    Partners Program
+                    
                   </a>
+                  <Link href={'/partnersprogram'} className="cursor-pointer hover:text-purple-700 menu-link">Resoursein Partners Program</Link>
                   <a
                     className="cursor-pointer hover:text-purple-700 menu-link"
                     href="https://resourceinn.com/contact-us/"

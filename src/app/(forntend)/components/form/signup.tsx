@@ -11,7 +11,7 @@ export default function AdminSignUpForm() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const router = useRouter(); // router instance
+  const router = useRouter(); 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +33,6 @@ export default function AdminSignUpForm() {
         setEmail("");
         setPassword("");
         setAdminKey("");
-
-        // Navigate to admin dashboard after 1 second
         setTimeout(() => {
           router.push("/admin"); 
         }, 1000);
