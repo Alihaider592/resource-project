@@ -11,8 +11,6 @@ import Technology from "@/app/(forntend)/components/technologyCard";
 import Sessions from "@/app/(forntend)/components/widthCards/widthMap/map";
 import Frame from "@/app/(forntend)/components/frame/iframe";
 import Service from "@/app/(forntend)/components/hrmCards/hrmCards";
-import SignUpForm from "./(forntend)/components/form/signup";
-import LoginForm from "./(forntend)/components/form/login";
 export default function Home() {
   return (
     <div>
@@ -30,8 +28,6 @@ export default function Home() {
         <Service />
       </div>
       <Conection />
-      <SignUpForm/>
-      <LoginForm/>
     </div>
   );
 }

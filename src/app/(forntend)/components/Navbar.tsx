@@ -239,7 +239,6 @@ export default function Navbar() {
             </li>
           </ul>
         </div>
-
         <div className="flex gap-3">
           <a href="https://resourceinn.com/demo/">
             <Button
@@ -257,6 +256,8 @@ export default function Navbar() {
             />
           </a>
         </div>
+          <a href="/login">login</a>
+          <a href="/signup">signup</a>
       </div>
     </div>
   );
