@@ -202,13 +202,6 @@ export default function Navbar() {
                  <Link href={'/Ourstory'}>
                     Our Story
                  </Link> 
-                 
-                  {/* <a
-                    className="cursor-pointer hover:text-purple-700 menu-link"
-                    href="https://resourceinn.com/clients/"
-                  >
-                    Our Client
-                  </a> */}
                   <Link href={'/Ourclient'}>
                     Our Client
                  </Link> 

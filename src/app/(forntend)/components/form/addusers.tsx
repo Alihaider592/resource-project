@@ -1,17 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
-export default function AdminSignUpForm() {
+export default function AddUserForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [adminKey, setAdminKey] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,27 +15,23 @@ export default function AdminSignUpForm() {
     setMessage("");
 
     try {
-      const res = await fetch("/api/auth/signup", {
+      const res = await fetch("/api/admin/adduser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, adminKey }),
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("Admin Sign-Up successful! Redirecting...");
+        setMessage("User added successfully!");
         setName("");
         setEmail("");
         setPassword("");
-        setAdminKey("");
-        setTimeout(() => {
-          router.push("/admin");
-        }, 1000);
       } else {
         setMessage(data.error || "Something went wrong");
       }
-    } catch (err) {
+    } catch {
       setMessage("Server error. Try again later.");
     } finally {
       setLoading(false);
@@ -47,19 +39,21 @@ export default function AdminSignUpForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-8 bg-white shadow-xl rounded-2xl">
+    <div className="max-w-md mx-auto mt-10 p-8 bg-white shadow-xl rounded-2xl">
       <h2 className="text-3xl font-bold text-center mb-6 text-teal-500-700">
-        Admin Sign Up
+        Add Users
       </h2>
+
       {message && (
         <p
           className={`mb-4 text-center ${
-            message.includes("successful") ? "text-green-600" : "text-red-600"
+            message.includes("success") ? "text-green-600" : "text-red-600"
           }`}
         >
           {message}
         </p>
       )}
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
           type="text"
@@ -85,20 +79,12 @@ export default function AdminSignUpForm() {
           required
           className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500-500"
         />
-        <input
-          type="password"
-          placeholder="Admin Key"
-          value={adminKey}
-          onChange={(e) => setAdminKey(e.target.value)}
-          required
-          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500-500"
-        />
         <button
           type="submit"
           disabled={loading}
           className="bg-teal-500-700 text-white py-3 rounded-lg hover:bg-teal-500-800 transition"
         >
-          {loading ? "Signing Up..." : "Sign Up"}
+          {loading ? "Adding User..." : "Add User"}
         </button>
       </form>
     </div>

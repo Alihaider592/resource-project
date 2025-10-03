@@ -7,8 +7,6 @@ const userSchema = new mongoose.Schema({
   companyname: { type: String, required: true },
   comment: { type: String }
 });
-
-// Prevent model overwrite in Next.js hot reload
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;

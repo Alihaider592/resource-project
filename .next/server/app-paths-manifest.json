@@ -1,6 +1,15 @@
 {
-  "/(pages)/Ourclient/page": "app/(pages)/Ourclient/page.js",
-  "/(pages)/Ourstory/page": "app/(pages)/Ourstory/page.js",
-  "/(pages)/partnersprogram/page": "app/(pages)/partnersprogram/page.js",
+  "/(backend)/api/admin/adduser/route": "app/(backend)/api/admin/adduser/route.js",
+  "/(backend)/api/admin/getusers/route": "app/(backend)/api/admin/getusers/route.js",
+  "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
+  "/(backend)/api/auth/signup/route": "app/(backend)/api/auth/signup/route.js",
+  "/(pages)/admin/addusers/page": "app/(pages)/admin/addusers/page.js",
+  "/(pages)/admin/manageusers/page": "app/(pages)/admin/manageusers/page.js",
+  "/(pages)/admin/page": "app/(pages)/admin/page.js",
+  "/(pages)/login/page": "app/(pages)/login/page.js",
+  "/(pages)/signup/page": "app/(pages)/signup/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/connect/route": "app/api/connect/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js"
 }

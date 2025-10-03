@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import connectDatabase from "@/app/(backend)/lib/db";
-import User from "@/app/(backend)/models/signupuser";
 import jwt from "jsonwebtoken";
+import connectDatabase from "@/app/(backend)/lib/db";
+import SignupUser from "@/app/(backend)/models/signupuser";
+import AddUser from "@/app/(backend)/models/adduser";
 
 export async function POST(req: Request) {
   try {
@@ -17,7 +18,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await User.findOne({ email });
+    // 1️⃣ Find user in SignupUser first, then AddUser
+    let user = await SignupUser.findOne({ email });
+    let source = "SignupUser";
+
+    if (!user) {
+      user = await AddUser.findOne({ email });
+      source = "AddUser";
+    }
+
+    // If no user found
     if (!user) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -25,6 +35,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // 2️⃣ Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return NextResponse.json(
@@ -33,7 +44,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Determine role based on adminKey
+    // 3️⃣ Role handling (admin / user)
     let role = "user";
     if (adminKey) {
       if (adminKey !== process.env.ADMIN_SECRET_CODE) {
@@ -45,6 +56,7 @@ export async function POST(req: Request) {
       role = "admin";
     }
 
+    // 4️⃣ JWT Secret check
     if (!process.env.JWT_SECRET) {
       console.error("❌ Missing JWT_SECRET in environment variables");
       return NextResponse.json(
@@ -53,12 +65,14 @@ export async function POST(req: Request) {
       );
     }
 
+    // 5️⃣ Generate token
     const token = jwt.sign(
       { id: user._id.toString(), role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
+    // 6️⃣ Return success response
     return NextResponse.json(
       {
         message: `${role === "admin" ? "Admin" : "User"} login successful`,
@@ -68,10 +82,12 @@ export async function POST(req: Request) {
           name: user.name,
           email: user.email,
           role,
+          source, // tells you whether from AddUser or SignupUser
         },
       },
       { status: 200 }
     );
+
   } catch (err: unknown) {
     console.error("Login error:", err);
     if (err instanceof Error) {
