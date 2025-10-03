@@ -1,29 +1,23 @@
 import { NextResponse } from "next/server";
-import connectDatabase from "@/app/(backend)/lib/db";
+import connectdatabase from "@/app/(backend)/lib/db";
 import AddUser from "@/app/(backend)/models/adduser";
-
 export async function GET() {
   try {
-    // Connect to the database
-    await connectDatabase();
+    await connectdatabase();
 
-    // Fetch all users
-    const users = await AddUser.find({});
+    const users = await AddUser.find({}, { name: 1, email: 1, picture: 1 });
 
-    // Convert Mongoose documents to plain objects
-    const plainUsers = users.map((u) => ({
-      id: u._id.toString(),
-      name: u.name,
-      email: u.email,
+    // Convert _id to string for React key
+    const mappedUsers = users.map((AddUser) => ({
+      id: AddUser._id.toString(),
+      name: AddUser.name,
+      email: AddUser.email,
+      picture: AddUser.picture || null,
     }));
 
-    // Return as JSON
-    return NextResponse.json({ users: plainUsers }, { status: 200 });
-  } catch (err: unknown) {
-    console.error("Fetch users error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ users: mappedUsers });
+  } catch (error) {
+    console.error("GET /api/admin/getusers error:", error);
+    return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
 }
