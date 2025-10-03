@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import React, { useState } from "react";
 import { FiHome, FiUser, FiSettings, FiLogOut, FiMenu } from "react-icons/fi";
 
@@ -11,7 +11,7 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex h-screen bg-gray-100">
       <div
-        className={`bg-teal-500-900 text-white shadow-md transition-all duration-300 ${
+        className={`bg-purple-900 text-white shadow-md transition-all duration-300 ${
           isOpen ? "w-64" : "w-20"
         }`}
       >
@@ -31,13 +31,13 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
             <FiHome size={20} />
             {isOpen && <span>Home</span>}
           </a>
-          <a
-            href="#"
+          <Link
+            href="/user/profile"
             className="flex  items-center gap-3 p-3 hover:bg-gray-600 transition-colors"
           >
             <FiUser size={20} />
             {isOpen && <span>Profile</span>}
-          </a>
+          </Link>
           <a
             href="#"
             className="flex items-center gap-3  p-3 hover:bg-gray-600 transition-colors"

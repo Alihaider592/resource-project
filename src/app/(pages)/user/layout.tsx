@@ -1,16 +1,14 @@
 "use client";
 
 import React, { ReactNode } from "react";
-// import AdminSidebar from "./AdminSidebar";
-// import AdminSidebar from "./adminsidebar";
 import SidebarLayout from "./userdashboard";
 
-interface AdminLayoutProps {
+interface userLayoutProps {
   children: ReactNode;
 }
 
-const AdminLayout = ({ children }: AdminLayoutProps) => {
+const userLayout = ({ children }: userLayoutProps) => {
   return <SidebarLayout>{children}</SidebarLayout>;
 };
 
-export default AdminLayout;
+export default userLayout;
