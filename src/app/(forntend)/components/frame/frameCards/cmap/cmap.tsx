@@ -20,23 +20,22 @@ export default function Cmap() {
     setActiveIndex(index);
   };
 
-  const handleDragEnd = (
-    _event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
-  ) => {
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     setIsDragging(false);
     if (info.offset.x < -50) {
       // swipe left next
       setActiveIndex((prev) => (prev + 1) % cardname.length);
     } else if (info.offset.x > 50) {
       // swipe right prev
-      setActiveIndex((prev) => (prev === 0 ? cardname.length - 1 : prev - 1));
+      setActiveIndex((prev) =>
+        prev === 0 ? cardname.length - 1 : prev - 1
+      );
     }
   };
 
   return (
     <div className="w-full max-w-xl mx-auto pt-10 bg-white">
-      {/* slider */}
+       {/* slider */}
       <div className="overflow-hidden relative h-64">
         <motion.div
           className="flex"
@@ -62,7 +61,7 @@ export default function Cmap() {
             key={index}
             onClick={() => handleDotClick(index)}
             className={`w-3 h-3 rounded-full ${
-              activeIndex === index ? "bg-teal-500-600" : "bg-gray-300"
+              activeIndex === index ? "bg-purple-600" : "bg-gray-300"
             }`}
           ></button>
         ))}

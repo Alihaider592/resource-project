@@ -42,11 +42,8 @@ const services = [
 export default function Service() {
   return (
     <section className="bg-white md:px-8 flex flex-col justify-center items-center gap-5 mt-20 lg:px-16">
-      <p className="text-3xl font-bold">HRM Software for any Industry </p>
-      <p className="text-lg text-gray-500">
-        We at Resourceinn are serving multiple verticals with industry-ready
-        solutions to meet the best market practices.
-      </p>
+        <p className="text-3xl font-bold">HRM Software for any Industry </p>
+        <p className="text-lg text-gray-500">We at Resourceinn are serving multiple verticals with industry-ready solutions to meet the best market practices.</p>
       <div className="max-w-[1440px] mx-auto grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         {services.map((service) => (
           <div
@@ -65,9 +62,7 @@ export default function Service() {
       </div>
       <div className="hover:scale-105 transition-all ease-in-out duration-300 mt-10">
         <a className="mt-10" href="https://resourceinn.com/industries/">
-          <span className="font-bold text-lg text-teal-500-600 hover:text-orange-500 transition-all ease-in-out duration-300">
-            Explore All Industries →
-          </span>
+        <span className="font-bold text-lg text-purple-600 hover:text-orange-500 transition-all ease-in-out duration-300">Explore All Industries →</span>
         </a>
       </div>
     </section>

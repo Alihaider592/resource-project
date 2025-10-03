@@ -40,7 +40,7 @@ export default function AddUserForm() {
 
   return (
     <div className="max-w-md mx-auto mt-10 p-8 bg-white shadow-xl rounded-2xl">
-      <h2 className="text-3xl font-bold text-center mb-6 text-teal-500-700">
+      <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">
         Add Users
       </h2>
 
@@ -61,7 +61,7 @@ export default function AddUserForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500-500"
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
         <input
           type="email"
@@ -69,7 +69,7 @@ export default function AddUserForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500-500"
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
         <input
           type="password"
@@ -77,12 +77,12 @@ export default function AddUserForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500-500"
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
         <button
           type="submit"
           disabled={loading}
-          className="bg-teal-500-700 text-white py-3 rounded-lg hover:bg-teal-500-800 transition"
+          className="bg-purple-700 text-white py-3 rounded-lg hover:bg-purple-800 transition"
         >
           {loading ? "Adding User..." : "Add User"}
         </button>

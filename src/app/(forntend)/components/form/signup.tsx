@@ -7,11 +7,11 @@ export default function AdminSignUpForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [adminKey, setAdminKey] = useState("");
+  const [adminKey, setAdminKey] = useState(""); 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
+  const router = useRouter(); 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +34,7 @@ export default function AdminSignUpForm() {
         setPassword("");
         setAdminKey("");
         setTimeout(() => {
-          router.push("/admin");
+          router.push("/admin"); 
         }, 1000);
       } else {
         setMessage(data.error || "Something went wrong");
@@ -48,7 +48,7 @@ export default function AdminSignUpForm() {
 
   return (
     <div className="max-w-md mx-auto mt-20 p-8 bg-white shadow-xl rounded-2xl">
-      <h2 className="text-3xl font-bold text-center mb-6 text-teal-500-700">
+      <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">
         Admin Sign Up
       </h2>
       {message && (
@@ -67,7 +67,7 @@ export default function AdminSignUpForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500-500"
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
         <input
           type="email"
@@ -75,7 +75,7 @@ export default function AdminSignUpForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500-500"
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
         <input
           type="password"
@@ -83,7 +83,7 @@ export default function AdminSignUpForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500-500"
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
         <input
           type="password"
@@ -91,12 +91,12 @@ export default function AdminSignUpForm() {
           value={adminKey}
           onChange={(e) => setAdminKey(e.target.value)}
           required
-          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500-500"
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
         <button
           type="submit"
           disabled={loading}
-          className="bg-teal-500-700 text-white py-3 rounded-lg hover:bg-teal-500-800 transition"
+          className="bg-purple-700 text-white py-3 rounded-lg hover:bg-purple-800 transition"
         >
           {loading ? "Signing Up..." : "Sign Up"}
         </button>

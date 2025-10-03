@@ -137,8 +137,6 @@
     --color-green-100: #dcfce7;
     --color-green-500: #00c758;
     --color-green-600: #00a544;
-    --color-teal-500: #00baa7;
-    --color-teal-900: #0b4f4a;
     --color-sky-300: #77d4ff;
     --color-blue-300: #90c5ff;
     --color-blue-400: #54a2ff;
@@ -148,7 +146,6 @@
     --color-blue-800: #193cb8;
     --color-blue-950: #162456;
     --color-purple-100: #f3e8ff;
-    --color-purple-300: #d9b3ff;
     --color-purple-400: #c07eff;
     --color-purple-500: #ac4bff;
     --color-purple-600: #9810fa;
@@ -231,8 +228,6 @@
       --color-green-100: color(display-p3 .885269 .984329 .910368);
       --color-green-500: color(display-p3 .308734 .774754 .374307);
       --color-green-600: color(display-p3 .243882 .640824 .294808);
-      --color-teal-500: color(display-p3 .266569 .721518 .655462);
-      --color-teal-900: color(display-p3 .135344 .303314 .290629);
       --color-sky-300: color(display-p3 .546356 .822561 .990576);
       --color-blue-300: color(display-p3 .602559 .767214 .993938);
       --color-blue-400: color(display-p3 .397443 .62813 .992116);
@@ -242,7 +237,6 @@
       --color-blue-800: color(display-p3 .134023 .230647 .695537);
       --color-blue-950: color(display-p3 .0993202 .141621 .323413);
       --color-purple-100: color(display-p3 .945034 .910569 .992972);
-      --color-purple-300: color(display-p3 .829394 .703737 .996084);
       --color-purple-400: color(display-p3 .719919 .492497 .995173);
       --color-purple-500: color(display-p3 .629519 .30089 .990817);
       --color-purple-600: color(display-p3 .546729 .130167 .94439);
@@ -277,8 +271,6 @@
       --color-green-100: lab(96.1861% -13.8464 6.52365);
       --color-green-500: lab(70.5521% -66.5147 45.8073);
       --color-green-600: lab(59.0978% -58.6621 41.2579);
-      --color-teal-500: lab(67.3859% -49.0983 -2.63511);
-      --color-teal-900: lab(29.506% -21.4706 -3.59886);
       --color-sky-300: lab(80.3307% -20.2945 -31.385);
       --color-blue-300: lab(77.5052% -6.4629 -36.42);
       --color-blue-400: lab(65.0361% -1.42065 -56.9802);
@@ -288,7 +280,6 @@
       --color-blue-800: lab(30.2514% 27.7853 -70.2699);
       --color-blue-950: lab(15.6723% 8.86232 -32.2945);
       --color-purple-100: lab(93.3333% 6.97437 -9.83434);
-      --color-purple-300: lab(78.3298% 26.2195 -34.9499);
       --color-purple-400: lab(63.6946% 47.6127 -59.2066);
       --color-purple-500: lab(52.0183% 66.11 -78.2316);
       --color-purple-600: lab(43.0295% 75.21 -86.5669);
@@ -1667,18 +1658,6 @@
     border-color: var(--color-orange-500);
   }
 
-  .border-purple-600 {
-    border-color: var(--color-purple-600);
-  }
-
-  .border-teal-500 {
-    border-color: var(--color-teal-500);
-  }
-
-  .border-teal-900 {
-    border-color: var(--color-teal-900);
-  }
-
   .border-transparent {
     border-color: rgba(0, 0, 0, 0);
   }
@@ -1755,14 +1734,6 @@
     background-color: var(--color-red-100);
   }
 
-  .bg-teal-500 {
-    background-color: var(--color-teal-500);
-  }
-
-  .bg-teal-900 {
-    background-color: var(--color-teal-900);
-  }
-
   .bg-white {
     background-color: var(--color-white);
   }
@@ -1774,11 +1745,6 @@
 
   .bg-none {
     background-image: none;
-  }
-
-  .from-purple-300 {
-    --tw-gradient-from: var(--color-purple-300);
-    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
   }
 
   .from-purple-800 {
@@ -1862,10 +1828,6 @@
 
   .px-6 {
     padding-inline: calc(var(--spacing) * 6);
-  }
-
-  .px-8 {
-    padding-inline: calc(var(--spacing) * 8);
   }
 
   .px-10 {
@@ -2100,14 +2062,6 @@
 
   .text-red-600 {
     color: var(--color-red-600);
-  }
-
-  .text-teal-500 {
-    color: var(--color-teal-500);
-  }
-
-  .text-teal-900 {
-    color: var(--color-teal-900);
   }
 
   .text-white {
@@ -2444,18 +2398,6 @@
   @media (hover: hover) {
     .hover\:text-red-500:hover {
       color: var(--color-red-500);
-    }
-  }
-
-  @media (hover: hover) {
-    .hover\:text-teal-500:hover {
-      color: var(--color-teal-500);
-    }
-  }
-
-  @media (hover: hover) {
-    .hover\:text-teal-900:hover {
-      color: var(--color-teal-900);
     }
   }
 
