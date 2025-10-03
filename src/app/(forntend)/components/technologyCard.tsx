@@ -127,7 +127,7 @@ const Technology = () => {
                         width="250" 
                         height="250" 
                         src={feature.url} 
-                        className="w-full max-w-[150px] h-auto object-contain rounded-full border-4 border-teal-500-600 hover:border-blue-800 transition duration-300"
+                        className="w-full max-w-[150px] h-auto object-contain rounded-full border-4 border-purple-700 border-teal-500-600 hover:border-blue-800 transition duration-300"
                         alt={`Feature icon ${index + 1}`} 
                        
                       />

@@ -137,6 +137,7 @@
     --color-green-100: #dcfce7;
     --color-green-500: #00c758;
     --color-green-600: #00a544;
+    --color-teal-500: #00baa7;
     --color-sky-300: #77d4ff;
     --color-blue-300: #90c5ff;
     --color-blue-400: #54a2ff;
@@ -228,6 +229,7 @@
       --color-green-100: color(display-p3 .885269 .984329 .910368);
       --color-green-500: color(display-p3 .308734 .774754 .374307);
       --color-green-600: color(display-p3 .243882 .640824 .294808);
+      --color-teal-500: color(display-p3 .266569 .721518 .655462);
       --color-sky-300: color(display-p3 .546356 .822561 .990576);
       --color-blue-300: color(display-p3 .602559 .767214 .993938);
       --color-blue-400: color(display-p3 .397443 .62813 .992116);
@@ -271,6 +273,7 @@
       --color-green-100: lab(96.1861% -13.8464 6.52365);
       --color-green-500: lab(70.5521% -66.5147 45.8073);
       --color-green-600: lab(59.0978% -58.6621 41.2579);
+      --color-teal-500: lab(67.3859% -49.0983 -2.63511);
       --color-sky-300: lab(80.3307% -20.2945 -31.385);
       --color-blue-300: lab(77.5052% -6.4629 -36.42);
       --color-blue-400: lab(65.0361% -1.42065 -56.9802);
@@ -1658,6 +1661,10 @@
     border-color: var(--color-orange-500);
   }
 
+  .border-purple-700 {
+    border-color: var(--color-purple-700);
+  }
+
   .border-transparent {
     border-color: rgba(0, 0, 0, 0);
   }
@@ -1732,6 +1739,10 @@
 
   .bg-red-100 {
     background-color: var(--color-red-100);
+  }
+
+  .bg-teal-500 {
+    background-color: var(--color-teal-500);
   }
 
   .bg-white {
