@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   try {
     await connectDatabase();
 
-    const { email, password, adminKey } = await req.json();
+    const { email, password } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1️⃣ Find user in SignupUser first, then AddUser
+    // 1️⃣ Try to find user in both collections
     let user = await SignupUser.findOne({ email });
     let source = "SignupUser";
 
@@ -27,7 +27,6 @@ export async function POST(req: Request) {
       source = "AddUser";
     }
 
-    // If no user found
     if (!user) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -35,7 +34,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2️⃣ Compare password
+    // 2️⃣ Check password match
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return NextResponse.json(
@@ -44,19 +43,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3️⃣ Role handling (admin / user)
-    let role = "user";
-    if (adminKey) {
-      if (adminKey !== process.env.ADMIN_SECRET_CODE) {
-        return NextResponse.json(
-          { error: "Invalid admin key" },
-          { status: 403 }
-        );
-      }
-      role = "admin";
-    }
-
-    // 4️⃣ JWT Secret check
+    // 3️⃣ Ensure JWT secret exists
     if (!process.env.JWT_SECRET) {
       console.error("❌ Missing JWT_SECRET in environment variables");
       return NextResponse.json(
@@ -65,29 +52,27 @@ export async function POST(req: Request) {
       );
     }
 
-    // 5️⃣ Generate token
+    // 4️⃣ Generate token (no role)
     const token = jwt.sign(
-      { id: user._id.toString(), role },
+      { id: user._id.toString() },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // 6️⃣ Return success response
+    // 5️⃣ Return successful response
     return NextResponse.json(
       {
-        message: `${role === "admin" ? "Admin" : "User"} login successful`,
+        message: "Login successful",
         token,
         user: {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
-          role,
-          source, // tells you whether from AddUser or SignupUser
+          source,
         },
       },
       { status: 200 }
     );
-
   } catch (err: unknown) {
     console.error("Login error:", err);
     if (err instanceof Error) {

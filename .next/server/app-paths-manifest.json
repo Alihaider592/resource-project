@@ -1,6 +1,12 @@
 {
+  "/(backend)/api/admin/adduser/route": "app/(backend)/api/admin/adduser/route.js",
+  "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
+  "/(backend)/api/auth/signup/route": "app/(backend)/api/auth/signup/route.js",
+  "/(pages)/admin/addusers/page": "app/(pages)/admin/addusers/page.js",
+  "/(pages)/admin/page": "app/(pages)/admin/page.js",
   "/(pages)/login/page": "app/(pages)/login/page.js",
-  "/(pages)/partnersprogram/page": "app/(pages)/partnersprogram/page.js",
+  "/(pages)/signup/page": "app/(pages)/signup/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js"
 }
