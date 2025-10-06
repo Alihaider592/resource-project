@@ -1,4 +1,5 @@
 import Image from "next/image";
+import VideoSection from "@/app/(forntend)/components/value";
 import React from "react";
 import Button from "@/app/(forntend)/components/buttons";
 const CirclesImage = () => {
@@ -33,17 +34,21 @@ const CirclesImage = () => {
               <h1 className="text-white text-lg">
                 grow. It’s a win-win for you, us, and the customers.
               </h1>
-            </div>
             <Button
               text="↓Become a Partner"
               textColor=" text-white hover:text-white"
               bgColor="bg-orange-500 hover:bg-teal-500-500 transition-all duration-300 ease-in-out"
               className=" hover:-translate-y-2 cursor-pointer hover:shadow-lg w-[170px] m-5 ml-0 h-[50px]  border-3 hover:border-teal-500-500 transition-all duration-500 ease-in-out border-orange-500"
             />
+            </div>
+            <div>
+              <img className="w-[400px]" src="https://resourceinn.com/wp-content/uploads/2022/12/partner-plan-01.webp" alt="" />
+            </div>
           </div>
         </div>
       </div>
 
+        <VideoSection/>
       <div className="elementor-widget-container">
         <Image
           src="https://resourceinn.com/wp-content/uploads/2020/02/circles_bg.png"
