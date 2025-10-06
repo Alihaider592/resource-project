@@ -12,7 +12,7 @@ const VideoSection = () => {
         </div>
         {/* Left Side - Video */}
         <div className="w-full md:w-1/2 flex justify-center">
-          <div className="w-full max-w-xl aspect-video">
+          <div className="w-full max-w-xl aspect-video shadow-sky-900">
             <iframe
               className="w-full h-full rounded-xl"
               src="https://www.youtube.com/embed/bz21zTQ_LWs?controls=1&rel=0"
