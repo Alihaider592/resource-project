@@ -3,6 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+interface LoginResponse {
+  message?: string;
+  token?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    role: "admin" | "HR" | "simple user" | string;
+  };
+  error?: string;
+}
+
 export default function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -11,7 +23,7 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -21,24 +33,47 @@ export default function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }), // ✅ only send email + password
+        body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const data: LoginResponse = await res.json();
 
       if (!res.ok) {
         setError(data.error || "Invalid credentials");
-      } else {
-        setSuccess("Login successful ✅");
-        if (data.token) localStorage.setItem("token", data.token);
-        router.push("/"); // ✅ redirect after login
+        return;
       }
-    } catch (error) {
-      console.error("Login error:", error);
+
+      if (data.token && data.user) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userName", data.user.name); 
+      }
+      if (data.token && data.user) {
+  document.cookie = `token=${data.token}; path=/`; 
+}
+
+      // Redirect based on role
+      switch (data.user?.role) {
+        case "admin":
+          router.push("/admin");
+          break;
+        case "HR":
+          router.push("/HR");
+          break;
+        case "simple user":
+          router.push("/user");
+          break;
+        default:
+          router.push("/");
+          break;
+      }
+      setSuccess("Login successful ✅");
+    } catch (err: unknown) {
+      console.error("Login error:", err);
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
+    
   };
 
   return (
@@ -51,16 +86,8 @@ export default function LoginForm() {
           Login
         </h2>
 
-        {error && (
-          <p className="text-red-600 text-sm mb-2 bg-red-100 p-2 rounded">
-            {error}
-          </p>
-        )}
-        {success && (
-          <p className="text-green-600 text-sm mb-2 bg-green-100 p-2 rounded">
-            {success}
-          </p>
-        )}
+        {error && <p className="text-red-600 p-2 rounded bg-red-100">{error}</p>}
+        {success && <p className="text-green-600 p-2 rounded bg-green-100">{success}</p>}
 
         <input
           type="email"

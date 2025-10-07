@@ -7,23 +7,14 @@ export async function POST(req: Request) {
   try {
     await connectDatabase();
 
-    const { name, email, password, adminKey } = await req.json();
+    const { name, email, password } = await req.json();
 
-    if (!name || !email || !password || !adminKey) {
+    if (!name || !email || !password) {
       return NextResponse.json(
         { error: "All fields including admin code are required" },
         { status: 400 }
       );
     }
-
-    // Check if adminKey matches your secret
-    if (adminKey !== process.env.ADMIN_SECRET_CODE) {
-      return NextResponse.json(
-        { error: "Invalid admin key" },
-        { status: 403 }
-      );
-    }
-
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(

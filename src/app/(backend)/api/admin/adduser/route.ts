@@ -1,55 +1,58 @@
 import { NextResponse } from "next/server";
-import connectdatabase from "@/app/(backend)/lib/db";
+import connectDatabase from "@/app/(backend)/lib/db";
 import AddUser from "@/app/(backend)/models/adduser";
+import bcrypt from "bcryptjs";
 
-// Interface to type-safely check for a MongoDB error code (e.g., E11000 for duplicate key)
-interface MongoErrorWithCode extends Error {
-  code?: number;
-}
+export const config = {
+  api: {
+    bodyParser: false, 
+  },
+};
 
 export async function POST(req: Request) {
   try {
-    // 1. Database Connection
-    await connectdatabase();
+    await connectDatabase();
 
-    const body = await req.json();
-    console.log("📩 Incoming body (from client):", body);
+    const formData = await req.formData();
+    const name = formData.get("name")?.toString();
+    const email = formData.get("email")?.toString();
+    const password = formData.get("password")?.toString();
+    const role = formData.get("role")?.toString() || "simple user";
 
-    const { name, email, password, role } = body;
+    console.log("📩 Received role:", role);
 
-    // 2. Debugging Log: Confirm the role variable value before Mongoose receives it
-    console.log(`🛠️ Role received from request: [${role}]`);
+    if (!name || !email || !password) {
+      return NextResponse.json(
+        { message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
 
-    // We pass 'role' directly. If 'role' is a valid enum string (e.g., "CEO"), Mongoose uses it.
-    // If 'role' is undefined (not sent by client), Mongoose uses the schema default ("simple user").
+    const allowedRoles = ["simple user", "admin", "HR", "Team Lead"];
+    if (!allowedRoles.includes(role)) {
+      return NextResponse.json(
+        { message: `Invalid role: ${role}` },
+        { status: 400 }
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = await AddUser.create({
       name,
       email,
-      password,
-      role, 
+      password: hashedPassword,
+      role,
     });
 
-    // 3. Debugging Log: Confirm what Mongoose reports saving
-    console.log("✅ Saved user (Mongoose response):", newUser);
-    console.log(`✅ Saved user role: [${newUser.role}]`);
+    console.log("✅ User created:", newUser);
 
-    return NextResponse.json({ message: "User created", user: newUser });
-    
+    return NextResponse.json({ message: "User created successfully", user: newUser });
   } catch (error) {
-    // 4. Critical Debug Log: This is the error message for the 500 status
-    console.error("❌ Error during user creation:", error);
-
-    // Cast the error for type-safe checking
-    const dbError = error as MongoErrorWithCode;
-
-    // Check for Mongoose Validation Error (e.g., failed enum check) OR MongoDB Duplicate Key Error (code 11000)
-    if (dbError instanceof Error && (dbError.name === 'ValidationError' || dbError.code === 11000)) {
-        return NextResponse.json({ 
-            message: "Validation Error or Email Already Exists.", 
-            error: dbError.message 
-        }, { status: 400 }); // Use 400 for client-side errors
-    }
-
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    console.error("❌ Error creating user:", error);
+    return NextResponse.json(
+      { message: "Internal Server Error", error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

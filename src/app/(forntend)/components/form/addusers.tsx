@@ -8,6 +8,7 @@ export default function AddUserForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [picture, setPicture] = useState<File | null>(null);
+  const [role, setRole] = useState("simple user"); // ✅ default role
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,6 +22,7 @@ export default function AddUserForm() {
       formData.append("name", name);
       formData.append("email", email);
       formData.append("password", password);
+      formData.append("role", role); // ✅ added role
       if (picture) {
         formData.append("picture", picture);
       }
@@ -38,6 +40,7 @@ export default function AddUserForm() {
         setEmail("");
         setPassword("");
         setPicture(null);
+        setRole("simple user");
       } else {
         setMessage(data.error || "Something went wrong");
       }
@@ -65,7 +68,7 @@ export default function AddUserForm() {
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Picture Upload Field */}
+        {/* Picture Upload */}
         <div className="flex flex-col items-center mb-4">
           <label className="relative cursor-pointer">
             <input
@@ -76,7 +79,7 @@ export default function AddUserForm() {
                 setPicture(e.target.files ? e.target.files[0] : null)
               }
             />
-            <div className="w-28 h-28 rounded-full border-2 border-gray-300 flex items-center justify-center overflow-hidden relative bg-gray-100">
+            <div className="w-28 h-28 rounded-full border-2 border-gray-300 flex items-center justify-center overflow-hidden bg-gray-100">
               {picture ? (
                 <img
                   src={URL.createObjectURL(picture)}
@@ -91,9 +94,7 @@ export default function AddUserForm() {
               <Camera className="w-4 h-4" />
             </span>
           </label>
-          <p className="text-sm text-gray-500 mt-2">
-            Upload profile picture
-          </p>
+          <p className="text-sm text-gray-500 mt-2">Upload profile picture</p>
         </div>
 
         {/* Input Fields */}
@@ -121,6 +122,21 @@ export default function AddUserForm() {
           required
           className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
+
+        {/* ✅ Role Dropdown */}
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          required
+          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+        >
+          <option value="simple user">Simple User</option>
+          <option value="admin">Admin</option>
+          <option value="HR">HR</option>
+          <option value="Team Lead">Team Lead</option>
+          {/* <option value="CEO">CEO</option> */}
+          {/* <option value="CTO">CTO</option> */}
+        </select>
 
         <button
           type="submit"

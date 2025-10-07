@@ -17,6 +17,7 @@
     "framer-motion": "^12.23.22",
     "icons": "^1.0.0",
     "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.544.0",
     "mongoose": "^8.18.3",
     "ms": "^2.1.3",

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { ReactNode } from "react";
-// import AdminSidebar from "./AdminSidebar";
 import AdminSidebar from "./adminsidebar";
 
 interface AdminLayoutProps {

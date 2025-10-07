@@ -1,14 +1,33 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Document, Model } from "mongoose";
 
-const userSchema = new mongoose.Schema({
+export interface IUser extends Document {
+  name: string;
+  email: string;
+  phonenumber: string;
+  companyname: string;
+  comment?: string;
+  role: "admin" | "hr" | "teamlead" | "simpleuser";
+  department?: string;
+  team?: string;
+  createdAt: Date;
+}
+
+const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phonenumber: { type: String, required: true },
   companyname: { type: String, required: true },
-  comment: { type: String }
+  comment: { type: String },
+  role: {
+    type: String,
+    enum: ["admin", "hr", "teamlead", "simpleuser"],
+    default: "simpleuser",
+  },
+  department: { type: String },
+  team: { type: String },
+  createdAt: { type: Date, default: Date.now },
 });
 
-// Prevent model overwrite in Next.js hot reload
-const User = mongoose.models.User || mongoose.model("User", userSchema);
+const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
 
 export default User;

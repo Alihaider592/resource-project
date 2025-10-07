@@ -7,7 +7,6 @@ export default function AdminSignUpForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [adminKey, setAdminKey] = useState(""); 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -22,9 +21,8 @@ export default function AdminSignUpForm() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, adminKey }),
+        body: JSON.stringify({ name, email, password}),
       });
-
       const data = await res.json();
 
       if (res.ok) {
@@ -32,7 +30,6 @@ export default function AdminSignUpForm() {
         setName("");
         setEmail("");
         setPassword("");
-        setAdminKey("");
         setTimeout(() => {
           router.push("/admin"); 
         }, 1000);
@@ -82,14 +79,6 @@ export default function AdminSignUpForm() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
-          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
-        <input
-          type="password"
-          placeholder="Admin Key"
-          value={adminKey}
-          onChange={(e) => setAdminKey(e.target.value)}
           required
           className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />

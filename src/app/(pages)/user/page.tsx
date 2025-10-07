@@ -1,23 +1,53 @@
 "use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { LogOut, User, MessageCircle, Settings } from "lucide-react";
+import { User, MessageCircle, Settings } from "lucide-react";
+
+interface UserType {
+  name: string;
+  email: string;
+  role: "admin" | "HR" | "simple user" | string;
+}
 
 export default function UserPage() {
-  const [userName, setUserName] = useState<string>("");
+  const [user, setUser] = useState<UserType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // Example: replace with JWT/localStorage fetch
-    const storedName = localStorage.getItem("userName") || "User";
-    setUserName(storedName);
-  }, []);
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    fetch("/api/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.user || data.user.role !== "simple user") {
+          router.push("/login");
+        } else {
+          setUser(data.user);
+          // Store the name in localStorage in case of refresh
+          localStorage.setItem("userName", data.user.name);
+        }
+      })
+      .catch(() => router.push("/login"))
+      .finally(() => setLoading(false));
+  }, [router]);
+
+  if (loading) return <div>Loading...</div>;
+
+  const userName = user?.name || localStorage.getItem("userName") || "User";
 
   return (
     <div className="min-h-screen flex flex-col text-gray-900">
-      
-
-      {/* Welcome Section */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -29,26 +59,25 @@ export default function UserPage() {
           Welcome, <span className="text-purple-600">{userName}</span> 👋
         </h2>
         <p className="text-lg text-gray-600 max-w-lg">
-          We’re glad to have you here. Explore your profile, connect with
-          support, or manage your preferences.
+          We’re glad to have you here. Explore your profile, connect with support, or manage your preferences.
         </p>
       </motion.div>
 
       {/* User Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-10 pb-20">
-        <Link href={'/user/profile'}>
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg flex flex-col items-center text-center cursor-pointer transition"
-        >
-          <User className="w-12 h-12 text-purple-600 mb-4" />
-          <h3 className="text-lg font-semibold mb-2">My Profile</h3>
-          <p className="text-gray-600 text-sm">
-            View and update your account details.
-          </p>
-        </motion.div>
-
+        <Link href="/user/profile">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg flex flex-col items-center text-center cursor-pointer transition"
+          >
+            <User className="w-12 h-12 text-purple-600 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">My Profile</h3>
+            <p className="text-gray-600 text-sm">
+              View and update your account details.
+            </p>
+          </motion.div>
         </Link>
+
         <motion.div
           whileHover={{ scale: 1.05 }}
           className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg flex flex-col items-center text-center cursor-pointer transition"
@@ -59,6 +88,7 @@ export default function UserPage() {
             Contact our team for help and guidance.
           </p>
         </motion.div>
+
         <motion.div
           whileHover={{ scale: 1.05 }}
           className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg flex flex-col items-center text-center cursor-pointer transition"

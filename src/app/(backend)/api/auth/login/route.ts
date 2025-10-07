@@ -5,11 +5,24 @@ import connectDatabase from "@/app/(backend)/lib/db";
 import SignupUser from "@/app/(backend)/models/signupuser";
 import AddUser from "@/app/(backend)/models/adduser";
 
+interface LoginRequestBody {
+  email: string;
+  password: string;
+}
+
+interface UserDocument {
+  _id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
 export async function POST(req: Request) {
   try {
     await connectDatabase();
 
-    const { email, password } = await req.json();
+    const { email, password }: LoginRequestBody = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -18,8 +31,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1️⃣ Try to find user in both collections
-    let user = await SignupUser.findOne({ email });
+    let user: UserDocument | null = await SignupUser.findOne({ email });
     let source = "SignupUser";
 
     if (!user) {
@@ -34,7 +46,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2️⃣ Check password match
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return NextResponse.json(
@@ -43,23 +54,20 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3️⃣ Ensure JWT secret exists
     if (!process.env.JWT_SECRET) {
-      console.error("❌ Missing JWT_SECRET in environment variables");
       return NextResponse.json(
-        { error: "Server misconfiguration" },
+        { error: "Server misconfiguration: missing JWT_SECRET" },
         { status: 500 }
       );
     }
 
-    // 4️⃣ Generate token (no role)
+    // ✅ Include name in JWT payload
     const token = jwt.sign(
-      { id: user._id.toString() },
+      { id: user._id.toString(), role: user.role, name: user.name },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // 5️⃣ Return successful response
     return NextResponse.json(
       {
         message: "Login successful",
@@ -68,16 +76,20 @@ export async function POST(req: Request) {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
+          role: user.role,
           source,
         },
       },
       { status: 200 }
     );
   } catch (err: unknown) {
-    console.error("Login error:", err);
-    if (err instanceof Error) {
-      return NextResponse.json({ error: err.message }, { status: 500 });
-    }
-    return NextResponse.json({ error: "Unknown server error" }, { status: 500 });
+    const errorMessage =
+      err instanceof Error ? err.message : "Unknown error occurred";
+
+    console.error("Login error:", errorMessage);
+    return NextResponse.json(
+      { error: errorMessage || "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
