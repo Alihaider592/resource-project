@@ -2,21 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import connectdatabase from "@/app/(backend)/lib/db";
 import AddUser from "@/app/(backend)/models/adduser";
 
+interface Params {
+  id: string;
+}
+
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } } // Correct type for App Router
+  context: { params: Params }
 ) {
-  const { id } = params;
+  const { id } = context.params;
 
   if (!id) {
     return NextResponse.json({ error: "User ID is required" }, { status: 400 });
   }
 
   try {
-    // Connect to MongoDB
     await connectdatabase();
 
-    // Delete the user by ID
     const deletedUser = await AddUser.findByIdAndDelete(id);
 
     if (!deletedUser) {
@@ -24,8 +26,8 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: "User deleted successfully" });
-  } catch (err) {
-    console.error("DELETE /api/admin/deleteuser/[id] error:", err);
+  } catch (error) {
+    console.error("DELETE /api/admin/deleteuser/[id] error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
