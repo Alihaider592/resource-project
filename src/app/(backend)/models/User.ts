@@ -9,6 +9,7 @@ export interface IUser extends Document {
   role: "admin" | "hr" | "teamlead" | "simpleuser";
   department?: string;
   team?: string;
+  avatar?: string; // ✅ ADDED: Field for the avatar URL/path
   createdAt: Date;
 }
 
@@ -25,9 +26,11 @@ const userSchema = new Schema<IUser>({
   },
   department: { type: String },
   team: { type: String },
+  avatar: { type: String }, // ✅ ADDED: Schema definition for avatar
   createdAt: { type: Date, default: Date.now },
 });
 
-const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
+const User: Model<IUser> =
+  mongoose.models.User || mongoose.model<IUser>("User", userSchema);
 
 export default User;

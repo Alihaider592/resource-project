@@ -56,6 +56,7 @@ export default function ProfilePage() {
   };
 
   const handleSave = async () => {
+    console.log('111111111111111111111111111111111111111111')
     const token = localStorage.getItem("token");
     if (!token) return;
 
@@ -63,15 +64,15 @@ export default function ProfilePage() {
     formData.append("name", name);
     formData.append("email", email);
     if (avatar) formData.append("avatar", avatar);
-
+console.log("qwr",formData)
     try {
-      const res = await fetch("/api/auth/update-profile", {
+      const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` }, // no Content-Type!
         body: formData,
       });
-
-      if (!res.ok) throw new Error("Failed to update profile");
+console.log('qwerty',res)
+      // if (!res.ok) throw new Error("Failed to update profile");
 
       const updated = await res.json();
       setUser(updated.user);
