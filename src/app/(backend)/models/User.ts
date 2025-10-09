@@ -9,7 +9,7 @@ export interface IUser extends Document {
   role: "admin" | "hr" | "teamlead" | "simpleuser";
   department?: string;
   team?: string;
-  avatar?: string;
+  avatar?: string; // ⬅️ Yahi field picture URL store karta hai
   createdAt: Date;
 }
 
@@ -28,7 +28,7 @@ const userSchema = new Schema<IUser>({
   },
   department: { type: String },
   team: { type: String },
-  avatar: { type: String },
+  avatar: { type: String }, // ⬅️ Avatar field yahan define hai
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -13,7 +13,9 @@ export interface ISAddUser extends Document {
   name: string;
   email: string;
   password: string;
-  picture?: string | null;
+  avatar?: string | null; // ⬅️ 'picture' se 'avatar' kiya gaya
+  phonenumber?: string | null; 
+  companyname?: string | null; 
   role: UserRole;
 }
 
@@ -22,7 +24,9 @@ const AddUserSchema: Schema<ISAddUser> = new Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    picture: { type: String, default: null },
+    avatar: { type: String, default: null }, // ⬅️ Schema mein bhi 'avatar' kiya gaya
+    phonenumber: { type: String, required: false }, 
+    companyname: { type: String, required: false }, 
     role:{type:String,required:true ,enum: ["simple user", "admin", "HR", "Team Lead", "CEO", "CTO"] },
   },
   { timestamps: true }
