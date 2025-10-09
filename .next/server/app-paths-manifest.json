@@ -1,6 +1,5 @@
 {
-  "/(backend)/api/admin/adduser/route": "app/(backend)/api/admin/adduser/route.js",
-  "/(backend)/api/admin/getusers/route": "app/(backend)/api/admin/getusers/route.js",
-  "/(pages)/admin/addusers/page": "app/(pages)/admin/addusers/page.js",
-  "/(pages)/admin/manageusers/page": "app/(pages)/admin/manageusers/page.js"
+  "/(pages)/teamlead/page": "app/(pages)/teamlead/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js"
 }

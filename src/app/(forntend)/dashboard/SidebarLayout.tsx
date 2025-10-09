@@ -11,6 +11,9 @@ import {
   FiMenu,
   FiPlus,
 } from "react-icons/fi";
+import { useRouter } from "next/router"; 
+import { handleLogout } from "@/utils/logout";
+
 
 interface Props {
   children: ReactNode;
@@ -19,6 +22,8 @@ interface Props {
 export default function SidebarLayout({ children }: Props) {
   const [isOpen, setIsOpen] = useState(true);
   const toggleSidebar = () => setIsOpen(!isOpen);
+
+  const router = useRouter(); 
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -37,7 +42,7 @@ export default function SidebarLayout({ children }: Props) {
           </button>
         </div>
 
-        <nav className="mt-4 flex flex-col">
+        <nav className="mt-4 flex flex-col h-full">
           <Link
             href="/admin/manageusers"
             className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
@@ -77,14 +82,17 @@ export default function SidebarLayout({ children }: Props) {
             <FiSettings size={20} />
             {isOpen && <span>Settings</span>}
           </Link>
-
-          <Link
-            href="/admin/logout"
-            className="flex items-center gap-3 p-3 mt-auto hover:bg-gray-800 transition-colors"
+          
+          {/* Logout Button */}
+          {/* 4. Link ki jagah button ka istemal aur onClick par handleLogout trigger */}
+          <button
+            onClick={() => handleLogout(router)}
+            className="flex items-center gap-3 p-3 mt-auto hover:bg-red-700 transition-colors text-left w-full"
+            style={{ marginTop: 'auto' }} // CSS to push the button to the bottom
           >
             <FiLogOut size={20} />
             {isOpen && <span>Logout</span>}
-          </Link>
+          </button>
         </nav>
       </div>
 
