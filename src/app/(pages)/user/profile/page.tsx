@@ -2,164 +2,201 @@
 
 import { useEffect, useState, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: string;
-  avatar?: string;
+  avatar?: string | null;
+  phonenumber?: string | null;
+  companyname?: string | null;
+}
+
+interface UpdatedUserResponse {
+  message: string;
+  user: User;
+}
+
+interface ErrorResponse {
+  error?: string;
+  message?: string;
 }
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
-  const [name, setName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [avatar, setAvatar] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [companyName, setCompanyName] = useState("");
 
   const router = useRouter();
 
-  // Fetch user data
-  useEffect(() => {
+  // ✅ Fetch latest user data (no cache)
+  const fetchUserData = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
     }
 
-    fetch("/api/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.user) {
-          router.push("/login");
-        } else {
-          setUser(data.user);
-          setName(data.user.name || "");
-          setEmail(data.user.email || "");
-          setPreview(data.user.avatar || null);
-        }
-      })
-      .catch(() => router.push("/login"))
-      .finally(() => setLoading(false));
-  }, [router]);
+    try {
+      const res = await fetch("/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-store",
+        },
+      });
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setAvatar(e.target.files[0]);
-      setPreview(URL.createObjectURL(e.target.files[0]));
+      const data = await res.json();
+      if (!data.user) {
+        router.push("/login");
+        return;
+      }
+
+      setUser(data.user);
+      setName(data.user.name);
+      setEmail(data.user.email);
+      setPreview(data.user.avatar);
+      setPhoneNumber(data.user.phonenumber || "");
+      setCompanyName(data.user.companyname || "");
+    } catch {
+      toast.error("⚠️ Failed to fetch user data");
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  // ✅ File change
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+      setAvatar(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // ✅ Save Profile
   const handleSave = async () => {
-    console.log('111111111111111111111111111111111111111111')
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) return toast.error("Token missing. Please login again.");
 
     const formData = new FormData();
     formData.append("name", name);
     formData.append("email", email);
+    formData.append("phonenumber", phoneNumber);
+    formData.append("companyname", companyName);
     if (avatar) formData.append("avatar", avatar);
-console.log("qwr",formData)
+
+    const toastId = toast.loading("Updating profile...");
+
     try {
       const res = await fetch("/api/user/profile", {
         method: "PUT",
-        headers: { Authorization: `Bearer ${token}` }, // no Content-Type!
+        headers: { Authorization: `Bearer ${token}`, "Cache-Control": "no-store" },
         body: formData,
       });
-console.log('qwerty',res)
-      // if (!res.ok) throw new Error("Failed to update profile");
 
-      const updated = await res.json();
-      setUser(updated.user);
+      const data: UpdatedUserResponse | ErrorResponse = await res.json();
+
+      if (!res.ok) {
+        toast.error((data as ErrorResponse).message || "Update failed.", { id: toastId });
+        return;
+      }
+
+      const updated = (data as UpdatedUserResponse).user;
+      setUser(updated);
       setEditMode(false);
-      setPreview(updated.user.avatar || null);
-      alert("Profile updated successfully ✅");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update profile");
+      setAvatar(null);
+      setPreview(updated.avatar || null);
+
+      toast.success("Profile updated!", { id: toastId });
+
+      await fetchUserData();
+      router.refresh();
+    } catch {
+      toast.error("Server error. Try again later.", { id: toastId });
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen text-purple-600 text-lg animate-pulse">
+        Loading profile...
+      </div>
+    );
+
   if (!user) return null;
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white shadow rounded-lg">
-      <h2 className="text-3xl font-bold mb-6 text-purple-800">My Profile</h2>
+    <div className="min-h-screen bg-purple-50 flex justify-center items-start py-12 px-4">
+      <div className="w-full max-w-md bg-white border border-purple-100 rounded-2xl shadow-md p-6">
+        <h2 className="text-center text-2xl font-bold text-purple-700 mb-6">My Profile</h2>
 
-      <div className="flex flex-col gap-4">
         {/* Avatar */}
-        <div className="flex flex-col items-center">
-          {preview ? (
-            <img
-              src={preview}
-              alt="Profile Picture"
-              className="w-32 h-32 rounded-full object-cover mb-2"
-            />
-          ) : (
-            <div className="w-32 h-32 rounded-full bg-gray-200 mb-2 flex items-center justify-center text-gray-500 text-xl">
-              No Image
-            </div>
-          )}
-          {editMode && (
-            <input type="file" accept="image/*" onChange={handleFileChange} />
-          )}
+        <div className="flex flex-col items-center mb-5">
+          <div className="relative">
+            {preview ? (
+              <img
+                src={preview}
+                alt="Avatar"
+                className="w-28 h-28 rounded-full object-cover ring-2 ring-purple-400"
+              />
+            ) : (
+              <div className="w-28 h-28 bg-purple-100 rounded-full flex items-center justify-center text-purple-500 font-semibold">
+                No Image
+              </div>
+            )}
+            {editMode && (
+              <label className="absolute bottom-0 right-0 bg-purple-600 text-white text-xs py-1 px-2 rounded-full cursor-pointer">
+                Edit
+                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+              </label>
+            )}
+          </div>
         </div>
 
-        {/* Name */}
-        <div>
-          <label className="block text-gray-700">Name:</label>
-          {editMode ? (
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="p-2 border rounded w-full"
-            />
-          ) : (
-            <p className="text-gray-900">{user.name}</p>
-          )}
-        </div>
-
-        {/* Email */}
-        <div>
-          <label className="block text-gray-700">Email:</label>
-          {editMode ? (
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="p-2 border rounded w-full"
-            />
-          ) : (
-            <p className="text-gray-900">{user.email}</p>
-          )}
-        </div>
-
-        {/* Role */}
-        <div>
-          <label className="block text-gray-700">Role:</label>
-          <p className="text-gray-900">{user.role}</p>
+        {/* Fields */}
+        <div className="space-y-4">
+          <ProfileField label="Name" value={name} editable={editMode} onChange={setName} />
+          <ProfileField label="Email" value={email} editable={false} />
+          <ProfileField
+            label="Phone Number"
+            value={phoneNumber}
+            editable={editMode}
+            onChange={setPhoneNumber}
+          />
+          <ProfileField
+            label="Company Name"
+            value={companyName}
+            editable={editMode}
+            onChange={setCompanyName}
+          />
+          <ProfileField label="Role" value={user.role} editable={false} color="text-purple-600" />
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-4 mt-4">
+        <div className="flex justify-center gap-4 mt-8">
           {editMode ? (
             <>
               <button
                 onClick={handleSave}
-                className="bg-purple-700 text-white px-4 py-2 rounded hover:bg-purple-800"
+                className="bg-purple-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-purple-700 transition"
               >
                 Save
               </button>
               <button
                 onClick={() => setEditMode(false)}
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+                className="bg-purple-100 text-purple-700 px-6 py-2 rounded-full font-semibold hover:bg-purple-200 transition"
               >
                 Cancel
               </button>
@@ -167,13 +204,45 @@ console.log('qwerty',res)
           ) : (
             <button
               onClick={() => setEditMode(true)}
-              className="bg-purple-700 text-white px-4 py-2 rounded hover:bg-purple-800"
+              className="bg-purple-600 text-white px-8 py-2 rounded-full font-semibold hover:bg-purple-700 transition"
             >
               Edit Profile
             </button>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ✅ Reusable Field
+function ProfileField({
+  label,
+  value,
+  editable,
+  onChange,
+  color,
+}: {
+  label: string;
+  value: string;
+  editable: boolean;
+  onChange?: (val: string) => void;
+  color?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
+      {editable ? (
+        <input
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          className="w-full p-2 border border-purple-200 rounded-md focus:ring-2 focus:ring-purple-400 focus:outline-none text-gray-800"
+        />
+      ) : (
+        <p className={`p-2 bg-purple-50 rounded-md border border-purple-100 ${color || "text-gray-800"}`}>
+          {value || "N/A"}
+        </p>
+      )}
     </div>
   );
 }

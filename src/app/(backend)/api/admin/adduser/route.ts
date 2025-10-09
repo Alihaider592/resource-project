@@ -1,58 +1,50 @@
-import { NextResponse } from "next/server";
-import connectDatabase from "@/app/(backend)/lib/db";
-import AddUser from "@/app/(backend)/models/adduser";
-import bcrypt from "bcryptjs";
+// src/app/(backend)/api/admin/adduser/route.ts
 
-export const config = {
-  api: {
-    bodyParser: false, 
-  },
-};
+import { NextResponse, NextRequest } from "next/server";
+import { handleNewUserRequest } from "@/app/(backend)/controllers/admin.controller"; 
+// ... other imports and config
 
-export async function POST(req: Request) {
-  try {
-    await connectDatabase();
+export async function POST(req: NextRequest) {
+    try {
+        // ... (I/O and Delegation logic remains the same)
+        const formData = await req.formData();
+        const userData = {
+            name: formData.get("name")?.toString() || "",
+            email: formData.get("email")?.toString() || "",
+            password: formData.get("password")?.toString() || "",
+            role: formData.get("role")?.toString() || "simple user",
+        };
 
-    const formData = await req.formData();
-    const name = formData.get("name")?.toString();
-    const email = formData.get("email")?.toString();
-    const password = formData.get("password")?.toString();
-    const role = formData.get("role")?.toString() || "simple user";
+        const newUser = await handleNewUserRequest(userData);
 
-    console.log("📩 Received role:", role);
+        return NextResponse.json(
+            { message: "User created successfully", user: newUser }, 
+            { status: 201 }
+        );
+        
+    } catch (error: unknown) { // ⬅️ FIX: Use 'unknown' instead of 'any'
+        // Type Guard to ensure we can access the 'message' property
+        const isErrorWithMessage = (err: unknown): err is { message: string } => {
+            return typeof err === 'object' && err !== null && 'message' in err;
+        };
+        
+        const errorMessage = isErrorWithMessage(error) ? error.message : "An unknown error occurred.";
 
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { message: "Missing required fields" },
-        { status: 400 }
-      );
+        // 5. I/O: Send the error response based on the error thrown by the Service/Controller
+        console.error("❌ Route Handler Error:", errorMessage);
+        
+        let statusCode = 500;
+
+        // Check for specific error messages for 400 Bad Request status
+        if (errorMessage.includes("Missing") || errorMessage.includes("Invalid role")) {
+            statusCode = 400;
+        } else if (errorMessage.includes("already registered")) {
+             statusCode = 409; // Conflict
+        }
+        
+        return NextResponse.json(
+            { message: "Operation Failed", error: errorMessage },
+            { status: statusCode }
+        );
     }
-
-    const allowedRoles = ["simple user", "admin", "HR", "Team Lead"];
-    if (!allowedRoles.includes(role)) {
-      return NextResponse.json(
-        { message: `Invalid role: ${role}` },
-        { status: 400 }
-      );
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = await AddUser.create({
-      name,
-      email,
-      password: hashedPassword,
-      role,
-    });
-
-    console.log("✅ User created:", newUser);
-
-    return NextResponse.json({ message: "User created successfully", user: newUser });
-  } catch (error) {
-    console.error("❌ Error creating user:", error);
-    return NextResponse.json(
-      { message: "Internal Server Error", error: (error as Error).message },
-      { status: 500 }
-    );
-  }
 }

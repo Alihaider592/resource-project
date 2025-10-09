@@ -1,54 +1,47 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import connectDatabase from "@/app/(backend)/lib/db";
-import User from "@/app/(backend)/models/signupuser";
+import { NextResponse, NextRequest } from "next/server";
+// import { handleSignupRequest } from "../../controllers/auth.controller"; // ⬅️ Controller
+import { handleSignupRequest } from "@/app/(backend)/controllers/auth.controller";
 
-export async function POST(req: Request) {
+interface SignupRequestBody {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export async function POST(req: NextRequest) {
   try {
-    await connectDatabase();
+    const { name, email, password }: SignupRequestBody = await req.json();
 
-    const { name, email, password } = await req.json();
-
+    // Field validation at Route level
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: "All fields including admin code are required" },
+        { error: "Name, email, and password are required" },
         { status: 400 }
       );
     }
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 409 }
-      );
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: "admin", // assign admin role
-    });
+    
+    // 1. DELEGATE to Controller
+    const user = await handleSignupRequest({ name, email, password });
 
     return NextResponse.json(
       {
-        message: "Admin signup successful",
-        user: {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
+        message: "Signup successful",
+        user,
       },
       { status: 201 }
     );
   } catch (err: unknown) {
-    console.error("Signup error:", err);
-    if (err instanceof Error) {
-      return NextResponse.json({ error: err.message }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error("❌ Signup Route Handler Error:", errorMessage);
+
+    // Error Translation
+    let statusCode = 500;
+    if (errorMessage.includes("already exists")) {
+        statusCode = 409; // Conflict
+    } else if (errorMessage.includes("required fields")) {
+        statusCode = 400; // Bad Request
     }
-    return NextResponse.json({ error: "Unknown error" }, { status: 500 });
+
+    return NextResponse.json({ error: errorMessage }, { status: statusCode });
   }
 }

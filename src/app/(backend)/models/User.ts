@@ -3,21 +3,23 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 export interface IUser extends Document {
   name: string;
   email: string;
-  phonenumber: string;
-  companyname: string;
+  phonenumber?: string; // Made optional for updates
+  companyname?: string; // Made optional for updates
   comment?: string;
   role: "admin" | "hr" | "teamlead" | "simpleuser";
   department?: string;
   team?: string;
-  avatar?: string; // ✅ ADDED: Field for the avatar URL/path
+  avatar?: string;
   createdAt: Date;
 }
 
 const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  phonenumber: { type: String, required: true },
-  companyname: { type: String, required: true },
+  // IMPORTANT FIX: Made non-required for flexible updates
+  phonenumber: { type: String, required: false }, 
+  companyname: { type: String, required: false }, 
+  
   comment: { type: String },
   role: {
     type: String,
@@ -26,11 +28,12 @@ const userSchema = new Schema<IUser>({
   },
   department: { type: String },
   team: { type: String },
-  avatar: { type: String }, // ✅ ADDED: Schema definition for avatar
+  avatar: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 
+// Fix to prevent Mongoose re-initialization errors in Next.js
 const User: Model<IUser> =
-  mongoose.models.User || mongoose.model<IUser>("User", userSchema);
+  (mongoose.models.User as Model<IUser>) || mongoose.model<IUser>("User", userSchema);
 
 export default User;

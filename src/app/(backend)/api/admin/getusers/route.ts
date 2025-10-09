@@ -1,23 +1,55 @@
-import { NextResponse } from "next/server";
-import connectdatabase from "@/app/(backend)/lib/db";
-import AddUser from "@/app/(backend)/models/adduser";
-export async function GET() {
+import { NextRequest, NextResponse } from "next/server";
+import { handleGetAllUsers } from "@/app/(backend)/controllers/admin.controller";
+import { verifyAccess, AuthError } from "../../../../../utils/authMiddleware";
+
+/* -------------------------------------------------------------------------- */
+/* 🔒 Always Fetch Fresh Data — Disable Route Caching                          */
+/* -------------------------------------------------------------------------- */
+export const dynamic = "force-dynamic"; // ensures API is always fresh
+export const revalidate = 0;            // disables ISR cache (optional safety)
+
+/* -------------------------------------------------------------------------- */
+/* 🚀 GET ALL USERS (ADMIN ONLY)                                               */
+/* -------------------------------------------------------------------------- */
+export async function GET(req: NextRequest) {
   try {
-    await connectdatabase();
+    // 🧩 Step 1: Verify Admin Access
+    const user = await verifyAccess(req, ["admin"]);
+    console.log(`✅ Access granted for Admin: ${user.email}`);
 
-    const users = await AddUser.find({}, { name: 1, email: 1, picture: 1 });
+    // 🧩 Step 2: Fetch users (always from DB)
+    const mappedUsers = await handleGetAllUsers();
 
-    // Convert _id to string for React key
-    const mappedUsers = users.map((AddUser) => ({
-      id: AddUser._id.toString(),
-      name: AddUser.name,
-      email: AddUser.email,
-      picture: AddUser.picture || null,
-    }));
+    // 🧩 Step 3: Validate data structure
+    if (!Array.isArray(mappedUsers)) {
+      console.warn("⚠️ handleGetAllUsers did not return an array:", mappedUsers);
+      return NextResponse.json({ users: [] }, { status: 200 });
+    }
 
-    return NextResponse.json({ users: mappedUsers });
-  } catch (error) {
-    console.error("GET /api/admin/getusers error:", error);
-    return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
+    // 🧩 Step 4: Return response
+    return NextResponse.json(
+      { users: mappedUsers, fetchedAt: new Date().toISOString() },
+      { status: 200, headers: { "Cache-Control": "no-store" } } // ✅ No cache
+    );
+
+  } catch (error: unknown) {
+    console.error("❌ GET Users Route Error:", error);
+
+    // 🧩 Auth error handler
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { message: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    // 🧩 General error handler
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal Server Error";
+
+    return NextResponse.json(
+      { message: "Failed to fetch users", error: errorMessage, users: [] },
+      { status: 500 }
+    );
   }
 }

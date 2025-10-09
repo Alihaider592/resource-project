@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Edit2 } from "lucide-react"; // nice icons
+import { Trash2, Edit2 } from "lucide-react";
 
 interface User {
   id: string;
@@ -18,11 +18,41 @@ export default function ManageUsersPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/getusers");
+      // 🟣 Try to get token (from localStorage or cookies)
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+      const res = await fetch("/api/admin/getusers", {
+        method: "GET",
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : {},
+        credentials: "include", // supports cookie-based auth too
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        console.error("❌ Failed to fetch users:", res.status, res.statusText);
+        setUsers([]);
+        return;
+      }
+
       const data = await res.json();
-      setUsers(data.users);
+
+      // ✅ Accept both formats
+      if (Array.isArray(data.users)) {
+        setUsers(data.users);
+      } else if (Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        console.error("Unexpected data format:", data);
+        setUsers([]);
+      }
     } catch (err) {
       console.error("Error fetching users:", err);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -37,11 +67,24 @@ export default function ManageUsersPage() {
 
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/admin/deleteuser/${id}`, { method: "DELETE" });
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`/api/admin/deleteuser/${id}`, {
+        method: "DELETE",
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : {},
+      });
+
       const data = await res.json();
 
-      if (res.ok) setUsers((prev) => prev.filter((u) => u.id !== id));
-      else alert(data.error || "Failed to delete user");
+      if (res.ok) {
+        setUsers((prev) => prev.filter((u) => u.id !== id));
+      } else {
+        alert(data.error || "Failed to delete user");
+      }
     } catch (err) {
       console.error("Delete error:", err);
       alert("Server error");
@@ -64,7 +107,7 @@ export default function ManageUsersPage() {
         <div className="flex justify-center items-center h-40">
           <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
-      ) : users.length === 0 ? (
+      ) : users && users.length === 0 ? (
         <p className="text-gray-500 text-center">No users found.</p>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -85,13 +128,15 @@ export default function ManageUsersPage() {
                 </div>
               )}
 
-              <h3 className="mt-4 text-lg font-semibold text-gray-800">{user.name}</h3>
+              <h3 className="mt-4 text-lg font-semibold text-gray-800">
+                {user.name}
+              </h3>
               <p className="text-gray-500 text-sm">{user.email}</p>
 
               <div className="mt-4 flex gap-3">
                 <button
                   className="flex items-center gap-1 px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-                  onClick={() => alert("Edit functionality not implemented")}
+                  onClick={() => alert("Edit functionality not implemented yet")}
                 >
                   <Edit2 size={16} />
                   Edit
@@ -103,9 +148,7 @@ export default function ManageUsersPage() {
                   className="flex items-center gap-1 px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {deletingId === user.id ? (
-                    <>
-                      <span className="animate-pulse">Deleting...</span>
-                    </>
+                    <span className="animate-pulse">Deleting...</span>
                   ) : (
                     <>
                       <Trash2 size={16} />

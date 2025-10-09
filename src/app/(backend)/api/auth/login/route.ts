@@ -1,29 +1,23 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import connectDatabase from "@/app/(backend)/lib/db";
-import SignupUser from "@/app/(backend)/models/signupuser";
-import AddUser from "@/app/(backend)/models/adduser";
+import { NextResponse, NextRequest } from "next/server";
+// import { handleLoginRequest } from "../../controllers/auth.controller"; // ⬅️ Controller Import
+import { handleLoginRequest } from "@/app/(backend)/controllers/auth.controller";
 
+// Interface for type safety on request body
 interface LoginRequestBody {
   email: string;
   password: string;
 }
 
-interface UserDocument {
-  _id: string;
-  name: string;
-  email: string;
-  password: string;
-  role: string;
-}
-
-export async function POST(req: Request) {
+/**
+ * Route Handler: Handles the POST request for user login.
+ * Delegates authentication, password verification, and token generation to the Controller/Service.
+ */
+export async function POST(req: NextRequest) {
   try {
-    await connectDatabase();
-
+    // 1. I/O: Read and parse the request body
     const { email, password }: LoginRequestBody = await req.json();
 
+    // Route-level check: Missing fields
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
@@ -31,65 +25,39 @@ export async function POST(req: Request) {
       );
     }
 
-    let user: UserDocument | null = await SignupUser.findOne({ email });
-    let source = "SignupUser";
+    // 2. DELEGATE: Call the Controller function
+    // Controller handles the heavy lifting: finding user, verifying password, and generating JWT.
+    const { token, user } = await handleLoginRequest({ email, password });
 
-    if (!user) {
-      user = await AddUser.findOne({ email });
-      source = "AddUser";
-    }
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
-    }
-
-    if (!process.env.JWT_SECRET) {
-      return NextResponse.json(
-        { error: "Server misconfiguration: missing JWT_SECRET" },
-        { status: 500 }
-      );
-    }
-
-    // ✅ Include name in JWT payload
-    const token = jwt.sign(
-      { id: user._id.toString(), role: user.role, name: user.name },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-
+    // 3. I/O: Send the final success response (200 OK)
     return NextResponse.json(
       {
         message: "Login successful",
         token,
-        user: {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          source,
-        },
+        user, // Cleaned user data (no password)
       },
       { status: 200 }
     );
-  } catch (err: unknown) {
+  } catch (error: unknown) {
+    // 4. ERROR TRANSLATION: Catch errors thrown by the Service
     const errorMessage =
-      err instanceof Error ? err.message : "Unknown error occurred";
+      error instanceof Error ? error.message : "Internal Server Error";
+    console.error("❌ Login Route Handler Error:", errorMessage);
 
-    console.error("Login error:", errorMessage);
+    let statusCode = 500;
+    
+    // Check for common authentication errors thrown by the Service
+    if (errorMessage.includes("required")) {
+        statusCode = 400; // Bad Request/Missing fields
+    } else if (errorMessage.includes("Invalid email or password")) {
+        statusCode = 401; // Unauthorized
+    } else if (errorMessage.includes("JWT_SECRET")) {
+        statusCode = 500; // Server misconfiguration
+    }
+
     return NextResponse.json(
-      { error: errorMessage || "Internal Server Error" },
-      { status: 500 }
+      { error: errorMessage || "Login Failed" },
+      { status: statusCode }
     );
   }
 }
