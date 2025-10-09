@@ -1,5 +1,7 @@
 {
+  "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
+  "/(backend)/api/auth/me/route": "app/(backend)/api/auth/me/route.js",
+  "/(pages)/login/page": "app/(pages)/login/page.js",
   "/(pages)/teamlead/page": "app/(pages)/teamlead/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js"
 }

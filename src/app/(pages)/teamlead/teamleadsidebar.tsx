@@ -18,13 +18,11 @@ export default function TeamLeadSidebarLayout({ children }: Props) {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <div
         className={`bg-teal-600 text-white shadow-md transition-all duration-300 flex flex-col ${
           isOpen ? "w-64" : "w-20"
         }`}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-teal-500">
           <span className={`text-xl font-bold ${!isOpen && "hidden"}`}>Team Lead</span>
           <button onClick={toggleSidebar} className="text-gray-200">
@@ -32,7 +30,6 @@ export default function TeamLeadSidebarLayout({ children }: Props) {
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="flex flex-col flex-1 mt-4">
           <div className="flex flex-col">
             <Link
@@ -68,7 +65,6 @@ export default function TeamLeadSidebarLayout({ children }: Props) {
             </Link>
           </div>
 
-          {/* Logout */}
           <button
             onClick={() => handleLogout(router)}
             className="flex items-center gap-3 p-3 mt-auto hover:bg-red-600 transition-colors text-left w-full"
@@ -79,7 +75,6 @@ export default function TeamLeadSidebarLayout({ children }: Props) {
         </nav>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 p-6 overflow-auto">{children}</div>
     </div>
   );
