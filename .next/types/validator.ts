@@ -227,6 +227,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/(backend)/api/teamlead/profile/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/teamlead/profile">> = Specific
+  const handler = {} as typeof import("../../src/app/(backend)/api/teamlead/profile/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/(backend)/api/teamled/[id]/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/teamled/[id]">> = Specific
+  const handler = {} as typeof import("../../src/app/(backend)/api/teamled/[id]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/(backend)/api/user/profile/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/user/profile">> = Specific

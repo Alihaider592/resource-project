@@ -1,81 +1,32 @@
+// src/app/(pages)/teamlead/teamleadsidebar.tsx
 "use client";
-
 import Link from "next/link";
-import { useState, ReactNode } from "react";
-import { FiUsers, FiFileText, FiSettings, FiLogOut, FiHome, FiMenu } from "react-icons/fi";
-import { useRouter } from "next/navigation";
-import { handleLogout } from "@/utils/logout";
+import { usePathname } from "next/navigation";
 
-interface Props {
-  children: ReactNode;
-}
+export default function TeamLeadSidebar() {
+  const pathname = usePathname();
 
-export default function TeamLeadSidebarLayout({ children }: Props) {
-  const [isOpen, setIsOpen] = useState(true);
-  const router = useRouter();
-
-  const toggleSidebar = () => setIsOpen(!isOpen);
+  const links = [
+    { href: "/teamlead", label: "Dashboard" },
+    { href: "/teamlead/profile", label: "Profile" },
+  ];
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <div
-        className={`bg-teal-600 text-white shadow-md transition-all duration-300 flex flex-col ${
-          isOpen ? "w-64" : "w-20"
-        }`}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-teal-500">
-          <span className={`text-xl font-bold ${!isOpen && "hidden"}`}>Team Lead</span>
-          <button onClick={toggleSidebar} className="text-gray-200">
-            <FiMenu size={24} />
-          </button>
-        </div>
-
-        <nav className="flex flex-col flex-1 mt-4">
-          <div className="flex flex-col">
-            <Link
-              href="/teamlead/dashboard"
-              className="flex items-center gap-3 p-3 hover:bg-teal-500 transition-colors"
-            >
-              <FiHome size={20} />
-              {isOpen && <span>Dashboard</span>}
-            </Link>
-
-            <Link
-              href="/teamlead/team"
-              className="flex items-center gap-3 p-3 hover:bg-teal-500 transition-colors"
-            >
-              <FiUsers size={20} />
-              {isOpen && <span>Team Members</span>}
-            </Link>
-
-            <Link
-              href="/teamlead/reports"
-              className="flex items-center gap-3 p-3 hover:bg-teal-500 transition-colors"
-            >
-              <FiFileText size={20} />
-              {isOpen && <span>Reports</span>}
-            </Link>
-
-            <Link
-              href="/teamlead/settings"
-              className="flex items-center gap-3 p-3 hover:bg-teal-500 transition-colors"
-            >
-              <FiSettings size={20} />
-              {isOpen && <span>Settings</span>}
-            </Link>
-          </div>
-
-          <button
-            onClick={() => handleLogout(router)}
-            className="flex items-center gap-3 p-3 mt-auto hover:bg-red-600 transition-colors text-left w-full"
+    <aside className="w-64 bg-teal-600 text-white flex flex-col p-5 shadow-2xl">
+      <h2 className="text-2xl font-bold mb-6 text-center">Team Lead Panel</h2>
+      <nav className="flex flex-col gap-3">
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              pathname === link.href ? "bg-white text-teal-700" : "hover:bg-teal-500"
+            }`}
           >
-            <FiLogOut size={20} />
-            {isOpen && <span>Logout</span>}
-          </button>
-        </nav>
-      </div>
-
-      <div className="flex-1 p-6 overflow-auto">{children}</div>
-    </div>
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+    </aside>
   );
 }
