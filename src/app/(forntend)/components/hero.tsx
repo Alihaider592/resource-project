@@ -18,7 +18,7 @@ export default function Hero() {
 
       <div className="flex justify-between">
         <motion.div
-          className="w-[50%]  h-[555px] p-8 z-30  absolute top-[85px]"
+          className="w-[50%]  h-[555px] p-8 z-30  absolute top-[30px]"
           initial={{ opacity: 0, x: -80 }}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 1.2 }}
@@ -53,7 +53,7 @@ export default function Hero() {
         </motion.div>
 
         <motion.div
-          className="w-[50%] right-0 h-[555px] z-30  absolute top-[85px]"
+          className="w-[50%] right-0 h-[555px] z-30  absolute top-[2px]"
           initial={{ opacity: 0, x: 80 }}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 1.5 }}

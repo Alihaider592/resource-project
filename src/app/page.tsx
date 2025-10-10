@@ -21,7 +21,7 @@ export default function Home() {
       <Toaster position="top-right" reverseOrder={false} />
       <Hero />
       <Slider />
-      <section className="w-full max-w-7xl rounded-2xl flex flex-col items-center justify-center gap-16 my-20 px-4">
+      <div className="w-full max-w-7xl rounded-2xl flex flex-col items-center justify-center gap-16 my-20 px-4">
         <Technology />
         <Features />
         <Source />
@@ -31,7 +31,7 @@ export default function Home() {
         <Sessions />
         <Frame />
         <Service />
-      </section>
+      </div>
       <Conection />
     </div>
   );
