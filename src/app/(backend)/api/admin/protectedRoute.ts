@@ -3,7 +3,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 
 interface JwtPayloadType extends JwtPayload {
   id: string;
-  role: "admin" | "HR" | "simple user";
+  role: "admin" | "HR" | "simple user" | "teamlead";
 }
 
 export async function GET(req: Request) {

@@ -27,6 +27,9 @@ export function middleware(req: NextRequest) {
     if (path.startsWith("/userdashboard") && user.role !== "simple user") {
       return NextResponse.redirect(new URL("/login", req.url));
     }
+    if (path.startsWith("/teamlead") && user.role !== "teamlead") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
 
     return NextResponse.next();
   } catch (err) {
@@ -37,5 +40,5 @@ export function middleware(req: NextRequest) {
 
 // Apply middleware only to protected paths
 export const config = {
-  matcher: ["/admin/:path*", "/HR/:path*", "/userdashboard/:path*"],
+  matcher: ["/admin/:path*", "/HR/:path*", "/userdashboard/:path*", "/teamlead/:path*"],
 };

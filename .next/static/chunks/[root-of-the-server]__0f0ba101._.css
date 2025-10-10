@@ -895,6 +895,10 @@
     right: 30rem;
   }
 
+  .-bottom-2 {
+    bottom: calc(var(--spacing) * -2);
+  }
+
   .bottom-0 {
     bottom: calc(var(--spacing) * 0);
   }
@@ -1284,6 +1288,10 @@
 
   .max-h-full {
     max-height: 100%;
+  }
+
+  .min-h-\[70vh\] {
+    min-height: 70vh;
   }
 
   .min-h-screen {

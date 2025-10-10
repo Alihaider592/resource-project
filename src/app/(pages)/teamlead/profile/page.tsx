@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
 
 interface TeamLead {
@@ -14,178 +11,223 @@ interface TeamLead {
   email: string;
   companyname?: string;
   phonenumber?: string;
-  avatar?: string;
+  avatar?: string | null;
 }
 
 export default function TeamLeadProfilePage() {
+  const router = useRouter();
   const [teamLead, setTeamLead] = useState<TeamLead | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  // 🧠 Replace this with actual logged-in team lead ID
-  const teamLeadId = "YOUR_TEAMLEAD_ID"; // will come from token later
-
+  // Initialize: fetch /api/auth/me to get user id, then load profile
   useEffect(() => {
-    const fetchProfile = async () => {
+    const init = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
       try {
-        const res = await fetch(`/api/teamlead/${teamLeadId}`);
-        if (!res.ok) throw new Error("Failed to load profile");
-        const data = await res.json();
-        setTeamLead(data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Error loading profile");
+        // 1) fetch logged-in user
+        const meRes = await fetch("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+
+        if (!meRes.ok) {
+          throw new Error("Not authenticated");
+        }
+
+        const meData = await meRes.json();
+        const user = meData?.user;
+        if (!user || (user.role && user.role !== "teamlead")) {
+          // if not teamlead, redirect or show error
+          router.push("/login");
+          return;
+        }
+
+        // resolve id from possible shapes (id or _id)
+        const id = (user.id || user._id || "").toString();
+        if (!id) {
+          throw new Error("User id not available");
+        }
+
+        // 2) fetch teamlead profile by id
+        const profileRes = await fetch(`/api/teamlead/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+
+        if (!profileRes.ok) {
+          const text = await profileRes.text().catch(() => "");
+          throw new Error(text || "Failed to fetch profile");
+        }
+
+        const profile = await profileRes.json();
+        setTeamLead(profile);
+        setAvatarPreview(profile?.avatar || null);
+      } catch (err) {
+        console.error("Profile init error:", err);
+        toast.error("Failed to load profile");
       } finally {
         setLoading(false);
       }
     };
-    fetchProfile();
-  }, [teamLeadId]);
 
-  const handleChange = (field: keyof TeamLead, value: string) => {
-    if (!teamLead) return;
-    setTeamLead({ ...teamLead, [field]: value });
+    init();
+  }, [router]);
+
+  // file input change -> preview + store file
+  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (!file) return;
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setAvatarFile(file);
-      setAvatarPreview(URL.createObjectURL(file));
-    }
-  };
+  // Save updates
+  const handleSave = async () => {
+    if (!teamLead) return toast.error("No profile loaded");
+    const token = localStorage.getItem("token");
+    if (!token) return toast.error("Not authenticated");
 
-  const handleUpdate = async () => {
-    if (!teamLead) return;
     try {
-      const formData = new FormData();
-      formData.append("name", teamLead.name);
-      formData.append("email", teamLead.email);
-      formData.append("companyname", teamLead.companyname || "");
-      formData.append("phonenumber", teamLead.phonenumber || "");
-      if (avatarFile) formData.append("avatar", avatarFile);
+      const fd = new FormData();
+      fd.append("name", teamLead.name);
+      fd.append("email", teamLead.email);
+      if (teamLead.companyname) fd.append("companyname", teamLead.companyname);
+      if (teamLead.phonenumber) fd.append("phonenumber", teamLead.phonenumber);
+      if (avatarFile) fd.append("avatar", avatarFile);
 
       const res = await fetch(`/api/teamlead/${teamLead._id}`, {
         method: "PUT",
-        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // DO NOT set Content-Type — let browser set multipart boundary
+          "Cache-Control": "no-store",
+        },
+        body: fd,
       });
-      if (!res.ok) throw new Error("Update failed");
 
-      toast.success("Profile updated successfully");
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || "Update failed");
+      }
+
+      const updated = await res.json();
+      setTeamLead(updated);
       setIsEditing(false);
-    } catch (error) {
-      console.error(error);
+      setAvatarFile(null);
+      setAvatarPreview(updated.avatar || null);
+      toast.success("Profile updated");
+    } catch (err) {
+      console.error("Update error:", err);
       toast.error("Update failed");
     }
   };
 
-  if (loading) return <p className="text-center mt-10">Loading profile...</p>;
-  if (!teamLead) return <p className="text-center mt-10">No profile found.</p>;
+  if (loading) return <div className="py-16 text-center">Loading profile...</div>;
+  if (!teamLead) return <div className="py-16 text-center">No profile found.</div>;
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-lg shadow-xl border border-gray-200">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center font-semibold text-purple-700">
-            Team Lead Profile
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col items-center gap-3">
+    <div className="min-h-[70vh] flex items-center justify-center bg-gray-50 p-6">
+      <div className="w-full max-w-xl bg-white rounded-xl shadow-md border border-gray-200 p-6">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Team Lead Profile</h2>
+
+        <div className="flex flex-col items-center mb-6">
+          <div className="relative">
             <Image
               src={avatarPreview || teamLead.avatar || "/default-avatar.png"}
-              alt="Avatar"
+              alt="avatar"
               width={100}
               height={100}
-              className="rounded-full object-cover border-2 border-purple-500"
+              className="rounded-full object-cover border-2 border-gray-200"
             />
             {isEditing && (
-              <div className="flex flex-col items-center">
-                <Label
-                  htmlFor="avatar"
-                  className="cursor-pointer text-sm text-purple-600 hover:underline"
-                >
-                  Change Avatar
-                </Label>
-                <Input
-                  id="avatar"
+              <label className="absolute -bottom-2 right-0 bg-gray-800 text-white px-2 py-1 text-xs rounded cursor-pointer">
+                Change
+                <input
                   type="file"
                   accept="image/*"
                   onChange={handleAvatarChange}
                   className="hidden"
                 />
-              </div>
+              </label>
             )}
           </div>
+        </div>
 
+        <div className="space-y-4">
           <div>
-            <Label>Name</Label>
-            <Input
+            <label className="block text-sm text-gray-600 mb-1">Name</label>
+            <input
+              className="w-full p-2 border rounded-md"
               value={teamLead.name}
               disabled={!isEditing}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleChange("name", e.target.value)
-              }
+              onChange={(e) => setTeamLead({ ...teamLead, name: e.target.value })}
             />
           </div>
 
           <div>
-            <Label>Email</Label>
-            <Input value={teamLead.email} disabled />
+            <label className="block text-sm text-gray-600 mb-1">Email</label>
+            <input
+              className="w-full p-2 border rounded-md bg-gray-50"
+              value={teamLead.email}
+              disabled
+            />
           </div>
 
           <div>
-            <Label>Company Name</Label>
-            <Input
-              value={teamLead.companyname || ""}
+            <label className="block text-sm text-gray-600 mb-1">Company</label>
+            <input
+              className="w-full p-2 border rounded-md"
+              value={teamLead.companyname ?? ""}
               disabled={!isEditing}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleChange("companyname", e.target.value)
-              }
+              onChange={(e) => setTeamLead({ ...teamLead, companyname: e.target.value })}
             />
           </div>
 
           <div>
-            <Label>Phone Number</Label>
-            <Input
-              value={teamLead.phonenumber || ""}
+            <label className="block text-sm text-gray-600 mb-1">Phone</label>
+            <input
+              className="w-full p-2 border rounded-md"
+              value={teamLead.phonenumber ?? ""}
               disabled={!isEditing}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleChange("phonenumber", e.target.value)
-              }
+              onChange={(e) => setTeamLead({ ...teamLead, phonenumber: e.target.value })}
             />
           </div>
 
-          <div className="flex justify-between mt-5">
+          <div className="flex gap-3 justify-end mt-4">
             {isEditing ? (
               <>
-                <Button
-                  onClick={handleUpdate}
-                  className="bg-purple-600 hover:bg-purple-700"
+                <button
+                  onClick={handleSave}
+                  className="bg-gray-800 text-white px-4 py-2 rounded-md"
                 >
                   Save
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditing(false)}
-                  className="border-gray-400"
+                </button>
+                <button
+                  onClick={() => { setIsEditing(false); setAvatarFile(null); setAvatarPreview(teamLead.avatar || null); }}
+                  className="px-4 py-2 rounded-md border"
                 >
                   Cancel
-                </Button>
+                </button>
               </>
             ) : (
-              <Button
+              <button
                 onClick={() => setIsEditing(true)}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-gray-800 text-white px-4 py-2 rounded-md"
               >
                 Edit Profile
-              </Button>
+              </button>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
