@@ -1,4 +1,3 @@
-// src/app/(pages)/teamlead/page.tsx
 "use client";
 
 import TeamLeadLayout from "./layout";
@@ -13,7 +12,7 @@ interface User {
 }
 
 export default function TeamLeadDashboardPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,15 +22,13 @@ export default function TeamLeadDashboardPage() {
       return;
     }
 
-    fetch("/api/protected/teamlead", {
+    fetch("/api/(backend)/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.user && data.user.role === "teamlead") {
-          setUser(data.user);
-        } else {
-          console.warn("Unauthorized or invalid user:", data);
+          setAuthorized(true);
         }
       })
       .catch((err) => console.error(err))
@@ -46,7 +43,7 @@ export default function TeamLeadDashboardPage() {
     );
   }
 
-  if (!user) {
+  if (!authorized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-red-500 text-lg">Unauthorized access</p>
@@ -56,7 +53,7 @@ export default function TeamLeadDashboardPage() {
 
   return (
     <TeamLeadLayout>
-      <TeamLeadDashboardContent user={user} />
+      <TeamLeadDashboardContent />
     </TeamLeadLayout>
   );
 }

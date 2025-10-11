@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import TeamLeadCard from "./teamleadcard";
 import { FiClipboard, FiUsers, FiCheckSquare, FiClock } from "react-icons/fi";
+import { useRouter } from "next/navigation";
 
 interface User {
   _id: string;
@@ -10,12 +12,65 @@ interface User {
   role: string;
 }
 
-interface Props {
-  user: User;
-}
+export default function TeamLeadDashboardContent() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-export default function TeamLeadDashboardContent({ user }: Props) {
-  // Stats data
+  // ✅ Fetch logged-in Team Lead data
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
+
+      try {
+        // ✅ Correct API path — matches your actual backend file
+        const res = await fetch("/api/admin/protectedRoute", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.user) {
+          console.warn("Unauthorized or invalid response:", data);
+          router.replace("/login");
+          return;
+        }
+
+        if (data.user.role !== "teamlead" && data.user.role !== "Team Lead") {
+          console.warn("User is not a Team Lead:", data.user.role);
+          router.replace("/login");
+          return;
+        }
+
+        setUser(data.user);
+      } catch (err) {
+        console.error("Error fetching team lead data:", err);
+        router.replace("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-gray-600">
+        Loading Team Lead Dashboard...
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  // Dashboard Stats
   const stats = [
     { title: "My Projects", value: 5, icon: <FiClipboard size={24} />, color: "bg-teal-500" },
     { title: "Active Team Members", value: 12, icon: <FiUsers size={24} />, color: "bg-indigo-500" },
@@ -54,7 +109,7 @@ export default function TeamLeadDashboardContent({ user }: Props) {
         ))}
       </div>
 
-      {/* Recent Tasks Table */}
+      {/* Recent Tasks */}
       <div className="bg-white shadow-lg rounded-xl p-6">
         <h2 className="text-xl font-semibold mb-4 text-gray-800">Recent Tasks</h2>
         <table className="w-full text-left">
@@ -80,37 +135,38 @@ export default function TeamLeadDashboardContent({ user }: Props) {
         </table>
       </div>
 
-      {/* Team Members Overview */}
+      {/* Team Members */}
       <div className="bg-white shadow-lg rounded-xl p-6">
         <h2 className="text-xl font-semibold mb-4 text-gray-800">Team Members</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold">
-              A
+          {["Ali", "Sara", "Rizwan"].map((member, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                  i === 0
+                    ? "bg-teal-500"
+                    : i === 1
+                    ? "bg-indigo-500"
+                    : "bg-orange-500"
+                }`}
+              >
+                {member[0]}
+              </div>
+              <div>
+                <p className="font-medium text-gray-800">{member}</p>
+                <p className="text-gray-500 text-sm">
+                  {i === 0
+                    ? "Frontend Developer"
+                    : i === 1
+                    ? "Backend Developer"
+                    : "QA Engineer"}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="font-medium text-gray-800">Ali</p>
-              <p className="text-gray-500 text-sm">Frontend Developer</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
-              S
-            </div>
-            <div>
-              <p className="font-medium text-gray-800">Sara</p>
-              <p className="text-gray-500 text-sm">Backend Developer</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">
-              R
-            </div>
-            <div>
-              <p className="font-medium text-gray-800">Rizwan</p>
-              <p className="text-gray-500 text-sm">QA Engineer</p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>
