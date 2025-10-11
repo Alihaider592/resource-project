@@ -1,24 +1,62 @@
 // src/app/(pages)/teamlead/page.tsx
 "use client";
-import { useEffect, useState } from "react";
-import TeamLeadDashboardContent from "./teamleaddashboardconent";
 
-export default function TeamLeadDashboard() {
-  const [teamLead, setTeamLead] = useState<{ name: string } | null>(null);
+import TeamLeadLayout from "./layout";
+import TeamLeadDashboardContent from "./teamleaddashboardconent";
+import { useEffect, useState } from "react";
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export default function TeamLeadDashboardPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch from backend API (e.g., /api/teamlead/me)
-    fetch("/api/auth/me")
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    fetch("/api/protected/teamlead", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) setTeamLead(data.user);
+        if (data.user && data.user.role === "teamlead") {
+          setUser(data.user);
+        } else {
+          console.warn("Unauthorized or invalid user:", data);
+        }
       })
-      .catch(() => setTeamLead({ name: "Team Lead" }));
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-600 text-lg">Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-red-500 text-lg">Unauthorized access</p>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <TeamLeadDashboardContent />
-    </div>
+    <TeamLeadLayout>
+      <TeamLeadDashboardContent user={user} />
+    </TeamLeadLayout>
   );
 }

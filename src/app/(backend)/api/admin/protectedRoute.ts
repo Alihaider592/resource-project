@@ -1,27 +1,35 @@
 import { NextResponse } from "next/server";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import User from "@/app/(backend)/models/User";
+import connectdatabase from "@/app/(backend)/lib/db";
 
-interface JwtPayloadType extends JwtPayload {
-  id: string;
-  role: "admin" | "HR" | "simple user" | "teamlead";
-}
+const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
 export async function GET(req: Request) {
-  const token = req.headers.get("Authorization")?.split(" ")[1];
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  await connectdatabase();
+
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json({ message: "No token provided" }, { status: 401 });
   }
 
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayloadType;
+  const token = authHeader.split(" ")[1];
 
-    if (payload.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
+
+    if (decoded.role.toLowerCase() !== "teamlead") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json({ message: "Welcome admin!" });
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ user });
   } catch (err) {
     console.error("Token verification error:", err);
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json({ message: "Invalid token" }, { status: 401 });
   }
 }

@@ -3,32 +3,24 @@
 import TeamLeadCard from "./teamleadcard";
 import { FiClipboard, FiUsers, FiCheckSquare, FiClock } from "react-icons/fi";
 
-export default function TeamLeadDashboardContent() {
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface Props {
+  user: User;
+}
+
+export default function TeamLeadDashboardContent({ user }: Props) {
+  // Stats data
   const stats = [
-    {
-      title: "My Projects",
-      value: 5,
-      icon: <FiClipboard size={24} />,
-      color: "bg-teal-500",
-    },
-    {
-      title: "Active Team Members",
-      value: 12,
-      icon: <FiUsers size={24} />,
-      color: "bg-indigo-500",
-    },
-    {
-      title: "Pending Tasks",
-      value: 8,
-      icon: <FiCheckSquare size={24} />,
-      color: "bg-orange-500",
-    },
-    {
-      title: "Upcoming Deadlines",
-      value: 3,
-      icon: <FiClock size={24} />,
-      color: "bg-red-500",
-    },
+    { title: "My Projects", value: 5, icon: <FiClipboard size={24} />, color: "bg-teal-500" },
+    { title: "Active Team Members", value: 12, icon: <FiUsers size={24} />, color: "bg-indigo-500" },
+    { title: "Pending Tasks", value: 8, icon: <FiCheckSquare size={24} />, color: "bg-orange-500" },
+    { title: "Upcoming Deadlines", value: 3, icon: <FiClock size={24} />, color: "bg-red-500" },
   ];
 
   const recentTasks = [
@@ -38,10 +30,12 @@ export default function TeamLeadDashboardContent() {
   ];
 
   return (
-    <div className=" space-y-3">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-800">Welcome, Team Lead</h1>
+        <h1 className="text-3xl font-bold text-gray-800">
+          Welcome{user ? `, ${user.name}` : ""}
+        </h1>
         <p className="text-gray-600 mt-1">
           Here’s a quick overview of your projects and team activities.
         </p>

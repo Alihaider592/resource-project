@@ -12,18 +12,25 @@ export async function GET(
 
   try {
     await connectToDatabase();
-    const lead = await TeamLead.findById(id);
+
+    const lead = await TeamLead.findById(id).select("-password"); // Exclude sensitive info
 
     if (!lead) {
       console.warn("⚠️ Team lead not found for ID:", id);
-      return NextResponse.json({ message: "Team lead not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Team lead not found" },
+        { status: 404 }
+      );
     }
 
     console.log("✅ Team lead fetched successfully:", lead.name);
-    return NextResponse.json(lead);
+    return NextResponse.json({ success: true, user: lead });
   } catch (error) {
     console.error("❌ Error fetching team lead:", error);
-    return NextResponse.json({ message: "Server error", error: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { message: "Server error", error: String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -38,28 +45,27 @@ export async function PUT(
   try {
     await connectToDatabase();
 
-    const formData = await request.formData();
-    const updateData: Record<string, string> = {};
+    // Parse JSON body instead of formData for modern API usage
+    const body = await request.json();
+    console.log("🛠️ Updating fields:", body);
 
-    formData.forEach((value, key) => {
-      if (typeof value === "string") {
-        updateData[key] = value;
-      }
-    });
-
-    console.log("🛠️ Updating fields:", updateData);
-
-    const lead = await TeamLead.findByIdAndUpdate(id, updateData, { new: true });
+    const lead = await TeamLead.findByIdAndUpdate(id, body, { new: true });
 
     if (!lead) {
       console.warn("⚠️ Team lead not found while updating:", id);
-      return NextResponse.json({ message: "Team lead not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Team lead not found" },
+        { status: 404 }
+      );
     }
 
     console.log("✅ Team lead updated successfully:", lead.name);
-    return NextResponse.json(lead);
+    return NextResponse.json({ success: true, user: lead });
   } catch (error) {
     console.error("❌ Error updating team lead:", error);
-    return NextResponse.json({ message: "Server error", error: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { message: "Server error", error: String(error) },
+      { status: 500 }
+    );
   }
 }
