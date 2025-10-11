@@ -10,7 +10,7 @@ interface LoginResponse {
     id: string;
     name: string;
     email: string;
-    role: "admin" | "HR" | "simple user" | string;
+    role: "admin" | "HR" | "simple user" | "Team Lead" | string;
   };
   error?: string;
 }
