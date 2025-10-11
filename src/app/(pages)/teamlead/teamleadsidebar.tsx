@@ -23,7 +23,7 @@ export default function TeamLeadSidebarLayout({ children }: Props) {
   const toggleSidebar = () => setIsOpen(!isOpen);
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen">
       {/* Sidebar */}
       <div
         className={`bg-teal-600 text-white shadow-md transition-all duration-300 ${

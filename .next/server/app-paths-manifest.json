@@ -1,8 +1,5 @@
 {
   "/(backend)/api/auth/me/route": "app/(backend)/api/auth/me/route.js",
   "/(pages)/teamlead/page": "app/(pages)/teamlead/page.js",
-  "/(pages)/teamlead/profile/page": "app/(pages)/teamlead/profile/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/page": "app/page.js"
+  "/_not-found/page": "app/_not-found/page.js"
 }

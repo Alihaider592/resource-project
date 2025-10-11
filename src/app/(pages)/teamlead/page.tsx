@@ -18,9 +18,6 @@ export default function TeamLeadDashboard() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        Welcome {teamLead ? teamLead.name : "Team Lead"}
-      </h1>
       <TeamLeadDashboardContent />
     </div>
   );
