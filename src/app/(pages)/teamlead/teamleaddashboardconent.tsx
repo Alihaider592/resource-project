@@ -12,6 +12,11 @@ interface User {
   role: string;
 }
 
+interface MeResponse {
+  user?: User;
+  message?: string;
+}
+
 export default function TeamLeadDashboardContent() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,21 +31,30 @@ export default function TeamLeadDashboardContent() {
       }
 
       try {
-        const res = await fetch("/api/admin/protectedRoute", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const res = await fetch("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        const data = await res.json();
+        // Safely parse JSON
+        let data: MeResponse = {};
+        try {
+          data = (await res.json()) as MeResponse;
+        } catch (err) {
+          console.error("Failed to parse JSON from /api/auth/me", err);
+          router.replace("/login");
+          return;
+        }
 
+        // Check for valid user
         if (!res.ok || !data.user) {
           console.warn("Unauthorized or invalid response:", data);
           router.replace("/login");
           return;
         }
 
-        if (data.user.role !== "teamlead" && data.user.role !== "Team Lead") {
+        // Normalize role for consistency
+        const roleNormalized = data.user.role.replace(/\s+/g, "").toLowerCase();
+        if (roleNormalized !== "teamlead") {
           console.warn("User is not a Team Lead:", data.user.role);
           router.replace("/login");
           return;
@@ -84,9 +98,7 @@ export default function TeamLeadDashboardContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800">
-          Welcome{user ? `, ${user.name}` : ""}
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-800">Welcome, { ` ${user?.name ?? "Team Lead"}` }</h1>
         <p className="text-gray-600 mt-1">
           Here’s a quick overview of your projects and team activities.
         </p>
@@ -118,10 +130,7 @@ export default function TeamLeadDashboardContent() {
           </thead>
           <tbody>
             {recentTasks.map((task, i) => (
-              <tr
-                key={i}
-                className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-              >
+              <tr key={i} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                 <td className="py-2 px-4">{task.task}</td>
                 <td className="py-2 px-4">{task.assigned}</td>
                 <td className="py-2 px-4">{task.status}</td>
@@ -136,17 +145,10 @@ export default function TeamLeadDashboardContent() {
         <h2 className="text-xl font-semibold mb-4 text-gray-800">Team Members</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {["Ali", "Sara", "Rizwan"].map((member, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            >
+            <div key={i} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                  i === 0
-                    ? "bg-teal-500"
-                    : i === 1
-                    ? "bg-indigo-500"
-                    : "bg-orange-500"
+                  i === 0 ? "bg-teal-500" : i === 1 ? "bg-indigo-500" : "bg-orange-500"
                 }`}
               >
                 {member[0]}
@@ -154,11 +156,7 @@ export default function TeamLeadDashboardContent() {
               <div>
                 <p className="font-medium text-gray-800">{member}</p>
                 <p className="text-gray-500 text-sm">
-                  {i === 0
-                    ? "Frontend Developer"
-                    : i === 1
-                    ? "Backend Developer"
-                    : "QA Engineer"}
+                  {i === 0 ? "Frontend Developer" : i === 1 ? "Backend Developer" : "QA Engineer"}
                 </p>
               </div>
             </div>

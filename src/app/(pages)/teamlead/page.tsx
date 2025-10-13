@@ -1,95 +1,32 @@
 "use client";
 
-import TeamLeadLayout from "./layout";
-import TeamLeadDashboardContent from "./teamleaddashboardconent";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
-export default function TeamLeadDashboardPage() {
-  const [authorized, setAuthorized] = useState(false);
-  const [loading, setLoading] = useState(true);
+import TeamLeadDashboardContent from "./teamleaddashboardconent";
+export default function TeamLeadDashboard() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        router.replace("/login");
-        return;
-      }
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("userRole");
 
-      try {
-        const res = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        // Handle non-OK responses
-        if (!res.ok) {
-          let errData;
-          try {
-            errData = await res.json();
-          } catch {
-            errData = { message: await res.text() };
-          }
-          console.error("Failed to fetch user:", errData);
-          router.replace("/login");
-          return;
-        }
-
-        // Parse JSON safely
-        let data;
-        try {
-          data = await res.json();
-        } catch {
-          console.error("Invalid JSON from server");
-          router.replace("/login");
-          return;
-        }
-
-        // Check user role
-        if (!data.user || data.user.role.toLowerCase() !== "teamlead") {
-          router.replace("/login");
-          return;
-        }
-
-        setAuthorized(true);
-      } catch (err) {
-        console.error("Network or server error:", err);
-        router.replace("/login");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
+    if (!token || role !== "teamlead") {
+      router.push("/login");
+    } else {
+      setLoading(false);
+    }
   }, [router]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-600 text-lg">Loading dashboard...</p>
-      </div>
-    );
-  }
-
-  if (!authorized) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-red-500 text-lg">Unauthorized access</p>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   return (
-    <TeamLeadLayout>
-      <TeamLeadDashboardContent />
-    </TeamLeadLayout>
+    <div className="p-8">
+      {/* <h1 className="text-3xl font-bold">Teamlead Dashboard</h1>
+      <p>Welcome, Teamlead! You can now manage your team here.</p> */}
+      <TeamLeadDashboardContent/>
+    </div>
   );
 }

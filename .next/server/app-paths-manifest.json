@@ -1,13 +1,18 @@
 {
+  "/(backend)/api/admin/adduser/route": "app/(backend)/api/admin/adduser/route.js",
+  "/(backend)/api/admin/getusers/route": "app/(backend)/api/admin/getusers/route.js",
   "/(backend)/api/admin/protectedRoute/route": "app/(backend)/api/admin/protectedRoute/route.js",
   "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
   "/(backend)/api/auth/me/route": "app/(backend)/api/auth/me/route.js",
+  "/(pages)/admin/addusers/page": "app/(pages)/admin/addusers/page.js",
+  "/(pages)/admin/manageusers/page": "app/(pages)/admin/manageusers/page.js",
   "/(pages)/admin/page": "app/(pages)/admin/page.js",
+  "/(pages)/hr/manage/page": "app/(pages)/hr/manage/page.js",
   "/(pages)/hr/page": "app/(pages)/hr/page.js",
   "/(pages)/login/page": "app/(pages)/login/page.js",
   "/(pages)/teamlead/page": "app/(pages)/teamlead/page.js",
+  "/(pages)/teamlead/profile/page": "app/(pages)/teamlead/profile/page.js",
   "/(pages)/user/page": "app/(pages)/user/page.js",
-  "/(pages)/user/profile/page": "app/(pages)/user/profile/page.js",
   "/_not-found/page": "app/_not-found/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js"
 }

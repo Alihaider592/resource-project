@@ -1,52 +1,67 @@
-import { NextResponse } from "next/server";
-import jwt, { JwtPayload } from "jsonwebtoken";
-import SignupUser from "@/app/(backend)/models/signupuser";
-import AddUser from "@/app/(backend)/models/adduser";
-import connectDatabase from "@/app/(backend)/lib/db";
+import { NextResponse, NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "secret";
-
-interface DecodedToken extends JwtPayload {
+interface DecodedToken {
   id: string;
+  name: string;
+  email: string;
+  role: "admin" | "teamlead" | "hr" | "simpleuser";
+  iat?: number;
+  exp?: number;
 }
 
-export async function GET(request: Request) {
-  try {
-    await connectDatabase();
+function extractDecodedToken(obj: unknown): DecodedToken | null {
+  if (typeof obj !== "object" || obj === null) return null;
 
-    const authHeader = request.headers.get("authorization");
+  const record = obj as Record<string, unknown>;
+
+  const roleStr =
+    typeof record.role === "string"
+      ? record.role.toLowerCase().replace(/\s+/g, "")
+      : "";
+
+  if (
+    typeof record.id === "string" &&
+    typeof record.name === "string" &&
+    typeof record.email === "string" &&
+    ["admin", "teamlead", "hr", "simpleuser"].includes(roleStr)
+  ) {
+    return {
+      id: record.id,
+      name: record.name,
+      email: record.email,
+      role: roleStr as "admin" | "teamlead" | "hr" | "simpleuser",
+      iat: typeof record.iat === "number" ? record.iat : undefined,
+      exp: typeof record.exp === "number" ? record.exp : undefined,
+    };
+  }
+
+  return null;
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ message: "No token provided" }, { status: 401 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const token = authHeader.split(" ")[1];
-    if (!token) {
-      return NextResponse.json({ message: "Missing token" }, { status: 401 });
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error("JWT_SECRET not defined");
+
+    const decodedRaw = jwt.verify(token, secret) as unknown;
+
+    const decoded = extractDecodedToken(decodedRaw);
+
+    if (!decoded) {
+      console.log("Decoded JWT failed type guard:", decodedRaw);
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    let decoded: DecodedToken;
-    try {
-      decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
-    } catch {
-      return NextResponse.json({ message: "Invalid or expired token" }, { status: 401 });
-    }
-
-    // ✅ Check both models (SignupUser and AddUser)
-    const user =
-      (await SignupUser.findById(decoded.id).select("-password")) ||
-      (await AddUser.findById(decoded.id).select("-password"));
-
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ user }, { status: 200 });
+    return NextResponse.json({ message: "Authorized", user: decoded });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    console.error("Protected route error:", errorMessage);
-    return NextResponse.json(
-      { message: "Server error", error: errorMessage },
-      { status: 500 }
-    );
+    console.error("Protected Route Error:", err);
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }

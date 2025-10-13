@@ -24,7 +24,7 @@ interface User {
 }
 
 interface Props {
-  user: User | null; // ✅ Accept user prop
+  user: User | null; 
 }
 
 export default function TeamLeadSidebar({ user }: Props) {
@@ -41,10 +41,7 @@ export default function TeamLeadSidebar({ user }: Props) {
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-teal-700">
-        <span className={`text-xl font-bold ${!isOpen && "hidden"}`}>
-          {isOpen ? `Welcome, ${user?.name ?? "Team Lead"}` : "TL"}
-        </span>
-        <button onClick={toggleSidebar} className="text-gray-200">
+        <button onClick={toggleSidebar} className="cursor-pointer text-gray-200">
           <FiMenu size={24} />
         </button>
       </div>

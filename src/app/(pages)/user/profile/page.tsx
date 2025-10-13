@@ -36,8 +36,6 @@ export default function ProfilePage() {
   const [companyName, setCompanyName] = useState("");
 
   const router = useRouter();
-
-  // ✅ Fetch latest user data (no cache)
   const fetchUserData = async () => {
     const token = localStorage.getItem("token");
     if (!token) {

@@ -15,6 +15,11 @@ interface User {
   role: string;
 }
 
+interface MeResponse {
+  user?: User;
+  message?: string;
+}
+
 export default function TeamLeadLayout({ children }: Props) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,6 +30,7 @@ export default function TeamLeadLayout({ children }: Props) {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
+          console.warn("No token found, redirecting to login");
           router.replace("/login");
           return;
         }
@@ -33,22 +39,33 @@ export default function TeamLeadLayout({ children }: Props) {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!res.ok) {
-          console.error("Failed to fetch user:", res.status);
+        // Attempt to parse JSON safely
+        let data: MeResponse = {};
+        try {
+          data = (await res.json()) as MeResponse;
+        } catch (jsonError) {
+          console.error("Failed to parse JSON from /api/auth/me", jsonError);
           router.replace("/login");
           return;
         }
 
-        const data = await res.json();
+        if (!res.ok || !data.user) {
+          console.error("Unauthorized or no user returned:", data);
+          router.replace("/login");
+          return;
+        }
 
-        if (!data.user || data.user.role.toLowerCase() !== "teamlead") {
+        // Normalize role for comparison
+        const roleNormalized = data.user.role.replace(/\s+/g, "").toLowerCase();
+        if (roleNormalized !== "teamlead") {
+          console.error("Role mismatch, not a Team Lead:", data.user.role);
           router.replace("/login");
           return;
         }
 
         setUser(data.user);
       } catch (err) {
-        console.error("Error verifying teamlead:", err);
+        console.error("Unexpected error verifying teamlead:", err);
         router.replace("/login");
       } finally {
         setLoading(false);
@@ -62,6 +79,14 @@ export default function TeamLeadLayout({ children }: Props) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-gray-600 text-lg">Verifying access...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-red-500 text-lg">Unauthorized access</p>
       </div>
     );
   }

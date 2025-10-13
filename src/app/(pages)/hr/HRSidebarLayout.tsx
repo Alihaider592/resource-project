@@ -29,7 +29,7 @@ export default function HRSidebarLayout({ children }: Props) {
 
         <nav className="mt-4 flex flex-col">
           <Link
-            href="/hr/employees"
+            href="/hr/manage"
             className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
           >
             <FiUsers size={20} />
