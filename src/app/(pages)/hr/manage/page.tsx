@@ -1,11 +1,15 @@
-import React from 'react';
-import ManageUsersPage from '../../admin/manageusers/page';
-const page = () => {
+// src/app/hr/manage-users/page.tsx
+"use client";
+
+// import ManageUsersPage from "@/components/ManageUsersPage";
+// import HRLayout from "@/components/HRLayout";
+import ManageUsersPage from "../../admin/manageusers/page";
+import HRSidebarLayout from "../HRSidebarLayout";
+
+export default function ManageUsersWrapper() {
   return (
-    <div>
-      {/* <ManageUsersPage/> */}
-    </div>
+    <HRSidebarLayout>
+      <ManageUsersPage />
+    </HRSidebarLayout>
   );
 }
-
-export default page;

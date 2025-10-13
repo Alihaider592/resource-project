@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState, ReactNode } from "react";
-import { FiUsers, FiFileText, FiSettings, FiLogOut, FiMenu } from "react-icons/fi";
+import { FiUsers, FiFileText, FiSettings, FiLogOut, FiMenu, FiHome, FiUser } from "react-icons/fi";
+import { handleLogout } from "@/utils/logout";
+import { useRouter } from "next/navigation";
 
 interface Props {
   children: ReactNode;
@@ -11,6 +13,7 @@ interface Props {
 export default function HRSidebarLayout({ children }: Props) {
   const [isOpen, setIsOpen] = useState(true);
   const toggleSidebar = () => setIsOpen(!isOpen);
+  const router = useRouter();
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -18,7 +21,7 @@ export default function HRSidebarLayout({ children }: Props) {
       <div
         className={`bg-green-700 text-white shadow-md transition-all duration-300 ${
           isOpen ? "w-64" : "w-20"
-        }`}
+        } flex flex-col`}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <span className={`text-xl font-bold ${!isOpen && "hidden"}`}>HR Panel</span>
@@ -27,7 +30,24 @@ export default function HRSidebarLayout({ children }: Props) {
           </button>
         </div>
 
-        <nav className="mt-4 flex flex-col">
+        {/* Navigation links */}
+        <nav className="flex-1 flex flex-col mt-4">
+          <Link
+            href="/hr"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
+          >
+            <FiHome size={20} />
+            {isOpen && <span>Home</span>}
+          </Link>
+
+          <Link
+            href="/hr/Profile"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
+          >
+            <FiUser size={20} />
+            {isOpen && <span>Profile</span>}
+          </Link>
+
           <Link
             href="/hr/manage"
             className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
@@ -60,13 +80,16 @@ export default function HRSidebarLayout({ children }: Props) {
             {isOpen && <span>Settings</span>}
           </Link>
 
-          <Link
-            href="/logout"
-            className="flex items-center gap-3 p-3 mt-auto hover:bg-gray-800 transition-colors"
-          >
-            <FiLogOut size={20} />
-            {isOpen && <span>Logout</span>}
-          </Link>
+          {/* Logout button at the bottom */}
+          <div className="mt-auto">
+            <button
+              onClick={() => handleLogout(router)}
+              className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors w-full"
+            >
+              <FiLogOut size={20} />
+              {isOpen && <span>Logout</span>}
+            </button>
+          </div>
         </nav>
       </div>
 

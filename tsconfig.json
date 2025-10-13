@@ -26,5 +26,4 @@
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/api/connect/models/User.ts", "src/app/(backend)/lib/db.js"],
   "exclude": ["node_modules"]
-  
 }
