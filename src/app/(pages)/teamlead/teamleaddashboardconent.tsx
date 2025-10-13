@@ -17,7 +17,6 @@ export default function TeamLeadDashboardContent() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // ✅ Fetch logged-in Team Lead data
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
@@ -27,7 +26,6 @@ export default function TeamLeadDashboardContent() {
       }
 
       try {
-        // ✅ Correct API path — matches your actual backend file
         const res = await fetch("/api/admin/protectedRoute", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -70,7 +68,6 @@ export default function TeamLeadDashboardContent() {
 
   if (!user) return null;
 
-  // Dashboard Stats
   const stats = [
     { title: "My Projects", value: 5, icon: <FiClipboard size={24} />, color: "bg-teal-500" },
     { title: "Active Team Members", value: 12, icon: <FiUsers size={24} />, color: "bg-indigo-500" },
@@ -86,7 +83,6 @@ export default function TeamLeadDashboardContent() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-800">
           Welcome{user ? `, ${user.name}` : ""}

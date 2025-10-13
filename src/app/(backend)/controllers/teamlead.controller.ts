@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import TeamLead, { ITeamLead } from "../models/teamlead";
 
-// ✅ Define an interface for the update payload
 interface UpdateTeamLeadPayload {
   name?: string;
   email?: string;
@@ -11,7 +10,6 @@ interface UpdateTeamLeadPayload {
   role?: string;
 }
 
-// ✅ Get by ID
 export async function getTeamLeadByIdController(id: string) {
   try {
     const lead = await TeamLead.findById(id);
@@ -23,7 +21,6 @@ export async function getTeamLeadByIdController(id: string) {
   }
 }
 
-// ✅ Update
 export async function updateTeamLeadController(
   id: string,
   data: UpdateTeamLeadPayload
@@ -38,7 +35,6 @@ export async function updateTeamLeadController(
   }
 }
 
-// ✅ Delete
 export async function deleteTeamLeadController(id: string) {
   try {
     const lead = await TeamLead.findByIdAndDelete(id);

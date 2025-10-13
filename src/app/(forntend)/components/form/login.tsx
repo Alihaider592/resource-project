@@ -10,7 +10,7 @@ interface LoginResponse {
     id: string;
     name: string;
     email: string;
-    role: "admin" | "HR" | "simple user" | "Team Lead" | string;
+    role: string;
   };
   error?: string;
 }
@@ -30,6 +30,7 @@ export default function LoginForm() {
     setSuccess("");
 
     try {
+      // ✅ Step 1: Login request
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -39,44 +40,70 @@ export default function LoginForm() {
       const data: LoginResponse = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Invalid credentials");
+        setError(data.error || data.message || "Invalid credentials");
         return;
       }
 
-      if (data.token && data.user) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userName", data.user.name); 
+      if (!data.token || !data.user) {
+        setError("Invalid response from server");
+        return;
       }
-      if (data.token && data.user) {
-  document.cookie = `token=${data.token}; path=/`; 
-}
 
-      // Redirect based on role
-      switch (data.user?.role) {
+      const role = data.user.role.toLowerCase().replace(/\s+/g, "");
+
+      // ✅ Save to localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userName", data.user.name);
+      localStorage.setItem("userRole", role);
+      document.cookie = `token=${data.token}; path=/;`;
+
+      // ✅ Step 2: Verify token via protected route
+      const verifyRes = await fetch("/api/admin/protectedRoute", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${data.token}`,
+        },
+      });
+
+      if (!verifyRes.ok) {
+        const errData = await verifyRes.json().catch(() => ({}));
+        console.error("❌ Protected route access failed:", errData);
+        setError(errData.message || "Authentication verification failed. Please log in again.");
+        return;
+      }
+
+      const verified = await verifyRes.json();
+      console.log("✅ Verified user:", verified);
+
+      setSuccess("Login successful ✅");
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // ✅ Step 3: Redirect based on role
+      switch (role) {
         case "admin":
           router.push("/admin");
           break;
-        case "HR":
-          router.push("/HR");
+        case "hr":
+          router.push("/hr");
           break;
-        case "simple user":
-          router.push("/user");
-          break;
-          case "Team Lead":
+        case "teamlead":
           router.push("/teamlead");
+          break;
+        case "simpleuser":
+          router.push("/user");
           break;
         default:
           router.push("/");
           break;
       }
-      setSuccess("Login successful ✅");
-    } catch (err: unknown) {
-      console.error("Login error:", err);
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("Login error:", message);
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
-    
   };
 
   return (

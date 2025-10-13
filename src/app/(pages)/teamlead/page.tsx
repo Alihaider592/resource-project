@@ -3,6 +3,7 @@
 import TeamLeadLayout from "./layout";
 import TeamLeadDashboardContent from "./teamleaddashboardconent";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface User {
   _id: string;
@@ -14,26 +15,61 @@ interface User {
 export default function TeamLeadDashboardPage() {
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
 
-    fetch("/api/(backend)/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.user && data.user.role === "teamlead") {
-          setAuthorized(true);
+      try {
+        const res = await fetch("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // Handle non-OK responses
+        if (!res.ok) {
+          let errData;
+          try {
+            errData = await res.json();
+          } catch {
+            errData = { message: await res.text() };
+          }
+          console.error("Failed to fetch user:", errData);
+          router.replace("/login");
+          return;
         }
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+
+        // Parse JSON safely
+        let data;
+        try {
+          data = await res.json();
+        } catch {
+          console.error("Invalid JSON from server");
+          router.replace("/login");
+          return;
+        }
+
+        // Check user role
+        if (!data.user || data.user.role.toLowerCase() !== "teamlead") {
+          router.replace("/login");
+          return;
+        }
+
+        setAuthorized(true);
+      } catch (err) {
+        console.error("Network or server error:", err);
+        router.replace("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [router]);
 
   if (loading) {
     return (

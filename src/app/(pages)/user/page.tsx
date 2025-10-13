@@ -34,7 +34,6 @@ export default function UserPage() {
           router.push("/login");
         } else {
           setUser(data.user);
-          // Store the name in localStorage in case of refresh
           localStorage.setItem("userName", data.user.name);
         }
       })

@@ -1,11 +1,16 @@
-// src/app/(backend)/api/auth/me/route.ts
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import User from "@/app/(backend)/models/User";
 import TeamLead from "@/app/(backend)/models/teamlead";
+import AddUser from "@/app/(backend)/models/adduser";
 import connectDatabase from "@/app/(backend)/lib/db";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
+
+interface DecodedToken extends JwtPayload {
+  id: string;
+  role: string;
+}
 
 export async function GET(request: Request) {
   await connectDatabase();
@@ -18,13 +23,19 @@ export async function GET(request: Request) {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
+    const normalizedRole = decoded.role?.toLowerCase().replace(/\s/g, "");
 
     let user = null;
-    if (decoded.role === "teamlead") {
-      user = await TeamLead.findById(decoded.id).select("-password");
+
+    if (normalizedRole === "teamlead") {
+      user =
+        (await TeamLead.findById(decoded.id).select("-password")) ||
+        (await AddUser.findById(decoded.id).select("-password"));
     } else {
-      user = await User.findById(decoded.id).select("-password");
+      user =
+        (await User.findById(decoded.id).select("-password")) ||
+        (await AddUser.findById(decoded.id).select("-password"));
     }
 
     if (!user) {
@@ -34,6 +45,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, user });
   } catch (error) {
     console.error("Auth error:", error);
-    return NextResponse.json({ message: "Invalid token" }, { status: 401 });
+    return NextResponse.json({ message: "Invalid or expired token" }, { status: 401 });
   }
 }
