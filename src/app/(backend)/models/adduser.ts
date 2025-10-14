@@ -16,6 +16,7 @@ export interface ISAddUser extends Document {
   email: string;
   password: string;
   avatar?: string | null;
+  picture?: string | null; // ✅ added picture
 
   // Contact info
   phone?: string | null;
@@ -55,6 +56,10 @@ export interface ISAddUser extends Document {
   // Optional legacy fields
   phonenumber?: string | null;
   companyname?: string | null;
+
+  // Timestamps
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const AddUserSchema: Schema<ISAddUser> = new Schema(
@@ -63,10 +68,11 @@ const AddUserSchema: Schema<ISAddUser> = new Schema(
     employeeId: { type: String, required: true, unique: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    name: { type: String }, // optional full name
+    name: { type: String },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     avatar: { type: String, default: null },
+    picture: { type: String, default: null }, // ✅ added
 
     // 🔹 Contact Info
     phone: { type: String, default: null },
@@ -79,20 +85,12 @@ const AddUserSchema: Schema<ISAddUser> = new Schema(
 
     // 🔹 Job Info
     department: { type: String, default: null },
-    role: {
-      type: String,
-      required: true,
-      enum: ["Admin", "HR", "User", "TeamLead"],
-    },
+    role: { type: String, required: true, enum: ["Admin", "HR", "User", "TeamLead"] },
     timing: { type: String, default: null },
     joiningDate: { type: String, default: null },
     leavingDate: { type: String, default: null },
     location: { type: String, default: null },
-    workType: {
-      type: String,
-      enum: ["On-site", "Remote", "Hybrid"],
-      default: "On-site",
-    },
+    workType: { type: String, enum: ["On-site", "Remote", "Hybrid"], default: "On-site" },
 
     // 🔹 Address Info
     address: { type: String, default: null },
@@ -115,10 +113,10 @@ const AddUserSchema: Schema<ISAddUser> = new Schema(
     phonenumber: { type: String, default: null },
     companyname: { type: String, default: null },
   },
-  { timestamps: true }
+  { timestamps: true } // ✅ ensures createdAt & updatedAt
 );
 
-// Prevent model overwrite error in Next.js
+// Prevent model overwrite in Next.js
 const AddUser: Model<ISAddUser> =
   mongoose.models.AddUser || mongoose.model<ISAddUser>("AddUser", AddUserSchema);
 

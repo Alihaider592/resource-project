@@ -1,11 +1,1 @@
-{
-  "/(backend)/api/admin/protectedRoute/route": "app/(backend)/api/admin/protectedRoute/route.js",
-  "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
-  "/(backend)/api/auth/me/route": "app/(backend)/api/auth/me/route.js",
-  "/(pages)/admin/addusers/page": "app/(pages)/admin/addusers/page.js",
-  "/(pages)/admin/page": "app/(pages)/admin/page.js",
-  "/(pages)/hr/addemployee/page": "app/(pages)/hr/addemployee/page.js",
-  "/(pages)/hr/page": "app/(pages)/hr/page.js",
-  "/(pages)/login/page": "app/(pages)/login/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js"
-}
+{}
