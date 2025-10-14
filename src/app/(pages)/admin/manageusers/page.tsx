@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Trash2 } from "lucide-react";
 import { FiUser } from "react-icons/fi";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface User {
   id: string;
@@ -26,7 +27,7 @@ export default function ManageUsersPage() {
   /* -------------------------------------------------------------------------- */
   /* 🧭 Fetch all users                                                         */
   /* -------------------------------------------------------------------------- */
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     setErrorMsg(null);
 
@@ -53,14 +54,9 @@ export default function ManageUsersPage() {
         return;
       }
 
-      if (res.status === 404) {
-        setErrorMsg("No users found (404)");
-        setUsers([]);
-        return;
-      }
-
       if (!res.ok) {
-        console.error("❌ Failed to fetch users:", res.statusText);
+        const text = await res.text();
+        console.error("❌ Failed to fetch users:", text);
         setErrorMsg(`Failed to load users (${res.status})`);
         setUsers([]);
         return;
@@ -68,24 +64,26 @@ export default function ManageUsersPage() {
 
       const data = await res.json();
 
-      // Handle both possible backend formats
-      if (Array.isArray(data)) setUsers(data);
-      else if (Array.isArray(data.users)) setUsers(data.users);
-      else {
-        console.warn("⚠️ Unexpected data format:", data);
-        setUsers([]);
-      }
+      const fetchedUsers = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.users)
+        ? data.users
+        : [];
+
+      setUsers(fetchedUsers);
+      setErrorMsg(fetchedUsers.length === 0 ? "No users found" : null);
     } catch (err) {
       console.error("🔥 Error fetching users:", err);
       setErrorMsg("Server error while loading users.");
+      setUsers([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   /* -------------------------------------------------------------------------- */
   /* ❌ Delete user                                                             */
@@ -165,11 +163,18 @@ export default function ManageUsersPage() {
               className="bg-white rounded-2xl shadow-md hover:shadow-xl p-6 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 border border-gray-100"
             >
               {user.avatar || user.picture ? (
-                <img
-                  src={user.avatar || user.picture || ""}
-                  alt={user.name}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-indigo-100 shadow-sm"
-                />
+                <div className="w-24 h-24 relative">
+                  <Image
+                    src={user.avatar || user.picture || "/fallback-avatar.png"}
+                    alt={user.name}
+                    width={96}
+                    height={96}
+                    className="rounded-full object-cover border-4 border-indigo-100 shadow-sm"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/fallback-avatar.png";
+                    }}
+                  />
+                </div>
               ) : (
                 <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 font-bold text-lg">
                   {user.name?.charAt(0).toUpperCase() || "?"}

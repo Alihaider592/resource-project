@@ -1,8 +1,7 @@
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["resourceinn.com"], // <-- add your image host here
+    domains: ["resourceinn.com", "cdn.example.com"], // add all domains you use
   },
 };
 

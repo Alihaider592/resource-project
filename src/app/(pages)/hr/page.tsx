@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HRDashboardContent from "./HRDashboardContent";
-import HRSidebarLayout from "./HRSidebarLayout";
-
 interface User {
   name: string;
   email: string;
@@ -42,8 +40,6 @@ export default function HRDashboardPage() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <HRSidebarLayout>
 <HRDashboardContent userName="HR" />
-    </HRSidebarLayout>
   );
 }

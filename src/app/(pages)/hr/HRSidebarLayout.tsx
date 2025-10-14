@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, ReactNode } from "react";
-import { FiUsers, FiFileText, FiSettings, FiLogOut, FiMenu, FiHome, FiUser } from "react-icons/fi";
+import { FiUsers, FiFileText, FiSettings, FiLogOut, FiMenu, FiHome, FiUser,FiPlus } from "react-icons/fi";
 import { handleLogout } from "@/utils/logout";
 import { useRouter } from "next/navigation";
 
@@ -46,6 +46,13 @@ export default function HRSidebarLayout({ children }: Props) {
           >
             <FiUser size={20} />
             {isOpen && <span>Profile</span>}
+          </Link>
+          <Link
+            href="/hr/addemployee"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
+          >
+            <FiPlus size={20} />
+            {isOpen && <span>Add Employee</span>}
           </Link>
 
           <Link
