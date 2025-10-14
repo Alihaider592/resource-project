@@ -1,7 +1,7 @@
 "use client";
 
+import { useEffect, useState, ReactNode } from "react";
 import Link from "next/link";
-import React, { useState, ReactNode } from "react";
 import {
   FiUsers,
   FiBarChart2,
@@ -10,93 +10,130 @@ import {
   FiLogOut,
   FiMenu,
   FiPlus,
+  FiHome,
+  FiUser,
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { handleLogout } from "@/utils/logout";
 
-const AdminSidebar = ({ children }: { children?: ReactNode }) => {
-  const [isOpen, setIsOpen] = useState(true);
+interface Props {
+  children: ReactNode;
+}
+
+export default function AdminDashboardLayout({ children }: Props) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  const toggleSidebar = () => setIsOpen(!isOpen);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const handleViewProfile = () => {
+    const userId = localStorage.getItem("userId"); // 👈 store on login
+    if (userId) {
+      router.push(`/profile/${userId}`); // navigate to own profile
+    } else {
+      alert("User ID not found. Please login again.");
+      router.push("/login");
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <div
-        className={`bg-purple-900 text-white shadow-md transition-all duration-300 flex flex-col ${
-          isOpen ? "w-64" : "w-20"
+        className={`bg-purple-900 text-white shadow-md transition-all duration-300 ${
+          isSidebarOpen ? "w-64" : "w-20"
         }`}
       >
-        {/* Header */}
+        {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <span className={`text-xl font-bold ${!isOpen && "hidden"}`}>
+          <span className={`text-xl font-bold ${!isSidebarOpen && "hidden"}`}>
             Admin Panel
           </span>
-          <button onClick={toggleSidebar} className="text-gray-300">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="text-gray-300 cursor-pointer"
+          >
             <FiMenu size={24} />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-col flex-1 mt-4">
-          <div className="flex flex-col">
-            <Link
-              href="/admin/manageusers"
-              className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
-            >
-              <FiUsers size={20} />
-              {isOpen && <span>Manage Users</span>}
-            </Link>
+        <nav className="mt-4 flex flex-col h-full">
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
+          >
+            <FiHome size={20} />
+            {isSidebarOpen && <span>Home</span>}
+          </Link>
 
-            <Link
-              href="/admin/addusers"
-              className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
-            >
-              <FiPlus size={20} />
-              {isOpen && <span>Add Users</span>}
-            </Link>
+          {/* ✅ Updated Dynamic Profile Button */}
+          <button
+            onClick={handleViewProfile}
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors text-left w-full"
+          >
+            <FiUser size={20} />
+            {isSidebarOpen && <span>Profile</span>}
+          </button>
 
-            <Link
-              href="/admin/analytics"
-              className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
-            >
-              <FiBarChart2 size={20} />
-              {isOpen && <span>Analytics</span>}
-            </Link>
+          <Link
+            href="/admin/manageusers"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
+          >
+            <FiUsers size={20} />
+            {isSidebarOpen && <span>Manage Users</span>}
+          </Link>
 
-            <Link
-              href="/admin/reports"
-              className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
-            >
-              <FiFileText size={20} />
-              {isOpen && <span>Reports</span>}
-            </Link>
+          <Link
+            href="/admin/addusers"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
+          >
+            <FiPlus size={20} />
+            {isSidebarOpen && <span>Add Users</span>}
+          </Link>
 
-            <Link
-              href="/admin/settings"
-              className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
-            >
-              <FiSettings size={20} />
-              {isOpen && <span>Settings</span>}
-            </Link>
-          </div>
+          <Link
+            href="/admin/analytics"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
+          >
+            <FiBarChart2 size={20} />
+            {isSidebarOpen && <span>Analytics</span>}
+          </Link>
 
-          {/* Logout button at bottom */}
+          <Link
+            href="/admin/reports"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
+          >
+            <FiFileText size={20} />
+            {isSidebarOpen && <span>Reports</span>}
+          </Link>
+
+          <Link
+            href="/admin/settings"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
+          >
+            <FiSettings size={20} />
+            {isSidebarOpen && <span>Settings</span>}
+          </Link>
+
+          {/* Logout */}
           <button
             onClick={() => handleLogout(router)}
             className="flex items-center gap-3 p-3 mt-auto hover:bg-red-700 transition-colors text-left w-full"
           >
             <FiLogOut size={20} />
-            {isOpen && <span>Logout</span>}
+            {isSidebarOpen && <span>Logout</span>}
           </button>
         </nav>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 p-6 overflow-auto">{children}</div>
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">{children}</div>
     </div>
   );
-};
-
-export default AdminSidebar;
+}

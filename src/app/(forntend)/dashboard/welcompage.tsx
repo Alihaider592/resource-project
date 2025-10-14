@@ -1,9 +1,20 @@
 "use client";
-import Link from "next/link";
-import { motion } from "framer-motion";
+
 import { useEffect, useState } from "react";
-import { UserCog, Users, BarChart3 } from "lucide-react";
+import { Users, BarChart3, UserCog, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 interface UserType {
   name: string;
@@ -11,91 +22,162 @@ interface UserType {
   role: "admin" | "HR" | "simple user" | string;
 }
 
-export default function AdminPage() {
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export default function AdminDashboard() {
   const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ users: 0, reports: 0, settings: 0 });
+  const [latestUsers, setLatestUsers] = useState<UserData[]>([]);
+  const [teamLeads, setTeamLeads] = useState<UserData[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    if (!token) return router.push("/login");
 
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
-    fetch("/api/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => res.json())
       .then((data) => {
-        if (!data.user || data.user.role !== "admin") {
-          router.push("/login"); // redirect if not admin
-        } else {
-          setUser(data.user);
-          localStorage.setItem("adminName", data.user.name); // persist admin name
-        }
+        if (!data.user || data.user.role !== "admin") router.push("/login");
+        else setUser(data.user);
       })
       .catch(() => router.push("/login"))
       .finally(() => setLoading(false));
+
+    // Dummy stats
+    setStats({ users: 128, reports: 42, settings: 5 });
+
+    // Dummy latest users
+    setLatestUsers([
+      { id: "1", name: "Ali Khan", email: "ali@test.com", role: "simple user" },
+      { id: "2", name: "Sara Ahmed", email: "sara@test.com", role: "HR" },
+      { id: "3", name: "Ahmed Malik", email: "ahmed@test.com", role: "simple user" },
+    ]);
+
+    // Dummy team leads
+    setTeamLeads([
+      { id: "1", name: "Kamran Ali", email: "kamran@test.com", role: "teamlead" },
+      { id: "2", name: "Zara Khan", email: "zara@test.com", role: "teamlead" },
+    ]);
   }, [router]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return <div className="flex justify-center items-center min-h-screen text-gray-600">Loading...</div>;
 
-  const adminName = user?.name || localStorage.getItem("adminName") || "Admin";
+  // Bar chart data
+  const chartData = {
+    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+    datasets: [
+      {
+        label: "New Users",
+        data: [12, 19, 7, 15, 10, 20],
+        backgroundColor: "rgba(128, 90, 213, 0.7)",
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" as const },
+      title: { display: true, text: "New Users This Year" },
+    },
+  };
 
   return (
-    <div className="min-h-screen flex flex-col text-gray-900">
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="flex flex-col items-center justify-center text-center py-16"
-      >
-        <h2 className="text-4xl sm:text-5xl font-extrabold mb-4 text-gray-900">
-          👋 Welcome back, <span className="text-purple-600">{adminName}</span>
-        </h2>
-        <p className="text-lg text-gray-600 max-w-xl">
-          You have full access to manage users, view reports, and control system settings.
-        </p>
-      </motion.div>
+    <div className="min-h-screen p-8">
+      {/* Header */}
+      <header className="flex flex-col sm:flex-row justify-between items-center mb-10">
+        <div>
+          <h1 className="text-3xl font-bold text-purple-700">
+            Welcome, <span className="text-indigo-600">{user?.name}</span>
+          </h1>
+          <p className="text-gray-600">Here’s what’s happening in your admin panel today.</p>
+        </div>
+        <div className="mt-4 sm:mt-0">
+          <p className="text-gray-500">{user?.email}</p>
+        </div>
+      </header>
 
-      {/* Dashboard Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-10 pb-20">
-        <Link href="/admin/manageusers">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg flex flex-col items-center text-center cursor-pointer transition"
-          >
-            <Users className="w-12 h-12 text-purple-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Manage Users</h3>
-            <p className="text-gray-600 text-sm">
-              Add, edit, and remove users from the system.
-            </p>
-          </motion.div>
-        </Link>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+        <div className="bg-purple-50 rounded-xl p-6 shadow flex flex-col items-center">
+          <Users className="w-10 h-10 text-purple-700 mb-2" />
+          <p className="text-gray-600">Total Users</p>
+          <h2 className="text-2xl font-bold text-purple-800">{stats.users}</h2>
+        </div>
+        <div className="bg-indigo-50 rounded-xl p-6 shadow flex flex-col items-center">
+          <BarChart3 className="w-10 h-10 text-indigo-700 mb-2" />
+          <p className="text-gray-600">Reports Generated</p>
+          <h2 className="text-2xl font-bold text-indigo-800">{stats.reports}</h2>
+        </div>
+        <div className="bg-orange-50 rounded-xl p-6 shadow flex flex-col items-center">
+          <UserCog className="w-10 h-10 text-orange-700 mb-2" />
+          <p className="text-gray-600">System Settings</p>
+          <h2 className="text-2xl font-bold text-orange-800">{stats.settings}</h2>
+        </div>
+      </div>
 
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg flex flex-col items-center text-center cursor-pointer transition"
-        >
-          <BarChart3 className="w-12 h-12 text-indigo-600 mb-4" />
-          <h3 className="text-xl font-semibold mb-2">View Reports</h3>
-          <p className="text-gray-600 text-sm">
-            Access system analytics and usage insights.
-          </p>
-        </motion.div>
+      {/* Charts Section */}
+      <div className="bg-white p-6 rounded-xl shadow mb-10">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">User Growth</h2>
+        <Bar data={chartData} options={chartOptions} />
+      </div>
 
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg flex flex-col items-center text-center cursor-pointer transition"
-        >
-          <UserCog className="w-12 h-12 text-orange-600 mb-4" />
-          <h3 className="text-xl font-semibold mb-2">System Settings</h3>
-          <p className="text-gray-600 text-sm">
-            Configure application preferences and security.
-          </p>
-        </motion.div>
+      {/* Latest Users Table */}
+      <div className="bg-white p-6 rounded-xl shadow mb-10">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Latest Users</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full table-auto border border-gray-200">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="px-4 py-2 text-left text-gray-700">Name</th>
+                <th className="px-4 py-2 text-left text-gray-700">Email</th>
+                <th className="px-4 py-2 text-left text-gray-700">Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              {latestUsers.map((u) => (
+                <tr key={u.id} className="border-b hover:bg-gray-50 transition">
+                  <td className="px-4 py-2">{u.name}</td>
+                  <td className="px-4 py-2">{u.email}</td>
+                  <td className="px-4 py-2 capitalize">{u.role}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Team Leads Section */}
+      <div className="bg-white p-6 rounded-xl shadow">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Team Leads</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full table-auto border border-gray-200">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="px-4 py-2 text-left text-gray-700">Name</th>
+                <th className="px-4 py-2 text-left text-gray-700">Email</th>
+                <th className="px-4 py-2 text-left text-gray-700">Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teamLeads.map((t) => (
+                <tr key={t.id} className="border-b hover:bg-gray-50 transition">
+                  <td className="px-4 py-2">{t.name}</td>
+                  <td className="px-4 py-2">{t.email}</td>
+                  <td className="px-4 py-2 capitalize">{t.role}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

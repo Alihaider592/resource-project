@@ -1,47 +1,69 @@
-import { NextRequest } from "next/server"; 
+import { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
-const SECRET = process.env.JWT_SECRET || "your_secret_key";
-export type UserRole = "admin" | "HR" | "Team Lead" | "simple user"; 
+
+// ✅ Secret key setup (throw error if missing)
+const SECRET = process.env.JWT_SECRET;
+if (!SECRET) {
+  console.warn("⚠️ WARNING: JWT_SECRET is missing from environment variables!");
+}
+
+export type UserRole = "admin" | "HR" | "Team Lead" | "simple user";
+
 export interface DecodedUser {
+  id: string;
+  name: string;
   email: string;
   role: UserRole;
-  name: string;
-  id: string; 
+  iat?: number;
+  exp?: number;
 }
+
 export class AuthError extends Error {
-    statusCode: number;
-    constructor(message: string, statusCode: number) {
-        super(message);
-        this.statusCode = statusCode;
-        this.name = "AuthError";
-    }
+  statusCode: number;
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.statusCode = statusCode;
+    this.name = "AuthError";
+  }
 }
+
 /**
- * Verifies the JWT and checks if the user's role is authorized.
- * @param req - The NextRequest object.
- * @param allowedRoles - An array of roles permitted to access the resource.
- * @returns {DecodedUser} The decoded user payload if authorized.
- * @throws {AuthError} If authentication or authorization fails.
+ * ✅ Verifies JWT and enforces role-based access.
+ * @param req - The Next.js request object
+ * @param allowedRoles - Optional array of roles allowed to access the route
+ * @returns DecodedUser - Returns the decoded JWT payload if valid
+ * @throws AuthError - Throws if unauthorized or role is invalid
  */
 export async function verifyAccess(
   req: NextRequest,
-  allowedRoles: UserRole[]
+  allowedRoles: UserRole[] = [] // 👈 optional now
 ): Promise<DecodedUser> {
   const authHeader = req.headers.get("authorization");
-  const token = authHeader?.startsWith("Bearer ")
-    ? authHeader.split(" ")[1]
-    : null;
 
-  if (!token) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.warn("❌ Missing or invalid Authorization header");
     throw new AuthError("Unauthorized: Token missing.", 401);
   }
+
+  const token = authHeader.split(" ")[1];
   try {
-    const decoded = jwt.verify(token, SECRET) as DecodedUser;
-       if (!allowedRoles.includes(decoded.role)) {
-      throw new AuthError(`Forbidden: Insufficient role (${decoded.role}).`, 403);
+    const decoded = jwt.verify(token, SECRET!) as DecodedUser;
+
+    // ✅ Optional role-based access check
+    if (allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {
+      console.warn(
+        `🚫 Access Denied: User ${decoded.email} (${decoded.role}) tried to access a restricted route`
+      );
+      throw new AuthError(
+        `Forbidden: You do not have permission to perform this action.`,
+        403
+      );
     }
+
+    console.log(`✅ Authenticated as ${decoded.email} (${decoded.role})`);
     return decoded;
   } catch (error) {
+    console.error("❌ Token verification failed:", error);
     throw new AuthError("Unauthorized: Invalid or expired token.", 401);
   }
 }
