@@ -73,13 +73,13 @@ export default function AdminDashboardLayout({ children }: Props) {
           </Link>
 
           {/* ✅ Updated Dynamic Profile Button */}
-          <button
-            onClick={handleViewProfile}
+          <Link
+          href="/admin/profile"
             className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors text-left w-full"
           >
             <FiUser size={20} />
             {isSidebarOpen && <span>Profile</span>}
-          </button>
+          </Link>
 
           <Link
             href="/admin/manageusers"

@@ -5,56 +5,81 @@ import { handleGetAllUsers } from "@/app/(backend)/controllers/admin.controller"
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+/** User type returned from controller */
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
+  avatar?: string | null;
+  picture?: string | null;
+  phonenumber?: string | null;
+  companyname?: string | null;
+  createdAt?: Date | string;
+}
+
+/** Possible shapes returned by handleGetAllUsers */
+type GetAllUsersResult = User[] | { users: User[] } | unknown;
+
+/**
+ * ✅ GET /api/admin/getusers
+ * Roles allowed: Admin, HR, Team Lead
+ */
 export async function GET(req: NextRequest) {
   try {
-    // ✅ Allow multiple roles — not just admin and HR
-    const user = await verifyAccess(req, ["admin", "HR", "Team Lead"]);
-    console.log(`✅ Access granted for: ${user.email} (${user.role})`);
+    // ✅ Verify Access Token
+    const decodedUser = await verifyAccess(req, ["admin", "HR", "Team Lead"]);
+    console.log(
+      `✅ Access granted for: ${decodedUser.email} (${decodedUser.role})`
+    );
 
-    // ✅ Fetch all users via controller
-    const users = await handleGetAllUsers();
+    // ✅ Get all users from controller
+    const result: GetAllUsersResult = await handleGetAllUsers();
 
-    if (!Array.isArray(users)) {
-      console.warn("⚠️ handleGetAllUsers did not return an array:", users);
-      return NextResponse.json({ users: [] }, { status: 200 });
+    // ✅ Normalize to an array safely
+    let users: User[] = [];
+
+    if (Array.isArray(result)) {
+      users = result;
+    } else if (
+      typeof result === "object" &&
+      result !== null &&
+      "users" in result &&
+      Array.isArray((result as { users: unknown }).users)
+    ) {
+      const typed = result as { users: User[] };
+      users = typed.users;
+    } else {
+      console.warn("⚠️ Unexpected result format from handleGetAllUsers:", result);
     }
 
-    // ✅ Return successful response
+    // ✅ Return clean JSON
     return NextResponse.json(
       {
         success: true,
         users,
         fetchedAt: new Date().toISOString(),
       },
-      {
-        status: 200,
-        headers: { "Cache-Control": "no-store" },
-      }
+      { status: 200, headers: { "Cache-Control": "no-store" } }
     );
   } catch (error: unknown) {
-    console.error("❌ GET Users Route Error:", error);
+    console.error("❌ [GET /api/admin/getusers] Error:", error);
 
-    // ✅ Handle known auth errors
     if (error instanceof AuthError) {
       return NextResponse.json(
-        {
-          success: false,
-          message: error.message,
-          code: error.statusCode,
-        },
+        { success: false, message: error.message },
         { status: error.statusCode }
       );
     }
 
-    // ✅ Handle generic errors
-    const errorMessage =
+    const message =
       error instanceof Error ? error.message : "Internal Server Error";
 
     return NextResponse.json(
       {
         success: false,
         message: "Failed to fetch users",
-        error: errorMessage,
+        error: message,
         users: [],
       },
       { status: 500 }

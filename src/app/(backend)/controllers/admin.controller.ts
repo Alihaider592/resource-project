@@ -53,6 +53,7 @@ export async function handleNewUserRequest(data: NewUserRequest) {
     "CEO",
     "CTO",
   ];
+
   if (!validRoles.includes(data.role as UserRole)) {
     throw new Error("Invalid role specified.");
   }
@@ -69,37 +70,39 @@ export async function handleNewUserRequest(data: NewUserRequest) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* 2. GET SINGLE USER (For View Profile)                                      */
+/* ✅ 2. GET SINGLE USER (Fixed for API compatibility)                        */
 /* -------------------------------------------------------------------------- */
 
 export async function handleGetSingleUser(id: string) {
   if (!id) {
-    throw new Error("Missing user ID.");
+    return { success: false, message: "Missing user ID." };
   }
 
-  const user = await getSingleUserService(id);
+  try {
+    const user = await getSingleUserService(id);
 
-  if (!user) {
+    if (!user) {
+      return { success: false, message: "User not found." };
+    }
+
+    // ✅ Return wrapped response compatible with API route
     return {
-      success: false,
-      message: "User not found.",
-      user: null,
+      success: true,
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar || user.picture || null,
+        phonenumber: user.phonenumber || null,
+        companyname: user.companyname || null,
+        createdAt: user.createdAt,
+      },
     };
+  } catch (error) {
+    console.error("❌ Controller Error (Get Single User):", error);
+    return { success: false, message: "Error fetching user details." };
   }
-
-  return {
-    success: true,
-    user: {
-      id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      avatar: user.avatar || user.picture || null,
-      phonenumber: user.phonenumber || null,
-      companyname: user.companyname || null,
-      createdAt: user.createdAt,
-    },
-  };
 }
 
 /* -------------------------------------------------------------------------- */
