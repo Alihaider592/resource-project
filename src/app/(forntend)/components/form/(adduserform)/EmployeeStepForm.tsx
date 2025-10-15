@@ -20,54 +20,56 @@ export interface EmployeeData {
   maritalStatus: string;
   bloodGroup: string;
   department: string;
-  role: string;
+  role: "Admin" | "HR" | "User" | "TeamLead" | "";
   address: string;
   city: string;
   state: string;
   zip: string;
-  experienceLevel: string;
+  experienceLevel: "Fresher" | "Experienced" | "";
   previousCompany: string;
   experienceYears: string;
   education: string;
   bankAccount: string;
   salary: string;
   password: string;
-  workType: "On-site" | "Remote" | "Hybrid";
+  workType: "On-site" | "Remote" | "Hybrid" | "";
   avatar?: File | null;
 }
 
+const initialEmployeeState: EmployeeData = {
+  employeeId: `EMP-${Date.now()}`,
+  firstName: "",
+  lastName: "",
+  cnic: "",
+  email: "",
+  phone: "",
+  emergencyContact: "",
+  birthday: "",
+  gender: "",
+  maritalStatus: "",
+  bloodGroup: "",
+  department: "",
+  role: "",
+  address: "",
+  city: "",
+  state: "",
+  zip: "",
+  experienceLevel: "",
+  previousCompany: "",
+  experienceYears: "",
+  education: "",
+  bankAccount: "",
+  salary: "",
+  password: "",
+  workType: "On-site",
+  avatar: null,
+};
+
 const EmployeeStepForm: React.FC = () => {
   const [step, setStep] = useState(1);
-  const [employee, setEmployee] = useState<EmployeeData>({
-    employeeId: `EMP-${Date.now()}`,
-    firstName: "",
-    lastName: "",
-    cnic: "",
-    email: "",
-    phone: "",
-    emergencyContact: "",
-    birthday: "",
-    gender: "",
-    maritalStatus: "",
-    bloodGroup: "",
-    department: "",
-    role: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    experienceLevel: "",
-    previousCompany: "",
-    experienceYears: "",
-    education: "",
-    bankAccount: "",
-    salary: "",
-    password: "",
-    workType: "On-site",
-    avatar: null,
-  });
+  const [employee, setEmployee] = useState<EmployeeData>({ ...initialEmployeeState });
 
-  // Handle changes
+  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, files } = e.target as HTMLInputElement;
     setEmployee((prev) => ({
@@ -79,10 +81,7 @@ const EmployeeStepForm: React.FC = () => {
   // Validate per step
   const validateStep = (): boolean => {
     const requiredFields: Record<number, (keyof EmployeeData)[]> = {
-      1: [
-        "firstName", "lastName", "email", "password", "phone",
-        "emergencyContact", "cnic", "birthday", "gender", "maritalStatus",
-      ],
+      1: ["firstName", "lastName", "email", "password", "phone", "emergencyContact", "cnic", "birthday", "gender", "maritalStatus"],
       2: ["bloodGroup", "address", "city", "state", "zip"],
       3: ["department", "role", "workType"],
       4: ["experienceLevel"],
@@ -99,7 +98,6 @@ const EmployeeStepForm: React.FC = () => {
       }
     }
 
-    // Extra checks
     if (step === 1) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
@@ -109,8 +107,7 @@ const EmployeeStepForm: React.FC = () => {
       if (!emailRegex.test(employee.email)) return toast.error("Invalid email format!"), false;
       if (!cnicRegex.test(employee.cnic)) return toast.error("CNIC must be like 12345-1234567-1"), false;
       if (!phoneRegex.test(employee.phone)) return toast.error("Phone must be 11 digits"), false;
-      if (!passwordRegex.test(employee.password))
-        return toast.error("Password must include uppercase, number & special char"), false;
+      if (!passwordRegex.test(employee.password)) return toast.error("Password must include uppercase, number & special char"), false;
     }
 
     if (step === 4 && employee.experienceLevel === "Experienced") {
@@ -123,61 +120,54 @@ const EmployeeStepForm: React.FC = () => {
     return true;
   };
 
-  const nextStep = () => {
-    if (validateStep()) setStep((prev) => Math.min(prev + 1, 6));
-  };
+  const nextStep = () => { if (validateStep()) setStep((prev) => Math.min(prev + 1, 6)); };
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Submit form to backend
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!validateStep()) return;
-    toast.success("Employee Registered Successfully!");
 
-    setEmployee({
-      employeeId: `EMP-${Date.now()}`,
-      firstName: "",
-      lastName: "",
-      cnic: "",
-      email: "",
-      phone: "",
-      emergencyContact: "",
-      birthday: "",
-      gender: "",
-      maritalStatus: "",
-      bloodGroup: "",
-      department: "",
-      role: "",
-      address: "",
-      city: "",
-      state: "",
-      zip: "",
-      experienceLevel: "",
-      previousCompany: "",
-      experienceYears: "",
-      education: "",
-      bankAccount: "",
-      salary: "",
-      password: "",
-      workType: "On-site",
-      avatar: null,
-    });
-    setStep(1);
+    try {
+      const payload = {
+        ...employee,
+        experienceYears: employee.experienceYears ? Number(employee.experienceYears) : 0,
+        salary: employee.salary ? Number(employee.salary) : 0,
+      };
+      if (payload.avatar instanceof File) delete payload.avatar; // skip file for now
+
+      const res = await fetch("http://localhost:3000/api/admin/adduser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create user");
+
+      toast.success("Employee Registered Successfully!");
+      setEmployee({ ...initialEmployeeState, employeeId: `EMP-${Date.now()}` });
+      setStep(1);
+    }catch (err: unknown) {
+  if (err instanceof Error) {
+    toast.error(err.message);
+  } else {
+    toast.error("An unexpected error occurred");
+  }
+  console.error(err);
+}
+
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
       <Toaster position="top-right" />
       <div className="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-10">
-        <h2 className="text-3xl font-bold text-center text-purple-700 mb-8">
-          Employee Registration Form
-        </h2>
-
-        {/* ✅ Progress Bar */}
+        <h2 className="text-3xl font-bold text-center text-purple-700 mb-8">Employee Registration Form</h2>
         <StepProgressBar step={step} />
 
-        {/* ✅ Show form only for steps 1–5 */}
         {step < 6 ? (
           <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Step 1: Personal Information */}
             {step === 1 && (
               <section>
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">Personal Information</h3>
@@ -205,6 +195,7 @@ const EmployeeStepForm: React.FC = () => {
               </section>
             )}
 
+            {/* Step 2: Health & Address */}
             {step === 2 && (
               <section>
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">Health & Address</h3>
@@ -218,24 +209,19 @@ const EmployeeStepForm: React.FC = () => {
               </section>
             )}
 
+            {/* Step 3: Professional Details */}
             {step === 3 && (
               <section>
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">Professional Details</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <Input name="department" placeholder="Department" value={employee.department} onChange={handleChange} />
-                  <select
-  name="role"
-  value={employee.role}
-  onChange={handleChange}
-  className="border rounded-md px-3 py-2"
->
-  <option value="">Select Role</option>
-  <option value="Admin">Admin</option>
-  <option value="HR">HR</option>
-  <option value="User">User</option>
-  <option value="TeamLead">Team Lead</option>
-</select>
-
+                  <select name="role" value={employee.role} onChange={handleChange} className="border rounded-md px-3 py-2">
+                    <option value="">Select Role</option>
+                    <option value="Admin">Admin</option>
+                    <option value="HR">HR</option>
+                    <option value="User">User</option>
+                    <option value="TeamLead">Team Lead</option>
+                  </select>
                   <select name="workType" value={employee.workType} onChange={handleChange} className="border rounded-md px-3 py-2">
                     <option value="">Select Work Type</option>
                     <option>On-site</option>
@@ -246,6 +232,7 @@ const EmployeeStepForm: React.FC = () => {
               </section>
             )}
 
+            {/* Step 4: Experience Details */}
             {step === 4 && (
               <section>
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">Experience Details</h3>
@@ -255,24 +242,13 @@ const EmployeeStepForm: React.FC = () => {
                     <option>Fresher</option>
                     <option>Experienced</option>
                   </select>
-                  <Input
-                    name="previousCompany"
-                    placeholder="Previous Company (if any)"
-                    value={employee.previousCompany}
-                    onChange={handleChange}
-                    disabled={employee.experienceLevel === "Fresher"}
-                  />
-                  <Input
-                    name="experienceYears"
-                    placeholder="Years of Experience"
-                    value={employee.experienceYears}
-                    onChange={handleChange}
-                    disabled={employee.experienceLevel === "Fresher"}
-                  />
+                  <Input name="previousCompany" placeholder="Previous Company" value={employee.previousCompany} onChange={handleChange} disabled={employee.experienceLevel === "Fresher"} />
+                  <Input name="experienceYears" placeholder="Years of Experience" value={employee.experienceYears} onChange={handleChange} disabled={employee.experienceLevel === "Fresher"} />
                 </div>
               </section>
             )}
 
+            {/* Step 5: Education & Finance */}
             {step === 5 && (
               <section>
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">Education & Finance</h3>
@@ -287,39 +263,16 @@ const EmployeeStepForm: React.FC = () => {
 
             {/* Navigation */}
             <div className="flex justify-between mt-8">
-              {step > 1 && (
-                <Button type="button" onClick={prevStep} className="bg-gray-300 hover:bg-gray-400 text-gray-700">
-                  Back
-                </Button>
-              )}
-              <Button
-                type="button"
-                onClick={nextStep}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                Next
-              </Button>
+              {step > 1 && <Button type="button" onClick={prevStep} className="bg-gray-300 hover:bg-gray-400 text-gray-700">Back</Button>}
+              <Button type="button" onClick={nextStep} className="bg-purple-600 hover:bg-purple-700 text-white">Next</Button>
             </div>
           </form>
         ) : (
-          // ✅ Step 6: Preview (outside the form)
           <div className="space-y-6">
             <EmployeePreview employee={employee} />
             <div className="flex justify-center gap-4 mt-6">
-              <Button
-                type="button"
-                onClick={prevStep}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-700"
-              >
-                Back
-              </Button>
-              <Button
-                type="submit"
-                onClick={handleSubmit}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                Confirm & Submit
-              </Button>
+              <Button type="button" onClick={prevStep} className="bg-gray-300 hover:bg-gray-400 text-gray-700">Back</Button>
+              <Button type="submit" onClick={handleSubmit} className="bg-green-600 hover:bg-green-700 text-white">Confirm & Submit</Button>
             </div>
           </div>
         )}
