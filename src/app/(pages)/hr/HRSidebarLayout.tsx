@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function HRSidebarLayout({ children }: Props) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const toggleSidebar = () => setIsOpen(!isOpen);
   const router = useRouter();
 

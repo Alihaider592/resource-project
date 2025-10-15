@@ -1,246 +1,159 @@
 "use client";
 
-import { useEffect, useState, ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "react-hot-toast";
+import React, { useEffect, useState } from "react";
+import { EmployeeData } from "@/app/(backend)/api/auth/me/route";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string | null;
-  phonenumber?: string | null;
-  companyname?: string | null;
-}
+// Professional pastel gradients
+const gradients = [
+  ["#60a5fa", "#bfdbfe"], // blue
+  ["#4ade80", "#a7f3d0"], // green-teal
+  ["#818cf8", "#c7d2fe"], // indigo
+  ["#a78bfa", "#ddd6fe"], // purple
+  ["#f472b6", "#fbcfe8"], // pink
+];
 
-interface UpdatedUserResponse {
-  message: string;
-  user: User;
-}
-
-interface ErrorResponse {
-  error?: string;
-  message?: string;
-}
-
-export default function ProfilePage() {
-  const [user, setUser] = useState<User | null>(null);
+const ProfilePage: React.FC = () => {
+  const [user, setUser] = useState<EmployeeData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [avatar, setAvatar] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [companyName, setCompanyName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [gradientIndex, setGradientIndex] = useState(0);
 
-  const router = useRouter();
-  const fetchUserData = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/auth/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Cache-Control": "no-store",
-        },
-      });
-
-      const data = await res.json();
-      if (!data.user) {
-        router.push("/login");
-        return;
-      }
-
-      setUser(data.user);
-      setName(data.user.name);
-      setEmail(data.user.email);
-      setPreview(data.user.avatar);
-      setPhoneNumber(data.user.phonenumber || "");
-      setCompanyName(data.user.companyname || "");
-    } catch {
-      toast.error("⚠️ Failed to fetch user data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Fetch profile data
   useEffect(() => {
-    fetchUserData();
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("No token found, please login");
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          setError(errData.message || "Failed to fetch profile");
+          setLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        setUser(data.user || null);
+      } catch (err) {
+        console.error(err);
+        setError("An unexpected error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
-  // ✅ File change
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      const file = e.target.files[0];
-      setAvatar(file);
-      setPreview(URL.createObjectURL(file));
-    }
-  };
+  // Smooth gradient transition every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGradientIndex((prev) => (prev + 1) % gradients.length);
+    }, 2 * 60 * 1000); // 5 minutes
 
-  // ✅ Save Profile
-  const handleSave = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return toast.error("Token missing. Please login again.");
+    return () => clearInterval(interval);
+  }, []);
 
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("email", email);
-    formData.append("phonenumber", phoneNumber);
-    formData.append("companyname", companyName);
-    if (avatar) formData.append("avatar", avatar);
-
-    const toastId = toast.loading("Updating profile...");
-
-    try {
-      const res = await fetch("/api/user/profile", {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Cache-Control": "no-store" },
-        body: formData,
-      });
-
-      const data: UpdatedUserResponse | ErrorResponse = await res.json();
-
-      if (!res.ok) {
-        toast.error((data as ErrorResponse).message || "Update failed.", { id: toastId });
-        return;
-      }
-
-      const updated = (data as UpdatedUserResponse).user;
-      setUser(updated);
-      setEditMode(false);
-      setAvatar(null);
-      setPreview(updated.avatar || null);
-
-      toast.success("Profile updated!", { id: toastId });
-
-      await fetchUserData();
-      router.refresh();
-    } catch {
-      toast.error("Server error. Try again later.", { id: toastId });
-    }
-  };
+  const currentGradient = `linear-gradient(90deg, ${gradients[gradientIndex][0]}, ${gradients[gradientIndex][1]})`;
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-screen text-purple-600 text-lg animate-pulse">
-        Loading profile...
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-gray-500 text-lg">Loading profile...</p>
       </div>
     );
 
-  if (!user) return null;
+  if (error)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-red-500 text-lg">{error}</p>
+      </div>
+    );
+
+  if (!user)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-gray-500 text-lg">No profile data available.</p>
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-purple-50 flex justify-center items-start py-12 px-4">
-      <div className="w-full max-w-md bg-white border border-purple-100 rounded-2xl shadow-md p-6">
-        <h2 className="text-center text-2xl font-bold text-purple-700 mb-6">My Profile</h2>
-
-        {/* Avatar */}
-        <div className="flex flex-col items-center mb-5">
-          <div className="relative">
-            {preview ? (
-              <img
-                src={preview}
-                alt="Avatar"
-                className="w-28 h-28 rounded-full object-cover ring-2 ring-purple-400"
-              />
-            ) : (
-              <div className="w-28 h-28 bg-purple-100 rounded-full flex items-center justify-center text-purple-500 font-semibold">
-                No Image
-              </div>
-            )}
-            {editMode && (
-              <label className="absolute bottom-0 right-0 bg-purple-600 text-white text-xs py-1 px-2 rounded-full cursor-pointer">
-                Edit
-                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-              </label>
-            )}
+    <div className="min-h-screen bg-gray-100 py-10 px-4">
+      <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden">
+        {/* Header with smooth gradient */}
+        <div
+          style={{
+            backgroundImage: currentGradient,
+            transition: "background-image 2s ease-in-out",
+          }}
+          className="p-8 flex items-center gap-6"
+        >
+          {user.avatar ? (
+            <img
+              src={user.avatar}
+              alt={`${user.firstName} ${user.lastName}`}
+              className="w-28 h-28 rounded-full border-4 border-white object-cover shadow-lg"
+            />
+          ) : (
+            <div className="w-28 h-28 rounded-full border-4 border-white flex items-center justify-center text-white font-bold text-3xl shadow-lg bg-gray-300">
+              {user.firstName?.[0] ?? "U"}
+            </div>
+          )}
+          <div>
+            <h1 className="text-4xl font-bold text-white">
+              {user.firstName} {user.lastName}
+            </h1>
+            <p className="text-white text-lg">{user.role ?? "N/A"}</p>
+            <p className="text-white text-sm">{user.department ?? ""}</p>
           </div>
         </div>
 
-        {/* Fields */}
-        <div className="space-y-4">
-          <ProfileField label="Name" value={name} editable={editMode} onChange={setName} />
-          <ProfileField label="Email" value={email} editable={false} />
+        {/* Body */}
+        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ProfileField label="Email" value={user.email} />
+          <ProfileField label="Phone" value={user.phone} />
+          <ProfileField label="Employee ID" value={user.employeeId} />
+          <ProfileField label="Work Type" value={user.workType} />
+          <ProfileField label="Experience Level" value={user.experienceLevel} />
+          <ProfileField label="Previous Company" value={user.previousCompany} />
+          <ProfileField label="Experience Years" value={user.experienceYears} />
+          <ProfileField label="Education" value={user.education} />
+          <ProfileField label="Bank Account" value={user.bankAccount} />
+          <ProfileField label="Salary" value={user.salary} />
           <ProfileField
-            label="Phone Number"
-            value={phoneNumber}
-            editable={editMode}
-            onChange={setPhoneNumber}
+            label="Address"
+            value={`${user.address ?? ""}, ${user.city ?? ""}, ${user.state ?? ""} ${
+              user.zip ?? ""
+            }`}
           />
-          <ProfileField
-            label="Company Name"
-            value={companyName}
-            editable={editMode}
-            onChange={setCompanyName}
-          />
-          <ProfileField label="Role" value={user.role} editable={false} color="text-purple-600" />
-        </div>
-
-        {/* Buttons */}
-        <div className="flex justify-center gap-4 mt-8">
-          {editMode ? (
-            <>
-              <button
-                onClick={handleSave}
-                className="bg-purple-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-purple-700 transition"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setEditMode(false)}
-                className="bg-purple-100 text-purple-700 px-6 py-2 rounded-full font-semibold hover:bg-purple-200 transition"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setEditMode(true)}
-              className="bg-purple-600 text-white px-8 py-2 rounded-full font-semibold hover:bg-purple-700 transition"
-            >
-              Edit Profile
-            </button>
-          )}
+          <ProfileField label="Birthday" value={user.birthday} />
+          <ProfileField label="Gender" value={user.gender} />
+          <ProfileField label="Marital Status" value={user.maritalStatus} />
+          <ProfileField label="Emergency Contact" value={user.emergencyContact} />
         </div>
       </div>
     </div>
   );
+};
+
+interface ProfileFieldProps {
+  label: string;
+  value?: string | null;
 }
 
-// ✅ Reusable Field
-function ProfileField({
-  label,
-  value,
-  editable,
-  onChange,
-  color,
-}: {
-  label: string;
-  value: string;
-  editable: boolean;
-  onChange?: (val: string) => void;
-  color?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
-      {editable ? (
-        <input
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          className="w-full p-2 border border-purple-200 rounded-md focus:ring-2 focus:ring-purple-400 focus:outline-none text-gray-800"
-        />
-      ) : (
-        <p className={`p-2 bg-purple-50 rounded-md border border-purple-100 ${color || "text-gray-800"}`}>
-          {value || "N/A"}
-        </p>
-      )}
-    </div>
-  );
-}
+const ProfileField: React.FC<ProfileFieldProps> = ({ label, value }) => (
+  <div className="bg-gray-50 p-4 rounded-xl shadow-sm flex flex-col hover:shadow-md transition-shadow duration-200">
+    <span className="text-gray-400 text-sm">{label}</span>
+    <span className="text-gray-800 font-semibold">{value ?? "N/A"}</span>
+  </div>
+);
+
+export default ProfilePage;
