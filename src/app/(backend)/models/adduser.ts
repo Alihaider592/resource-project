@@ -1,5 +1,9 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+/* -------------------------------------------------------------------------- */
+/* ROLE & WORK TYPE ENUMS                                                     */
+/* -------------------------------------------------------------------------- */
+
 // Allowed roles
 export type UserRole = "Admin" | "HR" | "User" | "TeamLead";
 export const UserRoles = {
@@ -17,7 +21,10 @@ export const WorkTypes = {
   HYBRID: "Hybrid" as WorkType,
 };
 
-// Employee Document
+/* -------------------------------------------------------------------------- */
+/* INTERFACE                                                                  */
+/* -------------------------------------------------------------------------- */
+
 export interface ISAddUser extends Document {
   employeeId: string;
   firstName: string;
@@ -45,15 +52,19 @@ export interface ISAddUser extends Document {
   state?: string | null;
   zip?: string | null;
   experienceLevel?: "Fresher" | "Experienced" | null;
-  experienceYears?: string | null;
+  experienceYears?: number | null;
   previousCompany?: string | null;
   education?: string | null;
   bankAccount?: string | null;
-  salary?: string | null;
+  salary?: number | null;
   additionalInfo?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+/* -------------------------------------------------------------------------- */
+/* SCHEMA                                                                     */
+/* -------------------------------------------------------------------------- */
 
 const AddUserSchema: Schema<ISAddUser> = new Schema(
   {
@@ -63,8 +74,10 @@ const AddUserSchema: Schema<ISAddUser> = new Schema(
     name: { type: String },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+
     role: { type: String, required: true, enum: Object.values(UserRoles) },
     workType: { type: String, enum: Object.values(WorkTypes), default: WorkTypes.ON_SITE },
+
     avatar: { type: String, default: null },
     phone: { type: String, default: null },
     emergencyContact: { type: String, default: null },
@@ -82,16 +95,23 @@ const AddUserSchema: Schema<ISAddUser> = new Schema(
     city: { type: String, default: null },
     state: { type: String, default: null },
     zip: { type: String, default: null },
+
     experienceLevel: { type: String, enum: ["Fresher", "Experienced"], default: null },
-    experienceYears: { type: String, default: null },
+    experienceYears: { type: Number, default: 0, min: 0 },
     previousCompany: { type: String, default: null },
     education: { type: String, default: null },
+
     bankAccount: { type: String, default: null },
-    salary: { type: String, default: null },
+    salary: { type: Number, default: 0, min: 0 },
+
     additionalInfo: { type: String, default: null },
   },
   { timestamps: true }
 );
+
+/* -------------------------------------------------------------------------- */
+/* MODEL EXPORT                                                               */
+/* -------------------------------------------------------------------------- */
 
 const AddUser: Model<ISAddUser> =
   mongoose.models.AddUser || mongoose.model<ISAddUser>("AddUser", AddUserSchema);
