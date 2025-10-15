@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { EmployeeData } from "@/app/(backend)/api/auth/me/route";
+import { FiEdit3 } from "react-icons/fi";
 
 // Professional pastel gradients
 const gradients = [
@@ -17,6 +18,7 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [gradientIndex, setGradientIndex] = useState(0);
+  const [editing, setEditing] = useState(false);
 
   // Fetch profile data
   useEffect(() => {
@@ -57,7 +59,7 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setGradientIndex((prev) => (prev + 1) % gradients.length);
-    }, 2 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000); // 5 minutes
 
     return () => clearInterval(interval);
   }, []);
@@ -87,15 +89,24 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
-      <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden">
+      <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden relative">
         {/* Header with smooth gradient */}
         <div
           style={{
             backgroundImage: currentGradient,
             transition: "background-image 2s ease-in-out",
           }}
-          className="p-8 flex items-center gap-6"
+          className="p-8 flex items-center gap-6 relative"
         >
+          {/* Professional edit icon */}
+          <div
+            className="absolute top-4 right-4 p-2 rounded-full bg-white shadow-md hover:bg-gray-100 cursor-pointer transition-all"
+            onClick={() => setEditing(!editing)}
+            title="Edit Profile"
+          >
+            <FiEdit3 className="text-gray-700 w-5 h-5" />
+          </div>
+
           {user.avatar ? (
             <img
               src={user.avatar}
@@ -118,26 +129,25 @@ const ProfilePage: React.FC = () => {
 
         {/* Body */}
         <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ProfileField label="Email" value={user.email} />
-          <ProfileField label="Phone" value={user.phone} />
-          <ProfileField label="Employee ID" value={user.employeeId} />
-          <ProfileField label="Work Type" value={user.workType} />
-          <ProfileField label="Experience Level" value={user.experienceLevel} />
-          <ProfileField label="Previous Company" value={user.previousCompany} />
-          <ProfileField label="Experience Years" value={user.experienceYears} />
-          <ProfileField label="Education" value={user.education} />
-          <ProfileField label="Bank Account" value={user.bankAccount} />
-          <ProfileField label="Salary" value={user.salary} />
+          <ProfileField label="Email" value={user.email} editing={editing} />
+          <ProfileField label="Phone" value={user.phone} editing={editing} />
+          <ProfileField label="Employee ID" value={user.employeeId} editing={editing} />
+          <ProfileField label="Work Type" value={user.workType} editing={editing} />
+          <ProfileField label="Experience Level" value={user.experienceLevel} editing={editing} />
+          <ProfileField label="Previous Company" value={user.previousCompany} editing={editing} />
+          <ProfileField label="Experience Years" value={user.experienceYears} editing={editing} />
+          <ProfileField label="Education" value={user.education} editing={editing} />
+          <ProfileField label="Bank Account" value={user.bankAccount} editing={editing} />
+          <ProfileField label="Salary" value={user.salary} editing={editing} />
           <ProfileField
             label="Address"
-            value={`${user.address ?? ""}, ${user.city ?? ""}, ${user.state ?? ""} ${
-              user.zip ?? ""
-            }`}
+            value={`${user.address ?? ""}, ${user.city ?? ""}, ${user.state ?? ""} ${user.zip ?? ""}`}
+            editing={editing}
           />
-          <ProfileField label="Birthday" value={user.birthday} />
-          <ProfileField label="Gender" value={user.gender} />
-          <ProfileField label="Marital Status" value={user.maritalStatus} />
-          <ProfileField label="Emergency Contact" value={user.emergencyContact} />
+          <ProfileField label="Birthday" value={user.birthday} editing={editing} />
+          <ProfileField label="Gender" value={user.gender} editing={editing} />
+          <ProfileField label="Marital Status" value={user.maritalStatus} editing={editing} />
+          <ProfileField label="Emergency Contact" value={user.emergencyContact} editing={editing} />
         </div>
       </div>
     </div>
@@ -147,12 +157,21 @@ const ProfilePage: React.FC = () => {
 interface ProfileFieldProps {
   label: string;
   value?: string | null;
+  editing?: boolean;
 }
 
-const ProfileField: React.FC<ProfileFieldProps> = ({ label, value }) => (
+const ProfileField: React.FC<ProfileFieldProps> = ({ label, value, editing }) => (
   <div className="bg-gray-50 p-4 rounded-xl shadow-sm flex flex-col hover:shadow-md transition-shadow duration-200">
     <span className="text-gray-400 text-sm">{label}</span>
-    <span className="text-gray-800 font-semibold">{value ?? "N/A"}</span>
+    {editing ? (
+      <input
+        type="text"
+        defaultValue={value ?? ""}
+        className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+      />
+    ) : (
+      <span className="text-gray-800 font-semibold">{value ?? "N/A"}</span>
+    )}
   </div>
 );
 
