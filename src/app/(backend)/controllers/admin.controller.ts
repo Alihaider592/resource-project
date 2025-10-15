@@ -1,50 +1,47 @@
+import { 
+  createNewUserService, 
+  getAllUsersService, 
+  IUserResponse 
+} from "../services /admin.service";
+import { UserRole, WorkType } from "@/app/(backend)/models/adduser";
 
-import { getAllUsersService,getSingleUserService,createNewUserService,deleteUserService,updateUserService } from "../services /admin.service";
-import { UserRole } from "../models/adduser";
-
-/* -------------------------------------------------------------------------- */
-/* TYPES AND INTERFACES                                                       */
-/* -------------------------------------------------------------------------- */
-
-interface NewUserRequest {
-  employeeId?: string;
-  firstName?: string;
-  lastName?: string;
-  name?: string;
+// NewUserRequest interface (already present)
+export interface NewUserRequest {
+  name: string;
   email: string;
   password: string;
+  role: UserRole;
+  workType?: WorkType | null;
   avatar?: string;
-
+  employeeId?: string;
+  cnic?: string;
   phone?: string;
   emergencyContact?: string;
-  cnic?: string;
   birthday?: string;
   gender?: string;
   maritalStatus?: string;
   bloodGroup?: string;
-
-  department?: string;
-  role: UserRole;
-  timing?: string;
-  joiningDate?: string;
-  leavingDate?: string;
-  location?: string;
-  workType?: string;
-
   address?: string;
   city?: string;
   state?: string;
   zip?: string;
-
-  experienceLevel?: string;
-  experienceYears?: string;
+  department?: string;
+  experienceLevel?: "Fresher" | "Experienced" | null;
   previousCompany?: string;
+  experienceYears?: string;
   education?: string;
-
-  salary?: string;
   bankAccount?: string;
-  additionalInfo?: string;
+  salary?: string;
 }
 
-// ✅ Use Partial<NewUserRequest> directly instead of empty interface
-type UpdateUserRequest = Partial<NewUserRequest>;
+// Handle creation
+export async function handleNewUserRequest(
+  employeeData: NewUserRequest
+): Promise<IUserResponse> {
+  return createNewUserService(employeeData);
+}
+
+// ✅ Handle fetching all users
+export async function handleGetAllUsers(): Promise<IUserResponse[]> {
+  return getAllUsersService();
+}

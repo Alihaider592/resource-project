@@ -131,8 +131,6 @@ const EmployeeStepForm: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep()) return;
-
-    console.log("✅ Employee Data:", employee);
     toast.success("Employee Registered Successfully!");
 
     setEmployee({
