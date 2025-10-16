@@ -21,7 +21,7 @@ interface Props {
 }
 
 export default function AdminDashboardLayout({ children }: Props) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 

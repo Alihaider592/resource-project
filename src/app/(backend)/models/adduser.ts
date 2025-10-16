@@ -5,11 +5,11 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 /* -------------------------------------------------------------------------- */
 
 // Allowed roles
-export type UserRole = "Admin" | "HR" | "User" | "TeamLead";
+export type UserRole = "Admin" | "HR" | "simple user" | "TeamLead";
 export const UserRoles = {
   ADMIN: "Admin" as UserRole,
   HR: "HR" as UserRole,
-  USER: "User" as UserRole,
+  USER: "simpl Uuser" as UserRole,
   TEAM_LEAD: "TeamLead" as UserRole,
 };
 
@@ -22,9 +22,13 @@ export const WorkTypes = {
 };
 
 /* -------------------------------------------------------------------------- */
+/* EXPERIENCE LEVEL ENUM                                                      */
+/* -------------------------------------------------------------------------- */
+export type ExperienceLevel = "Fresher" | "Experienced";
+
+/* -------------------------------------------------------------------------- */
 /* INTERFACE                                                                  */
 /* -------------------------------------------------------------------------- */
-
 export interface ISAddUser extends Document {
   employeeId: string;
   firstName: string;
@@ -33,31 +37,35 @@ export interface ISAddUser extends Document {
   email: string;
   password: string;
   role: UserRole;
-  workType?: WorkType | null;
-  avatar?: string | null;
-  phone?: string | null;
-  emergencyContact?: string | null;
-  cnic?: string | null;
-  birthday?: string | null;
-  gender?: string | null;
-  maritalStatus?: string | null;
-  bloodGroup?: string | null;
-  department?: string | null;
-  timing?: string | null;
-  joiningDate?: string | null;
-  leavingDate?: string | null;
-  location?: string | null;
-  address?: string | null;
-  city?: string | null;
-  state?: string | null;
-  zip?: string | null;
-  experienceLevel?: "Fresher" | "Experienced" | null;
-  experienceYears?: number | null;
-  previousCompany?: string | null;
-  education?: string | null;
-  bankAccount?: string | null;
-  salary?: number | null;
-  additionalInfo?: string | null;
+  workType?: WorkType;
+  avatar?: string;
+  phone?: string;
+  emergencyContact?: string;
+  cnic?: string;
+  birthday?: string;
+  gender?: string;
+  maritalStatus?: string;
+  bloodGroup?: string;
+  department?: string;
+  timing?: string;
+  joiningDate?: string;
+  leavingDate?: string;
+  joining?: Date;
+  leaving?: Date;
+  location?: string;
+  Branch?: string;
+  companybranch?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  experienceLevel?: ExperienceLevel;
+  experienceYears?: number;
+  previousCompany?: string;
+  education?: string;
+  bankAccount?: string;
+  salary?: number;
+  additionalInfo?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -65,20 +73,19 @@ export interface ISAddUser extends Document {
 /* -------------------------------------------------------------------------- */
 /* SCHEMA                                                                     */
 /* -------------------------------------------------------------------------- */
-
 const AddUserSchema: Schema<ISAddUser> = new Schema(
   {
     employeeId: { type: String, required: true, unique: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    name: { type: String },
+    name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
 
     role: { type: String, required: true, enum: Object.values(UserRoles) },
     workType: { type: String, enum: Object.values(WorkTypes), default: WorkTypes.ON_SITE },
-
     avatar: { type: String, default: null },
+
     phone: { type: String, default: null },
     emergencyContact: { type: String, default: null },
     cnic: { type: String, default: null },
@@ -88,9 +95,15 @@ const AddUserSchema: Schema<ISAddUser> = new Schema(
     bloodGroup: { type: String, default: null },
     department: { type: String, default: null },
     timing: { type: String, default: null },
+
     joiningDate: { type: String, default: null },
     leavingDate: { type: String, default: null },
+    joining: { type: Date, default: null },
+    leaving: { type: Date, default: null },
+
     location: { type: String, default: null },
+    Branch: { type: String, default: null },
+    companybranch: { type: String, default: null },
     address: { type: String, default: null },
     city: { type: String, default: null },
     state: { type: String, default: null },
@@ -112,8 +125,6 @@ const AddUserSchema: Schema<ISAddUser> = new Schema(
 /* -------------------------------------------------------------------------- */
 /* MODEL EXPORT                                                               */
 /* -------------------------------------------------------------------------- */
-
-const AddUser: Model<ISAddUser> =
-  mongoose.models.AddUser || mongoose.model<ISAddUser>("AddUser", AddUserSchema);
+const AddUser: Model<ISAddUser> = mongoose.models.AddUser || mongoose.model<ISAddUser>("AddUser", AddUserSchema);
 
 export default AddUser;

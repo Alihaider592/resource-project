@@ -5,13 +5,14 @@ import {
   deleteUserService,
   updateUserService,
 } from "../services /admin.service";
-
-import { UserRole, WorkType } from "@/app/(backend)/models/adduser";
+import { UserRole, WorkType, ISAddUser } from "@/app/(backend)/models/adduser";
 
 /* -------------------------------------------------------------------------- */
 /* INTERFACE DEFINITIONS                                                      */
 /* -------------------------------------------------------------------------- */
 export interface NewUserRequest {
+  firstName?: string;
+  lastName?: string;
   name?: string;
   email: string;
   password: string;
@@ -19,9 +20,13 @@ export interface NewUserRequest {
   workType?: WorkType;
   avatar?: string;
   employeeId?: string;
-
-  firstName?: string;
-  lastName?: string;
+  joiningDate?: string; // API string
+  leavingDate?: string; // API string
+  Branch?: string;
+  timing?: string;
+  joining?: string; // input string
+  leaving?: string; // input string
+  companybranch?: string;
   cnic?: string;
   phone?: string;
   emergencyContact?: string;
@@ -47,18 +52,16 @@ export interface NewUserRequest {
 /* -------------------------------------------------------------------------- */
 export async function handleNewUserRequest(data: NewUserRequest) {
   try {
-    // If name is not provided, combine firstName and lastName
     if (!data.name && (data.firstName || data.lastName)) {
       data.name = `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim();
     }
 
-    // ✅ Convert numeric strings to numbers before sending to service
-    const formattedData = {
+    const formattedData: Partial<ISAddUser> & { password: string } = {
       ...data,
-      experienceYears: data.experienceYears
-        ? Number(data.experienceYears)
-        : null,
-      salary: data.salary ? Number(data.salary) : null,
+      experienceYears: data.experienceYears ? Number(data.experienceYears) : undefined,
+      salary: data.salary ? Number(data.salary) : undefined,
+      joining: data.joining ? new Date(data.joining) : undefined,
+      leaving: data.leaving ? new Date(data.leaving) : undefined,
     };
 
     const newUser = await createNewUserService(formattedData);
@@ -99,7 +102,6 @@ export async function handleGetSingleUser(userId: string) {
   try {
     const user = await getSingleUserService(userId);
     if (!user) throw new Error("User not found");
-
     return {
       success: true,
       message: "✅ User fetched successfully",
@@ -120,13 +122,12 @@ export async function handleUpdateUser(
   updateData: Partial<NewUserRequest>
 ) {
   try {
-    // ✅ Convert numeric strings to numbers before update
-    const formattedUpdateData = {
+    const formattedUpdateData: Partial<ISAddUser> = {
       ...updateData,
-      experienceYears: updateData.experienceYears
-        ? Number(updateData.experienceYears)
-        : null,
-      salary: updateData.salary ? Number(updateData.salary) : null,
+      experienceYears: updateData.experienceYears ? Number(updateData.experienceYears) : undefined,
+      salary: updateData.salary ? Number(updateData.salary) : undefined,
+      joining: updateData.joining ? new Date(updateData.joining) : undefined,
+      leaving: updateData.leaving ? new Date(updateData.leaving) : undefined,
     };
 
     const updatedUser = await updateUserService(userId, formattedUpdateData);
@@ -145,7 +146,7 @@ export async function handleUpdateUser(
 /* -------------------------------------------------------------------------- */
 /* DELETE USER                                                                */
 /* -------------------------------------------------------------------------- */
-export async function handleDeleteUser(userId: string) {
+export async function handleDeleteUserRequest(userId: string) {
   try {
     await deleteUserService(userId);
     return {

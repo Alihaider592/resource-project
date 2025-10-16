@@ -114,7 +114,7 @@ export async function registerUser(userData: RegisterData): Promise<AuthResult["
     name,
     email,
     password: hashedPassword,
-    role: "simple user",
+    role: "User",
   });
 
   return {

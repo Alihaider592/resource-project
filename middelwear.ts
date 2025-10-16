@@ -27,6 +27,9 @@ export function middleware(req: NextRequest) {
     if (path.startsWith("/userdashboard") && user.role !== "simple user") {
       return NextResponse.redirect(new URL("/login", req.url));
     }
+    if (path.startsWith("/userdashboard") && user.role !== "User") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
     if (path.startsWith("/teamlead") && user.role !== "teamlead") {
       return NextResponse.redirect(new URL("/login", req.url));
     }

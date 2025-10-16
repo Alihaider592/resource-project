@@ -92,6 +92,9 @@ export default function LoginForm() {
         case "simpleuser":
           router.push("/user");
           break;
+          case "User":
+          router.push("/user");
+          break;
         default:
           router.push("/");
           break;

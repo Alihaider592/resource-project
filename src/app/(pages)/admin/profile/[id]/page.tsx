@@ -143,7 +143,7 @@ export default function UserProfilePage() {
           )}
 
           <h1 className="text-3xl font-bold text-gray-800 mt-4">{user.name}</h1>
-          <p className="text-gray-500">{user.role || "User"}</p>
+          <p className="text-gray-500">{user.role || "simpl user"}</p>
         </div>
 
         <div className="space-y-4 text-gray-700">

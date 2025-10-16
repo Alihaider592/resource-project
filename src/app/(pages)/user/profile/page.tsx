@@ -90,7 +90,6 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden relative">
-        {/* Header with smooth gradient */}
         <div
           style={{
             backgroundImage: currentGradient,
@@ -98,7 +97,6 @@ const ProfilePage: React.FC = () => {
           }}
           className="p-8 flex items-center gap-6 relative"
         >
-          {/* Professional edit icon */}
           <div
             className="absolute top-4 right-4 p-2 rounded-full bg-white shadow-md hover:bg-gray-100 cursor-pointer transition-all"
             onClick={() => setEditing(!editing)}
@@ -124,6 +122,7 @@ const ProfilePage: React.FC = () => {
             </h1>
             <p className="text-white text-lg">{user.role ?? "N/A"}</p>
             <p className="text-white text-sm">{user.department ?? ""}</p>
+            <p className="text-white text-sm">{user.employeeId ?? ""}</p>
           </div>
         </div>
 
@@ -148,6 +147,14 @@ const ProfilePage: React.FC = () => {
           <ProfileField label="Gender" value={user.gender} editing={editing} />
           <ProfileField label="Marital Status" value={user.maritalStatus} editing={editing} />
           <ProfileField label="Emergency Contact" value={user.emergencyContact} editing={editing} />
+          <ProfileField label="Emergency Contact" value={user.cnic} editing={editing} />
+          <ProfileField label="joining" value={user.joining} editing={editing} />
+          <ProfileField label="leaving" value={user.leaving} editing={editing} />
+          <ProfileField label="companybranch" value={user.companybranch} editing={editing} />
+          <ProfileField label="joiningDate" value={user.joiningDate} editing={editing} />
+          <ProfileField label="leavingDate" value={user.leavingDate} editing={editing} />
+          <ProfileField label="Branch" value={user.Branch} editing={editing} />
+          <ProfileField label="timing" value={user.timing} editing={editing} />
         </div>
       </div>
     </div>

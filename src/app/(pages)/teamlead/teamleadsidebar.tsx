@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function TeamLeadSidebar({ user }: Props) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
   const toggleSidebar = () => setIsOpen(!isOpen);

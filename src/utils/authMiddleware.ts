@@ -7,7 +7,7 @@ if (!SECRET) {
   console.warn("⚠️ WARNING: JWT_SECRET is missing from environment variables!");
 }
 
-export type UserRole = "admin" | "HR" | "Team Lead" | "simple user";
+export type UserRole = "admin" | "HR" | "Team Lead" | "simple user"|"User";
 
 export interface DecodedUser {
   id: string;

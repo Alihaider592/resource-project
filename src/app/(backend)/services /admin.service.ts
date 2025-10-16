@@ -1,3 +1,4 @@
+// src/app/(backend)/services/admin.service.ts
 import connectDatabase from "@/app/(backend)/lib/db";
 import AddUser, { ISAddUser, UserRole, WorkType } from "@/app/(backend)/models/adduser";
 import bcrypt from "bcryptjs";
@@ -9,6 +10,8 @@ import { Types } from "mongoose";
 export interface IUserResponse {
   _id: string;
   employeeId?: string;
+  firstName?: string;
+  lastName?: string;
   name: string;
   email: string;
   role: UserRole;
@@ -23,19 +26,23 @@ export interface IUserResponse {
   timing?: string | null;
   joiningDate?: string | null;
   leavingDate?: string | null;
+  joining?: string | null;
+  leaving?: string | null;
   location?: string | null;
+  Branch?: string | null;
+  companybranch?: string | null;
   address?: string | null;
   city?: string | null;
   state?: string | null;
   zip?: string | null;
   experienceLevel?: "Fresher" | "Experienced" | null;
-  experienceYears?: string | null; // ← keep string for API safety
+  experienceYears?: string | null; // keep string for API safety
   previousCompany?: string | null;
   education?: string | null;
   bankAccount?: string | null;
-  salary?: string | null; // ← keep string for API safety
+  salary?: string | null; // keep string for API safety
   additionalInfo?: string | null;
-  createdAt?: Date;
+  createdAt?: string | null;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -45,7 +52,9 @@ function mapUserToResponse(user: ISAddUser): IUserResponse {
   return {
     _id: String(user._id),
     employeeId: user.employeeId,
-    name: user.name,
+    firstName: user.firstName ?? null,
+    lastName: user.lastName ?? null,
+    name: user.name ?? `${user.firstName} ${user.lastName}`,
     email: user.email,
     role: user.role,
     workType: user.workType ?? null,
@@ -59,28 +68,28 @@ function mapUserToResponse(user: ISAddUser): IUserResponse {
     timing: user.timing ?? null,
     joiningDate: user.joiningDate ?? null,
     leavingDate: user.leavingDate ?? null,
-    location: user.location ?? null,
+    joining: user.joining ? user.joining.toISOString() : null,
+    leaving: user.leaving ? user.leaving.toISOString() : null,
+    Branch: user.Branch ?? null,
+    companybranch: user.companybranch ?? null,
     address: user.address ?? null,
     city: user.city ?? null,
     state: user.state ?? null,
     zip: user.zip ?? null,
     experienceLevel: user.experienceLevel ?? null,
-
-    // ✅ FIXED type conversions
     experienceYears:
-      user.experienceYears !== null && user.experienceYears !== undefined
+      user.experienceYears !== undefined && user.experienceYears !== null
         ? String(user.experienceYears)
         : null,
-    salary:
-      user.salary !== null && user.salary !== undefined
-        ? String(user.salary)
-        : null,
-
     previousCompany: user.previousCompany ?? null,
     education: user.education ?? null,
     bankAccount: user.bankAccount ?? null,
+    salary:
+      user.salary !== undefined && user.salary !== null
+        ? String(user.salary)
+        : null,
     additionalInfo: user.additionalInfo ?? null,
-    createdAt: user.createdAt,
+    createdAt: user.createdAt ? user.createdAt.toISOString() : null,
   };
 }
 

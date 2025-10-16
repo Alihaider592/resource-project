@@ -10,6 +10,7 @@ interface DecodedToken {
   exp?: number;
 }
 
+// Type guard to normalize decoded JWT
 function extractDecodedToken(obj: unknown): DecodedToken | null {
   if (typeof obj !== "object" || obj === null) return null;
 
@@ -20,17 +21,19 @@ function extractDecodedToken(obj: unknown): DecodedToken | null {
       ? record.role.toLowerCase().replace(/\s+/g, "")
       : "";
 
+  // Accept both "user" and "simpleuser"
+  const validRoles = ["admin", "teamlead", "hr", "simpleuser", "user"];
+
   if (
     typeof record.id === "string" &&
-    typeof record.name === "string" &&
     typeof record.email === "string" &&
-    ["admin", "teamlead", "hr", "simpleuser"].includes(roleStr)
+    validRoles.includes(roleStr)
   ) {
     return {
       id: record.id,
-      name: record.name,
+      name: typeof record.name === "string" ? record.name : "",
       email: record.email,
-      role: roleStr as "admin" | "teamlead" | "hr" | "simpleuser",
+      role: roleStr === "user" ? "simpleuser" : (roleStr as DecodedToken["role"]),
       iat: typeof record.iat === "number" ? record.iat : undefined,
       exp: typeof record.exp === "number" ? record.exp : undefined,
     };
@@ -59,6 +62,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
+    // ✅ Success: return normalized user data
     return NextResponse.json({ message: "Authorized", user: decoded });
   } catch (err) {
     console.error("Protected Route Error:", err);

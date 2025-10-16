@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 interface User {
   _id: string;
+  firstname:string
   name: string;
   email: string;
   role: string;
@@ -98,8 +99,7 @@ export default function TeamLeadDashboardContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800">Welcome, { ` ${user?.name ?? "Team Lead"}` }</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-3xl font-bold text-gray-800">Welcome, { ` ${user?.name ?? "Team Lead"}` }</h1>        <p className="text-gray-600 mt-1">
           Here’s a quick overview of your projects and team activities.
         </p>
       </div>

@@ -36,6 +36,12 @@ export default function UserPage() {
           setUser(data.user);
           localStorage.setItem("userName", data.user.name);
         }
+        if (!data.user || data.user.role !== "User") {
+          router.push("/login");
+        } else {
+          setUser(data.user);
+          localStorage.setItem("userName", data.user.name);
+        }
       })
       .catch(() => router.push("/login"))
       .finally(() => setLoading(false));

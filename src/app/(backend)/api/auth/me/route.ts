@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import connectDatabase from "@/app/(backend)/lib/db";
+
+// Import models with correct types
 import User, { IUser } from "@/app/(backend)/models/User";
 import TeamLead, { ITeamLead } from "@/app/(backend)/models/teamlead";
 import AddUser, { ISAddUser } from "@/app/(backend)/models/adduser";
-import connectDatabase from "@/app/(backend)/lib/db";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
+/* -------------------------------------------------------------------------- */
+/* TYPES                                                                      */
+/* -------------------------------------------------------------------------- */
 interface DecodedToken extends JwtPayload {
   id: string;
   role: string;
@@ -21,9 +26,15 @@ export interface EmployeeData {
   emergencyContact?: string;
   cnic?: string;
   birthday?: string;
+  joining?: string;
+  leaving?: string;
+  joiningDate?: string;
+  leavingDate?: string;
   gender?: string;
   maritalStatus?: string;
   address?: string;
+  Branch?: string;
+  companybranch?: string;
   city?: string;
   state?: string;
   zip?: string;
@@ -37,8 +48,12 @@ export interface EmployeeData {
   bankAccount?: string;
   salary?: string;
   avatar?: string | null;
+  timing?: string;
 }
 
+/* -------------------------------------------------------------------------- */
+/* HELPER: MAP USER TO EMPLOYEE DATA                                          */
+/* -------------------------------------------------------------------------- */
 const mapUserToEmployeeData = (
   user: IUser | ITeamLead | ISAddUser
 ): EmployeeData => {
@@ -52,9 +67,15 @@ const mapUserToEmployeeData = (
       emergencyContact: user.emergencyContact ?? undefined,
       cnic: user.cnic ?? undefined,
       birthday: user.birthday ?? undefined,
+      joining: user.joining ? user.joining.toISOString() : undefined,
+      leaving: user.leaving ? user.leaving.toISOString() : undefined,
+      joiningDate: user.joiningDate ?? undefined,
+      leavingDate: user.leavingDate ?? undefined,
       gender: user.gender ?? undefined,
       maritalStatus: user.maritalStatus ?? undefined,
       address: user.address ?? undefined,
+      Branch: user.Branch ?? undefined,
+      companybranch: user.companybranch ?? undefined,
       city: user.city ?? undefined,
       state: user.state ?? undefined,
       zip: user.zip ?? undefined,
@@ -69,6 +90,7 @@ const mapUserToEmployeeData = (
       bankAccount: user.bankAccount ?? undefined,
       salary: user.salary != null ? String(user.salary) : undefined,
       avatar: user.avatar ?? null,
+      timing: user.timing ?? undefined,
     };
   }
 
@@ -79,6 +101,9 @@ const mapUserToEmployeeData = (
   };
 };
 
+/* -------------------------------------------------------------------------- */
+/* GET /api/auth/me                                                           */
+/* -------------------------------------------------------------------------- */
 export async function GET(request: Request) {
   try {
     await connectDatabase();
@@ -102,7 +127,6 @@ export async function GET(request: Request) {
 
     const employee: EmployeeData = mapUserToEmployeeData(user);
 
-    // ✅ Return normalized data under "user" so auth logic works
     return NextResponse.json({ success: true, user: employee });
   } catch (error) {
     console.error("Auth error:", error);

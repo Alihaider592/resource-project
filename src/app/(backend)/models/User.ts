@@ -6,7 +6,7 @@ export interface IUser extends Document {
   phonenumber?: string;
   companyname?: string;
   comment?: string;
-  role: "admin" | "hr" | "teamlead" | "simpleuser"; // ✅ consistent lowercase roles
+  role: "admin" | "hr" | "teamlead" | "simple user"; // ✅ consistent lowercase roles
   department?: string;
   team?: string;
   avatar?: string;
@@ -21,8 +21,8 @@ const userSchema = new Schema<IUser>({
   comment: { type: String },
   role: {
     type: String,
-    enum: ["admin", "hr", "teamlead", "simpleuser"], // ✅ lowercase and matches interface
-    default: "simpleuser",
+    enum: ["admin", "hr", "teamlead", "simple user",], // ✅ lowercase and matches interface
+    default: "simple user",
   },
   department: { type: String },
   team: { type: String },

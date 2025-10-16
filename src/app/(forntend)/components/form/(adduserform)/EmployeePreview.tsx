@@ -13,21 +13,34 @@ const EmployeePreview: React.FC<EmployeePreviewProps> = ({ employee }) => {
       <h3 className="text-xl font-semibold text-purple-700 mb-4 text-center">
         Employee Details Preview
       </h3>
+
       <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
-        {Object.entries(employee).map(([key, value]) => (
-          <div key={key} className="flex justify-between border-b py-1">
-            <span className="font-medium capitalize">
-              {key.replace(/([A-Z])/g, " $1")}
-            </span>
-            <span className="text-gray-600">
-              {typeof value === "string"
-                ? value
-                : value instanceof File
-                ? value.name
-                : "-"}
-            </span>
-          </div>
-        ))}
+        {(
+          Object.keys(employee) as (keyof EmployeeData)[]
+        ).map((key) => {
+          const value = employee[key];
+
+          let displayValue: string;
+
+          if (value === undefined || value === null) {
+            displayValue = "-";
+          } else if (value instanceof File) {
+            displayValue = value.name;
+          } else if (typeof value === "string" || typeof value === "number") {
+            displayValue = value.toString();
+          } else {
+            displayValue = JSON.stringify(value);
+          }
+
+          return (
+            <div key={key} className="flex justify-between border-b py-1">
+              <span className="font-medium capitalize">
+                {key.replace(/([A-Z])/g, " $1")}
+              </span>
+              <span className="text-gray-600">{displayValue}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

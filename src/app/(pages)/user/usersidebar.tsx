@@ -36,7 +36,7 @@ export default function UserSidebarLayout({ children }: Props) {
         <nav className="flex flex-col flex-1 mt-4">
           <div className="flex flex-col">
             <Link
-              href="/user/userdashboard"
+              href="/user"
               className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
             >
               <FiHome size={20} />
