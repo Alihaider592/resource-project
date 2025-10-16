@@ -80,7 +80,7 @@ export default function HRDashboard({ userName }: HRDashboardProps) {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        {stats.map((stat)=> (
+        {stats.map((stat) => (
           <motion.div
             key={stat.title}
             whileHover={{ scale: 1.05 }}

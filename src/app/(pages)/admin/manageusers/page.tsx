@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   role?: string;
@@ -22,34 +22,26 @@ export default function ManageUsersPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
   /* -------------------------------------------------------------------------- */
   /* 🧭 Fetch all users                                                         */
   /* -------------------------------------------------------------------------- */
   const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setErrorMsg(null);
-
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.warn("⚠️ No token found — redirecting to login");
         router.push("/login");
         return;
       }
 
       const res = await fetch("/api/admin/getusers", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
 
       if (res.status === 401) {
-        console.warn("🚫 Unauthorized — redirecting to login...");
         router.push("/login");
         return;
       }
@@ -63,8 +55,7 @@ export default function ManageUsersPage() {
       }
 
       const data = await res.json();
-
-      const fetchedUsers = Array.isArray(data)
+      const fetchedUsers: User[] = Array.isArray(data)
         ? data
         : Array.isArray(data?.users)
         ? data.users
@@ -96,9 +87,7 @@ export default function ManageUsersPage() {
       const token = localStorage.getItem("token");
       const res = await fetch(`/api/admin/deleteuser/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json();
@@ -109,7 +98,7 @@ export default function ManageUsersPage() {
       }
 
       if (res.ok) {
-        setUsers((prev) => prev.filter((u) => u.id !== id));
+        setUsers((prev) => prev.filter((u) => u._id !== id));
       } else {
         alert(data.message || "Failed to delete user");
       }
@@ -125,11 +114,27 @@ export default function ManageUsersPage() {
   /* 👤 View profile                                                            */
   /* -------------------------------------------------------------------------- */
   const handleViewProfile = (id: string) => {
-    if (!id) {
-      alert("User ID not found");
-      return;
-    }
+    if (!id) return alert("User ID not found");
     router.push(`/admin/profile/${id}`);
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /* 🧠 Safe image helper                                                       */
+  /* -------------------------------------------------------------------------- */
+  const getSafeImageSrc = (img?: string) => {
+    if (!img) return "/fallback-avatar.png";
+    if (img.startsWith("http") || img.startsWith("/")) return img;
+    return `https://res.cloudinary.com/dk9i3x5la/image/upload/${img.replace(
+      /^uploads\//,
+      ""
+    )}`;
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /* 🧰 Handle image error                                                      */
+  /* -------------------------------------------------------------------------- */
+  const handleImageError = (id: string) => {
+    setImageErrors((prev) => ({ ...prev, [id]: true }));
   };
 
   /* -------------------------------------------------------------------------- */
@@ -141,86 +146,86 @@ export default function ManageUsersPage() {
         Manage <span className="text-indigo-600">Users</span>
       </h1>
 
-      {loading && (
+      {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="w-14 h-14 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
-      )}
-
-      {!loading && errorMsg && (
+      ) : errorMsg ? (
         <div className="text-center text-red-600 font-medium">{errorMsg}</div>
-      )}
-
-      {!loading && !errorMsg && users.length === 0 && (
+      ) : users.length === 0 ? (
         <p className="text-gray-500 text-center text-lg">No users found.</p>
-      )}
-
-      {!loading && !errorMsg && users.length > 0 && (
+      ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {users.map((user) => (
-            <div
-              key={user.id}
-              className="bg-white rounded-2xl shadow-md hover:shadow-xl p-6 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 border border-gray-100"
-            >
-              {user.avatar || user.picture ? (
-                <div className="w-24 h-24 relative">
-                  <Image
-                    src={user.avatar || user.picture || "/fallback-avatar.png"}
-                    alt={user.name}
-                    width={96}
-                    height={96}
-                    className="rounded-full object-cover border-4 border-indigo-100 shadow-sm"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/fallback-avatar.png";
-                    }}
-                  />
+          {users.map((user) => {
+            const imgSrc = getSafeImageSrc(user.avatar || user.picture);
+            const hasError = imageErrors[user._id];
+
+            return (
+              <div
+                key={user._id}
+                className="bg-white rounded-2xl shadow-md hover:shadow-xl p-6 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 border border-gray-100"
+              >
+                {hasError ? (
+                  <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-3xl font-bold shadow-sm">
+                    {user.name?.charAt(0).toUpperCase() || "?"}
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 relative">
+                    <Image
+                      src={imgSrc}
+                      alt={user.name || "User"}
+                      width={96}
+                      height={96}
+                      unoptimized
+                      loading="lazy"
+                      className="rounded-full object-cover border-4 border-indigo-100 shadow-sm"
+                      onError={() => handleImageError(user._id)}
+                    />
+                  </div>
+                )}
+
+                <h3 className="mt-4 text-xl font-semibold text-gray-800">
+                  {user.name}
+                </h3>
+                <p className="text-gray-500 text-sm">{user.email}</p>
+
+                {user.role && (
+                  <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">
+                    {user.role}
+                  </p>
+                )}
+
+                <div className="flex gap-3 w-full justify-center mt-5">
+                  <button
+                    onClick={() => handleViewProfile(user._id)}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition font-medium shadow-md w-full"
+                  >
+                    <FiUser size={16} />
+                    View Profile
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(user._id)}
+                    disabled={deletingId === user._id}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium shadow-md w-full ${
+                      deletingId === user._id
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                  >
+                    {deletingId === user._id ? (
+                      <span className="animate-pulse">Deleting...</span>
+                    ) : (
+                      <>
+                        <Trash2 size={16} />
+                        Delete
+                      </>
+                    )}
+                  </button>
                 </div>
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 font-bold text-lg">
-                  {user.name?.charAt(0).toUpperCase() || "?"}
-                </div>
-              )}
-
-              <h3 className="mt-4 text-xl font-semibold text-gray-800">
-                {user.name}
-              </h3>
-              <p className="text-gray-500 text-sm">{user.email}</p>
-              {user.role && (
-                <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">
-                  {user.role}
-                </p>
-              )}
-
-              <div className="flex gap-3 w-full justify-center mt-5">
-                <button
-                  onClick={() => handleViewProfile(user.id)}
-                  className="flex items-center justify-center cursor-pointer gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition font-medium shadow-md w-full"
-                >
-                  <FiUser size={16} />
-                  View Profile
-                </button>
-
-                <button
-                  onClick={() => handleDelete(user.id)}
-                  disabled={deletingId === user.id}
-                  className={`flex items-center justify-center cursor-pointer gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium shadow-md w-full ${
-                    deletingId === user.id
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }`}
-                >
-                  {deletingId === user.id ? (
-                    <span className="animate-pulse">Deleting...</span>
-                  ) : (
-                    <>
-                      <Trash2 size={16} />
-                      Delete
-                    </>
-                  )}
-                </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

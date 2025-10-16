@@ -5,9 +5,8 @@ import { handleGetAllUsers } from "@/app/(backend)/controllers/admin.controller"
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-/** User type returned from controller */
 interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   role?: string;
@@ -15,11 +14,8 @@ interface User {
   picture?: string | null;
   phonenumber?: string | null;
   companyname?: string | null;
-  createdAt?: Date | string;
+  createdAt?: Date | string | null; // ✅ Fixed type
 }
-
-/** Possible shapes returned by handleGetAllUsers */
-type GetAllUsersResult = User[] | { users: User[] } | unknown;
 
 /**
  * ✅ GET /api/admin/getusers
@@ -27,16 +23,16 @@ type GetAllUsersResult = User[] | { users: User[] } | unknown;
  */
 export async function GET(req: NextRequest) {
   try {
-    // ✅ Verify Access Token
+    // ✅ 1. Verify access token
     const decodedUser = await verifyAccess(req, ["admin", "HR", "Team Lead"]);
     console.log(
       `✅ Access granted for: ${decodedUser.email} (${decodedUser.role})`
     );
 
-    // ✅ Get all users from controller
-    const result: GetAllUsersResult = await handleGetAllUsers();
+    // ✅ 2. Fetch users from controller
+    const result = await handleGetAllUsers();
 
-    // ✅ Normalize to an array safely
+    // ✅ 3. Normalize the output shape
     let users: User[] = [];
 
     if (Array.isArray(result)) {
@@ -44,23 +40,57 @@ export async function GET(req: NextRequest) {
     } else if (
       typeof result === "object" &&
       result !== null &&
-      "users" in result &&
-      Array.isArray((result as { users: unknown }).users)
+      "users" in result
     ) {
-      const typed = result as { users: User[] };
-      users = typed.users;
+      const maybeUsers = (result as { users?: unknown }).users;
+      if (Array.isArray(maybeUsers)) {
+        users = maybeUsers as User[];
+      }
     } else {
       console.warn("⚠️ Unexpected result format from handleGetAllUsers:", result);
     }
 
-    // ✅ Return clean JSON
+    // ✅ 4. Format + sanitize users
+    const cleanUsers: User[] = users.map((u) => ({
+      _id: u._id,
+      name: u.name,
+      email: u.email,
+      role: u.role || "simple user",
+      phonenumber: u.phonenumber || null,
+      companyname: u.companyname || null,
+      createdAt: u.createdAt || null,
+      avatar:
+        u.avatar && u.avatar.startsWith("http")
+          ? u.avatar
+          : u.avatar
+          ? `https://res.cloudinary.com/dk9i3x5la/image/upload/${u.avatar.replace(
+              /^uploads\//,
+              ""
+            )}`
+          : null,
+      picture:
+        u.picture && u.picture.startsWith("http")
+          ? u.picture
+          : u.picture
+          ? `https://res.cloudinary.com/dk9i3x5la/image/upload/${u.picture.replace(
+              /^uploads\//,
+              ""
+            )}`
+          : null,
+    }));
+
+    // ✅ 5. Return response
     return NextResponse.json(
       {
         success: true,
-        users,
+        count: cleanUsers.length,
+        users: cleanUsers,
         fetchedAt: new Date().toISOString(),
       },
-      { status: 200, headers: { "Cache-Control": "no-store" } }
+      {
+        status: 200,
+        headers: { "Cache-Control": "no-store" },
+      }
     );
   } catch (error: unknown) {
     console.error("❌ [GET /api/admin/getusers] Error:", error);

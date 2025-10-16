@@ -11,13 +11,15 @@ import {
 } from "react-icons/fi";
 
 interface UserProfile {
-  id: string;
+  _id?: string;
+  id?: string;
   name: string;
   email: string;
   role?: string;
   department?: string;
   designation?: string;
   picture?: string;
+  avatar?: string;
   joiningDate?: string;
 }
 
@@ -27,6 +29,17 @@ export default function UserProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // ✅ Helper to build correct image URL (Cloudinary safe fallback)
+  const getImageUrl = (img?: string) => {
+    if (!img) return null;
+    if (img.startsWith("http")) return img;
+    // Replace 'dk9i3x5la' with your real Cloudinary cloud name
+    return `https://res.cloudinary.com/dk9i3x5la/image/upload/${img.replace(
+      /^uploads\//,
+      ""
+    )}`;
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -46,45 +59,27 @@ export default function UserProfilePage() {
         }
 
         const res = await fetch(`/api/admin/getuser/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
 
         const contentType = res.headers.get("content-type");
-
-        // ✅ Make sure server returned JSON
-        if (!contentType || !contentType.includes("application/json")) {
-          const text = await res.text();
-          console.error("❌ Non-JSON response from server:", text);
+        if (!contentType?.includes("application/json")) {
+          console.error("❌ Invalid server response:", await res.text());
           throw new Error("Server returned invalid response format.");
         }
 
-        const data: unknown = await res.json();
-
-        // ✅ Validate the response shape
-        if (
-          typeof data === "object" &&
-          data !== null &&
-          "user" in data &&
-          res.ok
-        ) {
-          setUser((data as { user: UserProfile }).user);
+        const data = await res.json();
+        if (res.ok && data?.user) {
+          setUser(data.user);
         } else {
-          const message =
-            (data as { message?: string })?.message ||
-            "Something went wrong while loading the profile.";
-          setErrorMsg(message);
-          setUser(null);
+          setErrorMsg(data?.message || "User not found.");
         }
       } catch (error) {
-        const err =
-          error instanceof Error
-            ? error.message
-            : "Unknown error fetching user.";
-        console.error("❌ Fetch user failed:", err);
-        setErrorMsg(err);
+        console.error("❌ Fetch user failed:", error);
+        setErrorMsg(
+          error instanceof Error ? error.message : "Error fetching user data."
+        );
       } finally {
         setLoading(false);
       }
@@ -126,46 +121,59 @@ export default function UserProfilePage() {
       </div>
     );
 
+  const imageUrl = getImageUrl(user.picture || user.avatar);
+
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-6 flex justify-center">
-      <div className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-3xl">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white py-10 px-6 flex justify-center">
+      <div className="bg-white shadow-xl rounded-2xl p-10 w-full max-w-3xl border border-gray-100">
         <div className="flex flex-col items-center mb-8">
-          {user.picture ? (
+          {imageUrl ? (
             <img
-              src={user.picture}
+              src={imageUrl}
               alt={user.name}
-              className="w-32 h-32 rounded-full border-4 border-purple-300 shadow-lg object-cover"
+              className="w-36 h-36 rounded-full border-4 border-purple-300 shadow-md object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/fallback-avatar.png";
+              }}
             />
           ) : (
-            <div className="w-32 h-32 rounded-full bg-gray-300 flex items-center justify-center text-2xl font-semibold text-gray-700 border-4 border-purple-200 shadow">
+            <div className="w-36 h-36 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-semibold text-gray-700 border-4 border-purple-200 shadow">
               {user.name?.charAt(0).toUpperCase()}
             </div>
           )}
 
           <h1 className="text-3xl font-bold text-gray-800 mt-4">{user.name}</h1>
-          <p className="text-gray-500">{user.role || "simpl user"}</p>
+          <p className="text-gray-500 text-sm capitalize">
+            {user.role || "Simple User"}
+          </p>
         </div>
 
-        <div className="space-y-4 text-gray-700">
+        <div className="space-y-5 text-gray-700 text-base">
           <div className="flex items-center gap-3">
-            <FiMail className="text-purple-600" /> <span>{user.email}</span>
+            <FiMail className="text-purple-600" />
+            <span>{user.email}</span>
           </div>
+
           {user.department && (
             <div className="flex items-center gap-3">
-              <FiBriefcase className="text-purple-600" />{" "}
+              <FiBriefcase className="text-purple-600" />
               <span>{user.department}</span>
             </div>
           )}
+
           {user.designation && (
             <div className="flex items-center gap-3">
-              <FiUser className="text-purple-600" />{" "}
+              <FiUser className="text-purple-600" />
               <span>{user.designation}</span>
             </div>
           )}
+
           {user.joiningDate && (
             <div className="flex items-center gap-3">
-              <FiCalendar className="text-purple-600" />{" "}
-              <span>Joined on {new Date(user.joiningDate).toDateString()}</span>
+              <FiCalendar className="text-purple-600" />
+              <span>
+                Joined on {new Date(user.joiningDate).toLocaleDateString()}
+              </span>
             </div>
           )}
         </div>
