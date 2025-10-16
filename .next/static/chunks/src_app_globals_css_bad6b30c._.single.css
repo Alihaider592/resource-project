@@ -247,7 +247,6 @@
     --text-5xl--line-height: 1;
     --text-7xl: 4.5rem;
     --text-7xl--line-height: 1;
-    --font-weight-normal: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
@@ -837,10 +836,6 @@
     right: 30rem;
   }
 
-  .left-4 {
-    left: calc(var(--spacing) * 4);
-  }
-
   .z-10 {
     z-index: 10;
   }
@@ -996,6 +991,10 @@
     margin-right: calc(var(--spacing) * 2);
   }
 
+  .mr-4 {
+    margin-right: calc(var(--spacing) * 4);
+  }
+
   .mb-0 {
     margin-bottom: calc(var(--spacing) * 0);
   }
@@ -1050,10 +1049,6 @@
 
   .ml-2 {
     margin-left: calc(var(--spacing) * 2);
-  }
-
-  .ml-4 {
-    margin-left: calc(var(--spacing) * 4);
   }
 
   .ml-20 {
@@ -1184,10 +1179,6 @@
 
   .h-28 {
     height: calc(var(--spacing) * 28);
-  }
-
-  .h-32 {
-    height: calc(var(--spacing) * 32);
   }
 
   .h-36 {
@@ -2151,10 +2142,6 @@
     background-color: var(--color-indigo-500);
   }
 
-  .bg-indigo-600 {
-    background-color: var(--color-indigo-600);
-  }
-
   .bg-orange-50 {
     background-color: var(--color-orange-50);
   }
@@ -2396,10 +2383,6 @@
     padding-block: calc(var(--spacing) * 16);
   }
 
-  .py-20 {
-    padding-block: calc(var(--spacing) * 20);
-  }
-
   .py-28 {
     padding-block: calc(var(--spacing) * 28);
   }
@@ -2538,11 +2521,6 @@
   .font-medium {
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
-  }
-
-  .font-normal {
-    --tw-font-weight: var(--font-weight-normal);
-    font-weight: var(--font-weight-normal);
   }
 
   .font-semibold {
@@ -3188,12 +3166,6 @@
   }
 
   @media (hover: hover) {
-    .hover\:bg-indigo-700:hover {
-      background-color: var(--color-indigo-700);
-    }
-  }
-
-  @media (hover: hover) {
     .hover\:bg-orange-500:hover {
       background-color: var(--color-orange-500);
     }
@@ -3292,12 +3264,6 @@
   @media (hover: hover) {
     .hover\:text-gray-600:hover {
       color: var(--color-gray-600);
-    }
-  }
-
-  @media (hover: hover) {
-    .hover\:text-indigo-600:hover {
-      color: var(--color-indigo-600);
     }
   }
 

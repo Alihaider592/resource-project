@@ -65,15 +65,10 @@ export async function handleNewUserRequest(data: NewUserRequest) {
     };
 
     const newUser = await createNewUserService(formattedData);
-    return {
-      success: true,
-      message: "✅ User created successfully",
-      user: newUser,
-    };
+    return newUser;
   } catch (error: unknown) {
-    const err = error as Error;
-    console.error("❌ Create user error:", err.message);
-    throw new Error(`Failed to create user: ${err.message}`);
+    console.error("❌ Create user error:", error);
+    return null;
   }
 }
 
@@ -83,15 +78,10 @@ export async function handleNewUserRequest(data: NewUserRequest) {
 export async function handleGetAllUsers() {
   try {
     const users = await getAllUsersService();
-    return {
-      success: true,
-      message: "✅ Users fetched successfully",
-      users,
-    };
+    return Array.isArray(users) ? users : [];
   } catch (error: unknown) {
-    const err = error as Error;
-    console.error("❌ Get all users error:", err.message);
-    throw new Error(`Failed to fetch users: ${err.message}`);
+    console.error("❌ Get all users error:", error);
+    return [];
   }
 }
 
@@ -101,16 +91,10 @@ export async function handleGetAllUsers() {
 export async function handleGetSingleUser(userId: string) {
   try {
     const user = await getSingleUserService(userId);
-    if (!user) throw new Error("User not found");
-    return {
-      success: true,
-      message: "✅ User fetched successfully",
-      user,
-    };
+    return user ?? null; // ✅ return null if not found
   } catch (error: unknown) {
-    const err = error as Error;
-    console.error("❌ Get single user error:", err.message);
-    throw new Error(`Failed to fetch user: ${err.message}`);
+    console.error("❌ Get single user error:", error);
+    return null;
   }
 }
 
@@ -131,15 +115,10 @@ export async function handleUpdateUser(
     };
 
     const updatedUser = await updateUserService(userId, formattedUpdateData);
-    return {
-      success: true,
-      message: "✅ User updated successfully",
-      user: updatedUser,
-    };
+    return updatedUser ?? null;
   } catch (error: unknown) {
-    const err = error as Error;
-    console.error("❌ Update user error:", err.message);
-    throw new Error(`Failed to update user: ${err.message}`);
+    console.error("❌ Update user error:", error);
+    return null;
   }
 }
 
@@ -149,13 +128,9 @@ export async function handleUpdateUser(
 export async function handleDeleteUserRequest(userId: string) {
   try {
     await deleteUserService(userId);
-    return {
-      success: true,
-      message: "🗑️ User deleted successfully",
-    };
+    return true;
   } catch (error: unknown) {
-    const err = error as Error;
-    console.error("❌ Delete user error:", err.message);
-    throw new Error(`Failed to delete user: ${err.message}`);
+    console.error("❌ Delete user error:", error);
+    return false;
   }
 }

@@ -5,8 +5,9 @@ import { handleGetAllUsers } from "@/app/(backend)/controllers/admin.controller"
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+/** User type returned from controller */
 interface User {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   role?: string;
@@ -14,8 +15,11 @@ interface User {
   picture?: string | null;
   phonenumber?: string | null;
   companyname?: string | null;
-  createdAt?: Date | string | null; // ✅ Fixed type
+  createdAt?: Date | string;
 }
+
+/** Possible shapes returned by handleGetAllUsers */
+type GetAllUsersResult = User[] | { users: User[] } | unknown;
 
 /**
  * ✅ GET /api/admin/getusers
@@ -23,16 +27,16 @@ interface User {
  */
 export async function GET(req: NextRequest) {
   try {
-    // ✅ 1. Verify access token
-    const decodedUser = await verifyAccess(req, ["admin", "HR", "Team Lead"]);
+    // ✅ Verify Access Token
+    const decodedUser = await verifyAccess(req, ["Admin","HR","TeamLead","simple user"]);
     console.log(
       `✅ Access granted for: ${decodedUser.email} (${decodedUser.role})`
     );
 
-    // ✅ 2. Fetch users from controller
-    const result = await handleGetAllUsers();
+    // ✅ Get all users from controller
+    const result: GetAllUsersResult = await handleGetAllUsers();
 
-    // ✅ 3. Normalize the output shape
+    // ✅ Normalize to an array safely
     let users: User[] = [];
 
     if (Array.isArray(result)) {
@@ -40,57 +44,23 @@ export async function GET(req: NextRequest) {
     } else if (
       typeof result === "object" &&
       result !== null &&
-      "users" in result
+      "users" in result &&
+      Array.isArray((result as { users: unknown }).users)
     ) {
-      const maybeUsers = (result as { users?: unknown }).users;
-      if (Array.isArray(maybeUsers)) {
-        users = maybeUsers as User[];
-      }
+      const typed = result as { users: User[] };
+      users = typed.users;
     } else {
       console.warn("⚠️ Unexpected result format from handleGetAllUsers:", result);
     }
 
-    // ✅ 4. Format + sanitize users
-    const cleanUsers: User[] = users.map((u) => ({
-      _id: u._id,
-      name: u.name,
-      email: u.email,
-      role: u.role || "simple user",
-      phonenumber: u.phonenumber || null,
-      companyname: u.companyname || null,
-      createdAt: u.createdAt || null,
-      avatar:
-        u.avatar && u.avatar.startsWith("http")
-          ? u.avatar
-          : u.avatar
-          ? `https://res.cloudinary.com/dk9i3x5la/image/upload/${u.avatar.replace(
-              /^uploads\//,
-              ""
-            )}`
-          : null,
-      picture:
-        u.picture && u.picture.startsWith("http")
-          ? u.picture
-          : u.picture
-          ? `https://res.cloudinary.com/dk9i3x5la/image/upload/${u.picture.replace(
-              /^uploads\//,
-              ""
-            )}`
-          : null,
-    }));
-
-    // ✅ 5. Return response
+    // ✅ Return clean JSON
     return NextResponse.json(
       {
         success: true,
-        count: cleanUsers.length,
-        users: cleanUsers,
+        users,
         fetchedAt: new Date().toISOString(),
       },
-      {
-        status: 200,
-        headers: { "Cache-Control": "no-store" },
-      }
+      { status: 200, headers: { "Cache-Control": "no-store" } }
     );
   } catch (error: unknown) {
     console.error("❌ [GET /api/admin/getusers] Error:", error);

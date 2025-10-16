@@ -28,6 +28,7 @@ export default function ManageUsersPage() {
   /* -------------------------------------------------------------------------- */
   /* 🧭 Fetch all users                                                         */
   /* -------------------------------------------------------------------------- */
+  console.log(ManageUsersPage)
   const fetchUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
@@ -53,7 +54,7 @@ export default function ManageUsersPage() {
         setUsers([]);
         return;
       }
-
+console.log(fetchUsers)
       const data = await res.json();
       const fetchedUsers: User[] = Array.isArray(data)
         ? data
@@ -115,7 +116,7 @@ export default function ManageUsersPage() {
   /* -------------------------------------------------------------------------- */
   const handleViewProfile = (id: string) => {
     if (!id) return alert("User ID not found");
-    router.push(`/admin/profile/${id}`);
+    router.push(`/admin/profile/[id]`);
   };
 
   /* -------------------------------------------------------------------------- */
@@ -197,12 +198,12 @@ export default function ManageUsersPage() {
 
                 <div className="flex gap-3 w-full justify-center mt-5">
                   <button
-                    onClick={() => handleViewProfile(user._id)}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition font-medium shadow-md w-full"
-                  >
-                    <FiUser size={16} />
-                    View Profile
-                  </button>
+  onClick={() => router.push(`/admin/profile/${user._id}`)}
+  className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition font-medium shadow-md w-full"
+>
+  <FiUser size={16} />
+  View Profile
+</button>
 
                   <button
                     onClick={() => handleDelete(user._id)}

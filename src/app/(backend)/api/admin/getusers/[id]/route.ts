@@ -1,48 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
+import User from "@/app/(backend)/models/adduser";
+import connectDatabase from "@/app/(backend)/lib/db";
+import mongoose from "mongoose";
 import { verifyAccess, AuthError } from "@/utils/authMiddleware";
-import { handleGetSingleUser } from "@/app/(backend)/controllers/admin.controller";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+interface Params {
+  id?: string;
+}
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, { params }: { params: Params }) {
   try {
-    const userId = params?.id;
-    if (!userId) {
+    // ✅ Verify auth and allowed roles
+    await verifyAccess(req, ["Admin", "HR", "TeamLead"]);
+
+    await connectDatabase();
+
+    const id = params?.id?.trim();
+    if (!id) {
       return NextResponse.json(
-        { success: false, message: "User ID missing in request." },
+        { message: "User ID is required" },
         { status: 400 }
       );
     }
 
-    const decodedUser = await verifyAccess(req, ["admin", "HR", "Team Lead"]);
-    console.log(`✅ Access granted for: ${decodedUser.email} (${decodedUser.role})`);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ message: "Invalid user ID" }, { status: 400 });
+    }
 
-    const user = await handleGetSingleUser(userId);
+    const user = await User.findById(id).lean();
 
-    // ✅ Return JSON in frontend-compatible format
-    return NextResponse.json(
-      { success: true, user },
-      { status: 200, headers: { "Cache-Control": "no-store" } }
-    );
-  } catch (error: unknown) {
-    console.error("❌ GET /api/admin/getuser/[id] Error:", error);
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
 
+    // ✅ Return user in consistent API response
+    return NextResponse.json({ user, message: "User fetched successfully" }, { status: 200 });
+  } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json(
-        { success: false, message: error.message },
+        { message: error.message },
         { status: error.statusCode }
       );
     }
 
     const message = error instanceof Error ? error.message : "Internal Server Error";
-
-    return NextResponse.json(
-      { success: false, message },
-      { status: 500 }
-    );
+    return NextResponse.json({ message }, { status: 500 });
   }
 }

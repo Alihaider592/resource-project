@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
+import type { UserRole } from "@/app/(backend)/models/adduser"; // ✅ use same type as DB model
 
 // ✅ Secret key setup (throw error if missing)
 const SECRET = process.env.JWT_SECRET;
@@ -7,13 +8,11 @@ if (!SECRET) {
   console.warn("⚠️ WARNING: JWT_SECRET is missing from environment variables!");
 }
 
-export type UserRole = "admin" | "HR" | "Team Lead" | "simple user"|"User";
-
 export interface DecodedUser {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: UserRole; // ✅ same consistent role type
   iat?: number;
   exp?: number;
 }
