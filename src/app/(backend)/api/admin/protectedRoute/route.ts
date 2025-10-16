@@ -10,20 +10,21 @@ interface DecodedToken {
   exp?: number;
 }
 
-// Type guard to normalize decoded JWT
+// Normalize JWT payload safely
 function extractDecodedToken(obj: unknown): DecodedToken | null {
   if (typeof obj !== "object" || obj === null) return null;
 
   const record = obj as Record<string, unknown>;
+  let roleStr = typeof record.role === "string"
+    ? record.role.toLowerCase().replace(/\s+/g, "")
+    : "";
 
-  const roleStr =
-    typeof record.role === "string"
-      ? record.role.toLowerCase().replace(/\s+/g, "")
-      : "";
+  // ✅ Normalize all possible "user" variations to "simpleuser"
+  if (roleStr === "user" || roleStr === "simpleuser" || roleStr === "simple user") {
+    roleStr = "simpleuser";
+  }
 
-  // Accept both "user" and "simpleuser"
-  const validRoles = ["admin", "teamlead", "hr", "simpleuser", "user"];
-
+  const validRoles = ["admin", "teamlead", "hr", "simpleuser"];
   if (
     typeof record.id === "string" &&
     typeof record.email === "string" &&
@@ -33,7 +34,7 @@ function extractDecodedToken(obj: unknown): DecodedToken | null {
       id: record.id,
       name: typeof record.name === "string" ? record.name : "",
       email: record.email,
-      role: roleStr === "user" ? "simpleuser" : (roleStr as DecodedToken["role"]),
+      role: roleStr as DecodedToken["role"],
       iat: typeof record.iat === "number" ? record.iat : undefined,
       exp: typeof record.exp === "number" ? record.exp : undefined,
     };
@@ -44,7 +45,7 @@ function extractDecodedToken(obj: unknown): DecodedToken | null {
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("Authorization");
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -54,7 +55,6 @@ export async function GET(req: NextRequest) {
     if (!secret) throw new Error("JWT_SECRET not defined");
 
     const decodedRaw = jwt.verify(token, secret) as unknown;
-
     const decoded = extractDecodedToken(decodedRaw);
 
     if (!decoded) {
@@ -62,7 +62,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    // ✅ Success: return normalized user data
     return NextResponse.json({ message: "Authorized", user: decoded });
   } catch (err) {
     console.error("Protected Route Error:", err);

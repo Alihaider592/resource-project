@@ -1,14 +1,15 @@
 {
-  "/(backend)/api/admin/adduser/route": "app/(backend)/api/admin/adduser/route.js",
+  "/(backend)/api/admin/getusers/route": "app/(backend)/api/admin/getusers/route.js",
   "/(backend)/api/admin/protectedRoute/route": "app/(backend)/api/admin/protectedRoute/route.js",
   "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
   "/(backend)/api/auth/me/route": "app/(backend)/api/auth/me/route.js",
   "/(pages)/hr/Profile/page": "app/(pages)/hr/Profile/page.js",
   "/(pages)/hr/addemployee/page": "app/(pages)/hr/addemployee/page.js",
+  "/(pages)/hr/manage/page": "app/(pages)/hr/manage/page.js",
   "/(pages)/hr/page": "app/(pages)/hr/page.js",
   "/(pages)/login/page": "app/(pages)/login/page.js",
+  "/(pages)/teamlead/page": "app/(pages)/teamlead/page.js",
   "/(pages)/user/page": "app/(pages)/user/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js"
 }

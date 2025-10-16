@@ -19,10 +19,11 @@ export async function POST(req: NextRequest) {
 
     const { token, user } = await handleLoginRequest({ email, password });
 
-    const normalizedUser = {
-      ...user,
-      role: user.role?.toLowerCase().replace(/\s+/g, ""),
-    };
+    // ✅ Normalize role safely
+    let role = (user.role || "").toLowerCase().replace(/\s+/g, "");
+    if (role === "user" || role === "simple user") role = "simpleuser";
+
+    const normalizedUser = { ...user, role };
 
     return NextResponse.json(
       {
@@ -38,14 +39,8 @@ export async function POST(req: NextRequest) {
     console.error("❌ Login Route Handler Error:", errorMessage);
 
     let statusCode = 500;
-
-    if (errorMessage.includes("required")) {
-      statusCode = 400;
-    } else if (errorMessage.includes("Invalid email or password")) {
-      statusCode = 401;
-    } else if (errorMessage.includes("JWT_SECRET")) {
-      statusCode = 500;
-    }
+    if (errorMessage.includes("required")) statusCode = 400;
+    else if (errorMessage.includes("Invalid email or password")) statusCode = 401;
 
     return NextResponse.json(
       { error: errorMessage || "Login Failed" },

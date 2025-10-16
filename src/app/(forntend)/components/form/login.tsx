@@ -30,7 +30,6 @@ export default function LoginForm() {
     setSuccess("");
 
     try {
-      // ✅ Step 1: Login request
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,37 +48,37 @@ export default function LoginForm() {
         return;
       }
 
+      // Normalize role: "user" → "simpleuser"
       const role = data.user.role.toLowerCase().replace(/\s+/g, "");
+      const normalizedRole = role === "user" ? "simpleuser" : role;
 
-      // ✅ Save to localStorage
+      // Save token and role
       localStorage.setItem("token", data.token);
       localStorage.setItem("userName", data.user.name);
-      localStorage.setItem("userRole", role);
+      localStorage.setItem("userRole", normalizedRole);
       document.cookie = `token=${data.token}; path=/;`;
 
-      // ✅ Step 2: Verify token via protected route
+      // Verify token once
       const verifyRes = await fetch("/api/admin/protectedRoute", {
         method: "GET",
-        headers: {
-          "Authorization": `Bearer ${data.token}`,
-        },
+        headers: { Authorization: `Bearer ${data.token}` },
       });
 
       if (!verifyRes.ok) {
         const errData = await verifyRes.json().catch(() => ({}));
-        console.error("❌ Protected route access failed:", errData);
-        setError(errData.message || "Authentication verification failed. Please log in again.");
+        console.error("Protected route failed:", errData);
+        setError(errData.message || "Auth verification failed. Please log in again.");
         return;
       }
 
       const verified = await verifyRes.json();
-      console.log("✅ Verified user:", verified);
+      console.log("Verified user:", verified);
 
       setSuccess("Login successful ✅");
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // ✅ Step 3: Redirect based on role
-      switch (role) {
+      // Redirect based on normalized role
+      switch (normalizedRole) {
         case "admin":
           router.push("/admin");
           break;
@@ -92,14 +91,10 @@ export default function LoginForm() {
         case "simpleuser":
           router.push("/user");
           break;
-          case "User":
-          router.push("/user");
-          break;
         default:
           router.push("/");
           break;
       }
-
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       console.error("Login error:", message);
