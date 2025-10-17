@@ -1,12 +1,13 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
+// Interface for LeaveRequest document
 export interface ILeaveRequest extends Document {
-  userId: string;
+  userId: Types.ObjectId; // ✅ Use ObjectId for MongoDB references
   leaveType: string;
   startDate: Date;
   endDate: Date;
   reason: string;
-  status: "pending" | "approved" | "rejected"; // ✅ new field
+  status: "pending" | "approved" | "rejected"; // ✅ status field
   approvers: {
     teamLead?: string | null;
     hr?: string | null;
@@ -15,13 +16,12 @@ export interface ILeaveRequest extends Document {
 
 const LeaveRequestSchema = new Schema<ILeaveRequest>(
   {
-    userId: { type: String, required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true }, // ✅ reference to User collection
     leaveType: { type: String, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     reason: { type: String, required: true },
 
-    // ✅ new default field
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],
@@ -36,6 +36,7 @@ const LeaveRequestSchema = new Schema<ILeaveRequest>(
   { timestamps: true }
 );
 
+// Avoid model overwrite in dev mode
 const LeaveRequest =
   mongoose.models.LeaveRequest ||
   mongoose.model<ILeaveRequest>("LeaveRequest", LeaveRequestSchema);
