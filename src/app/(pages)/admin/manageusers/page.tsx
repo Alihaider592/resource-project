@@ -25,27 +25,17 @@ export default function ManageUsersPage() {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
-  /* -------------------------------------------------------------------------- */
-  /* 🧭 Fetch all users                                                         */
-  /* -------------------------------------------------------------------------- */
-  console.log(ManageUsersPage)
   const fetchUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        router.push("/login");
-        return;
-      }
+      if (!token) return router.push("/login");
 
       const res = await fetch("/api/admin/getusers", {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
 
-      if (res.status === 401) {
-        router.push("/login");
-        return;
-      }
+      if (res.status === 401) return router.push("/login");
 
       if (!res.ok) {
         const text = await res.text();
@@ -54,7 +44,7 @@ export default function ManageUsersPage() {
         setUsers([]);
         return;
       }
-console.log(fetchUsers)
+
       const data = await res.json();
       const fetchedUsers: User[] = Array.isArray(data)
         ? data
@@ -77,9 +67,6 @@ console.log(fetchUsers)
     fetchUsers();
   }, [fetchUsers]);
 
-  /* -------------------------------------------------------------------------- */
-  /* ❌ Delete user                                                             */
-  /* -------------------------------------------------------------------------- */
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
     setDeletingId(id);
@@ -93,16 +80,10 @@ console.log(fetchUsers)
 
       const data = await res.json();
 
-      if (res.status === 401) {
-        router.push("/login");
-        return;
-      }
+      if (res.status === 401) return router.push("/login");
 
-      if (res.ok) {
-        setUsers((prev) => prev.filter((u) => u._id !== id));
-      } else {
-        alert(data.message || "Failed to delete user");
-      }
+      if (res.ok) setUsers((prev) => prev.filter((u) => u._id !== id));
+      else alert(data.message || "Failed to delete user");
     } catch (err) {
       console.error("Delete error:", err);
       alert("Server error while deleting user.");
@@ -111,17 +92,6 @@ console.log(fetchUsers)
     }
   };
 
-  /* -------------------------------------------------------------------------- */
-  /* 👤 View profile                                                            */
-  /* -------------------------------------------------------------------------- */
-  const handleViewProfile = (id: string) => {
-    if (!id) return alert("User ID not found");
-    router.push(`/admin/profile/[id]`);
-  };
-
-  /* -------------------------------------------------------------------------- */
-  /* 🧠 Safe image helper                                                       */
-  /* -------------------------------------------------------------------------- */
   const getSafeImageSrc = (img?: string) => {
     if (!img) return "/fallback-avatar.png";
     if (img.startsWith("http") || img.startsWith("/")) return img;
@@ -131,25 +101,19 @@ console.log(fetchUsers)
     )}`;
   };
 
-  /* -------------------------------------------------------------------------- */
-  /* 🧰 Handle image error                                                      */
-  /* -------------------------------------------------------------------------- */
   const handleImageError = (id: string) => {
     setImageErrors((prev) => ({ ...prev, [id]: true }));
   };
 
-  /* -------------------------------------------------------------------------- */
-  /* 🎨 UI Render                                                              */
-  /* -------------------------------------------------------------------------- */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-8">
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-10 tracking-tight">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 py-12 px-8">
+      <h1 className="text-5xl font-extrabold text-gray-900 mb-12 tracking-tight text-center">
         Manage <span className="text-indigo-600">Users</span>
       </h1>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="w-14 h-14 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : errorMsg ? (
         <div className="text-center text-red-600 font-medium">{errorMsg}</div>
@@ -164,62 +128,58 @@ console.log(fetchUsers)
             return (
               <div
                 key={user._id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-xl p-6 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 border border-gray-100"
+                className="flex flex-col items-center bg-white rounded-2xl shadow-lg hover:shadow-2xl p-5 transition-all duration-300 border border-gray-100"
               >
-                {hasError ? (
-                  <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-3xl font-bold shadow-sm">
-                    {user.name?.charAt(0).toUpperCase() || "?"}
-                  </div>
-                ) : (
-                  <div className="w-24 h-24 relative">
+                {/* Avatar with ring */}
+                <div className="w-20 h-20 relative mb-4 flex-shrink-0">
+                  {hasError ? (
+                    <div className="w-full h-full rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-2xl font-bold shadow ring-2 ring-indigo-500 ring-offset-2">
+                      {user.name?.charAt(0).toUpperCase() || "?"}
+                    </div>
+                  ) : (
                     <Image
                       src={imgSrc}
                       alt={user.name || "User"}
-                      width={96}
-                      height={96}
-                      unoptimized
-                      loading="lazy"
-                      className="rounded-full object-cover border-4 border-indigo-100 shadow-sm"
+                      width={80}
+                      height={80}
+                      className="rounded-full object-cover border-2 border-indigo-100 shadow ring-2 ring-indigo-500 ring-offset-2"
                       onError={() => handleImageError(user._id)}
                     />
-                  </div>
-                )}
+                  )}
+                </div>
 
-                <h3 className="mt-4 text-xl font-semibold text-gray-800">
-                  {user.name}
-                </h3>
+                {/* User info */}
+                <h3 className="text-lg font-semibold text-gray-800">{user.name}</h3>
                 <p className="text-gray-500 text-sm">{user.email}</p>
-
                 {user.role && (
-                  <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">
+                  <span className="inline-block mt-1 px-2 py-1 text-xs font-semibold text-white rounded-full bg-gradient-to-r from-indigo-500 to-purple-500">
                     {user.role}
-                  </p>
+                  </span>
                 )}
 
-                <div className="flex gap-3 w-full justify-center mt-5">
+                {/* Buttons */}
+                <div className="flex gap-3 mt-4 w-full">
                   <button
-  onClick={() => router.push(`/admin/profile/${user._id}`)}
-  className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition font-medium shadow-md w-full"
->
-  <FiUser size={16} />
-  View Profile
-</button>
+                    onClick={() => router.push(`/admin/profile/${user._id}`)}
+                    className="flex-1 cursor-pointer flex items-center justify-center gap-1 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-semibold hover:from-purple-500 hover:to-indigo-500 shadow-sm transition"
+                  >
+                    <FiUser size={14} /> Profile
+                  </button>
 
                   <button
                     onClick={() => handleDelete(user._id)}
                     disabled={deletingId === user._id}
-                    className={`flex items-center justify-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium shadow-md w-full ${
+                    className={`flex-1 flex cursor-pointer items-center justify-center gap-1 px-3 py-1.5 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl font-semibold hover:from-pink-500 hover:to-red-500 shadow-sm transition ${
                       deletingId === user._id
                         ? "opacity-50 cursor-not-allowed"
                         : ""
                     }`}
                   >
                     {deletingId === user._id ? (
-                      <span className="animate-pulse">Deleting...</span>
+                      <span className="animate-pulse text-xs">Deleting...</span>
                     ) : (
                       <>
-                        <Trash2 size={16} />
-                        Delete
+                        <Trash2 size={14} /> Delete
                       </>
                     )}
                   </button>

@@ -4,11 +4,10 @@ import connectDatabase from "@/app/(backend)/lib/db";
 import mongoose from "mongoose";
 import { verifyAccess, AuthError } from "@/utils/authMiddleware";
 
-interface Params {
-  id?: string;
-}
-
-export async function GET(req: NextRequest, { params }: { params: Params }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } } 
+) {
   try {
     await verifyAccess(req, ["Admin", "HR", "TeamLead"]);
 
@@ -16,10 +15,7 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
 
     const id = params?.id?.trim();
     if (!id) {
-      return NextResponse.json(
-        { message: "User ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "User ID is required" }, { status: 400 });
     }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -27,18 +23,17 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
     }
 
     const user = await User.findById(id).lean();
-
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ user, message: "User fetched successfully" }, { status: 200 });
+    // Remove sensitive fields
+    const { password, createdAt, updatedAt, joiningDate, leavingDate, ...safeUser } = user;
+
+    return NextResponse.json({ user: safeUser, message: "User fetched successfully" }, { status: 200 });
   } catch (error) {
     if (error instanceof AuthError) {
-      return NextResponse.json(
-        { message: error.message },
-        { status: error.statusCode }
-      );
+      return NextResponse.json({ message: error.message }, { status: error.statusCode });
     }
 
     const message = error instanceof Error ? error.message : "Internal Server Error";

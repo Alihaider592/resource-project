@@ -4,6 +4,7 @@
   "/(backend)/api/admin/protectedRoute/route": "app/(backend)/api/admin/protectedRoute/route.js",
   "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
   "/(backend)/api/auth/me/route": "app/(backend)/api/auth/me/route.js",
+  "/(pages)/admin/manageusers/page": "app/(pages)/admin/manageusers/page.js",
   "/(pages)/admin/page": "app/(pages)/admin/page.js",
   "/(pages)/admin/profile/[id]/page": "app/(pages)/admin/profile/[id]/page.js",
   "/(pages)/hr/Profile/page": "app/(pages)/hr/Profile/page.js",
@@ -12,5 +13,6 @@
   "/(pages)/hr/page": "app/(pages)/hr/page.js",
   "/(pages)/login/page": "app/(pages)/login/page.js",
   "/_not-found/page": "app/_not-found/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js"
 }
