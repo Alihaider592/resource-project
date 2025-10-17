@@ -18,6 +18,7 @@ interface DecodedToken extends JwtPayload {
 }
 
 export interface EmployeeData {
+  _id?: string; // Added this line
   employeeId?: string;
   firstName?: string;
   lastName?: string;
@@ -59,6 +60,7 @@ const mapUserToEmployeeData = (
 ): EmployeeData => {
   if ("employeeId" in user) {
     return {
+      _id: user._id?.toString(), // Added this line
       employeeId: user.employeeId ?? undefined,
       firstName: user.firstName ?? undefined,
       lastName: user.lastName ?? undefined,
@@ -95,6 +97,7 @@ const mapUserToEmployeeData = (
   }
 
   return {
+    _id: user._id?.toString(), // Added this line
     email: user.email,
     role: user.role,
     avatar: "avatar" in user ? user.avatar ?? null : null,

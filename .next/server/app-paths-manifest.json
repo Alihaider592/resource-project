@@ -1,18 +1,21 @@
 {
+  "/(backend)/api/admin/adduser/route": "app/(backend)/api/admin/adduser/route.js",
   "/(backend)/api/admin/getusers/[id]/route": "app/(backend)/api/admin/getusers/[id]/route.js",
   "/(backend)/api/admin/getusers/route": "app/(backend)/api/admin/getusers/route.js",
   "/(backend)/api/admin/protectedRoute/route": "app/(backend)/api/admin/protectedRoute/route.js",
+  "/(backend)/api/admin/updateuser/[id]/route": "app/(backend)/api/admin/updateuser/[id]/route.js",
   "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
   "/(backend)/api/auth/me/route": "app/(backend)/api/auth/me/route.js",
+  "/(pages)/admin/addusers/page": "app/(pages)/admin/addusers/page.js",
   "/(pages)/admin/manageusers/page": "app/(pages)/admin/manageusers/page.js",
   "/(pages)/admin/page": "app/(pages)/admin/page.js",
   "/(pages)/admin/profile/[id]/page": "app/(pages)/admin/profile/[id]/page.js",
+  "/(pages)/admin/profile/page": "app/(pages)/admin/profile/page.js",
   "/(pages)/hr/Profile/page": "app/(pages)/hr/Profile/page.js",
-  "/(pages)/hr/addemployee/page": "app/(pages)/hr/addemployee/page.js",
   "/(pages)/hr/manage/page": "app/(pages)/hr/manage/page.js",
   "/(pages)/hr/page": "app/(pages)/hr/page.js",
   "/(pages)/login/page": "app/(pages)/login/page.js",
+  "/(pages)/user/page": "app/(pages)/user/page.js",
   "/_not-found/page": "app/_not-found/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/page": "app/page.js"
+  "/favicon.ico/route": "app/favicon.ico/route.js"
 }
