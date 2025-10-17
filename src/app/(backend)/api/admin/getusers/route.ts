@@ -5,7 +5,6 @@ import { handleGetAllUsers } from "@/app/(backend)/controllers/admin.controller"
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-/** User type returned from controller */
 interface User {
   id: string;
   name: string;
@@ -18,25 +17,19 @@ interface User {
   createdAt?: Date | string;
 }
 
-/** Possible shapes returned by handleGetAllUsers */
 type GetAllUsersResult = User[] | { users: User[] } | unknown;
 
-/**
- * ✅ GET /api/admin/getusers
- * Roles allowed: Admin, HR, Team Lead
- */
 export async function GET(req: NextRequest) {
   try {
-    // ✅ Verify Access Token
     const decodedUser = await verifyAccess(req, ["Admin","HR","TeamLead","simple user"]);
     console.log(
       `✅ Access granted for: ${decodedUser.email} (${decodedUser.role})`
     );
 
-    // ✅ Get all users from controller
+    
     const result: GetAllUsersResult = await handleGetAllUsers();
 
-    // ✅ Normalize to an array safely
+    
     let users: User[] = [];
 
     if (Array.isArray(result)) {
@@ -53,7 +46,7 @@ export async function GET(req: NextRequest) {
       console.warn("⚠️ Unexpected result format from handleGetAllUsers:", result);
     }
 
-    // ✅ Return clean JSON
+    
     return NextResponse.json(
       {
         success: true,

@@ -10,7 +10,6 @@ interface Params {
 
 export async function GET(req: NextRequest, { params }: { params: Params }) {
   try {
-    // ✅ Verify auth and allowed roles
     await verifyAccess(req, ["Admin", "HR", "TeamLead"]);
 
     await connectDatabase();
@@ -33,7 +32,6 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // ✅ Return user in consistent API response
     return NextResponse.json({ user, message: "User fetched successfully" }, { status: 200 });
   } catch (error) {
     if (error instanceof AuthError) {

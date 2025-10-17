@@ -2,37 +2,24 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { FiMail, FiUser, FiBriefcase, FiCalendar, FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft } from "react-icons/fi";
 import axios from "axios";
 
-interface UserProfile {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role?: string;
-  department?: string;
-  designation?: string;
-  avatar?: string;
-  picture?: string;
-  joiningDate?: string;
-}
-
-// API response can be either a user or an error message
 interface ApiResponse {
-  user?: UserProfile;
+  user?: Record<string, unknown>; 
   message?: string;
 }
 
 const AdminUserProfile = () => {
   const params = useParams();
   const router = useRouter();
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const getImageUrl = (img?: string) => {
     if (!img) return null;
+    if (typeof img !== "string") return null;
     if (img.startsWith("http")) return img;
     return `https://res.cloudinary.com/dk9i3x5la/image/upload/${img.replace(/^uploads\//, "")}`;
   };
@@ -45,7 +32,6 @@ const AdminUserProfile = () => {
       setErrorMsg(null);
 
       try {
-        // ✅ Get token from localStorage
         const token = localStorage.getItem("token");
         if (!token) {
           setErrorMsg("Unauthorized: No token found. Please log in.");
@@ -53,7 +39,6 @@ const AdminUserProfile = () => {
           return;
         }
 
-        // ✅ Fetch user with Authorization header
         const res = await axios.get<ApiResponse>(`/api/admin/getusers/${params.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -63,7 +48,7 @@ const AdminUserProfile = () => {
         } else {
           setErrorMsg(res.data.message || "User not found.");
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("❌ Fetch user failed:", error);
 
         if (axios.isAxiosError(error)) {
@@ -109,7 +94,7 @@ const AdminUserProfile = () => {
       </div>
     );
 
-  const imageUrl = getImageUrl(user.picture || user.avatar);
+  const imageUrl = getImageUrl(user.picture as string || user.avatar as string);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white py-10 px-6 flex justify-center">
@@ -117,46 +102,33 @@ const AdminUserProfile = () => {
         <div className="flex flex-col items-center mb-8">
           {imageUrl ? (
             <img
-              src={imageUrl}
-              alt={`${user.firstName} ${user.lastName}`}
+              // src={imageUrl}
+              alt={`${user.firstName as string || "User"} ${user.lastName as string || ""}`}
               className="w-36 h-36 rounded-full border-4 border-purple-300 shadow-md object-cover"
               onError={(e) => ((e.target as HTMLImageElement).src = "/fallback-avatar.png")}
             />
           ) : (
             <div className="w-36 h-36 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-semibold text-gray-700 border-4 border-purple-200 shadow">
-              {user.firstName?.charAt(0).toUpperCase()}
+              {(user.firstName as string)?.charAt(0)?.toUpperCase() || "U"}
             </div>
           )}
 
           <h1 className="text-3xl font-bold text-gray-800 mt-4">
-            {user.firstName} {user.lastName}
+            {user.firstName as string} {user.lastName as string}
           </h1>
-          <p className="text-gray-500 text-sm capitalize">{user.role || "Simple User"}</p>
+          <p className="text-gray-500 text-sm capitalize">{user.role as string || "Simple User"}</p>
         </div>
 
-        <div className="space-y-5 text-gray-700 text-base">
-          <div className="flex items-center gap-3">
-            <FiMail className="text-purple-600" />
-            <span>{user.email}</span>
-          </div>
-          {user.department && (
-            <div className="flex items-center gap-3">
-              <FiBriefcase className="text-purple-600" />
-              <span>{user.department}</span>
-            </div>
-          )}
-          {user.designation && (
-            <div className="flex items-center gap-3">
-              <FiUser className="text-purple-600" />
-              <span>{user.designation}</span>
-            </div>
-          )}
-          {user.joiningDate && (
-            <div className="flex items-center gap-3">
-              <FiCalendar className="text-purple-600" />
-              <span>Joined on {new Date(user.joiningDate).toLocaleDateString()}</span>
-            </div>
-          )}
+        <div className="space-y-3 text-gray-700 text-base">
+          {Object.entries(user).map(([key, value]) => {
+            if (!value || key === "avatar" || key === "picture" || key === "_id") return null;
+            return (
+              <div key={key} className="flex gap-3">
+                <span className="font-semibold capitalize">{key.replace(/([A-Z])/g, " $1")}:</span>
+                <span>{typeof value === "string" && key.toLowerCase().includes("date") ? new Date(value).toLocaleDateString() : value.toString()}</span>
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-10 flex justify-center">
