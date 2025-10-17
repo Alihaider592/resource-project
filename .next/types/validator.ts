@@ -218,6 +218,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/(pages)/user/request/leaves/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/user/request/leaves">> = Specific
+  const handler = {} as typeof import("../../src/app/(pages)/user/request/leaves/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/(pages)/user/request/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/user/request">> = Specific
+  const handler = {} as typeof import("../../src/app/(pages)/user/request/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/">> = Specific
@@ -321,6 +339,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/teamled/[id]">> = Specific
   const handler = {} as typeof import("../../src/app/(backend)/api/teamled/[id]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/(backend)/api/user/profile/request/leave/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/user/profile/request/leave">> = Specific
+  const handler = {} as typeof import("../../src/app/(backend)/api/user/profile/request/leave/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

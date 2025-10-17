@@ -9,10 +9,11 @@ if (!SECRET) {
 }
 
 export interface DecodedUser {
-  id: string;
+  _id?: string; // MongoDB ObjectId
+  id?: string;  // fallback ID
   name: string;
   email: string;
-  role: UserRole; // ✅ same consistent role type
+  role: UserRole; // ✅ consistent role type
   iat?: number;
   exp?: number;
 }
@@ -35,7 +36,7 @@ export class AuthError extends Error {
  */
 export async function verifyAccess(
   req: NextRequest,
-  allowedRoles: UserRole[] = [] // 👈 optional now
+  allowedRoles: UserRole[] = [] // optional
 ): Promise<DecodedUser> {
   const authHeader = req.headers.get("authorization");
 

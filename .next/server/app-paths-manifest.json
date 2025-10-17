@@ -1,16 +1,15 @@
 {
-  "/(backend)/api/admin/getusers/route": "app/(backend)/api/admin/getusers/route.js",
   "/(backend)/api/admin/protectedRoute/route": "app/(backend)/api/admin/protectedRoute/route.js",
-  "/(backend)/api/admin/updateuser/[id]/route": "app/(backend)/api/admin/updateuser/[id]/route.js",
   "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
   "/(backend)/api/auth/me/route": "app/(backend)/api/auth/me/route.js",
-  "/(pages)/hr/Profile/page": "app/(pages)/hr/Profile/page.js",
-  "/(pages)/hr/manage/page": "app/(pages)/hr/manage/page.js",
-  "/(pages)/hr/page": "app/(pages)/hr/page.js",
+  "/(backend)/api/user/form/route": "app/(backend)/api/user/form/route.js",
+  "/(backend)/api/user/profile/request/leave/route": "app/(backend)/api/user/profile/request/leave/route.js",
   "/(pages)/login/page": "app/(pages)/login/page.js",
-  "/(pages)/teamlead/page": "app/(pages)/teamlead/page.js",
-  "/(pages)/teamlead/profile/page": "app/(pages)/teamlead/profile/page.js",
+  "/(pages)/user/leaves/page": "app/(pages)/user/leaves/page.js",
   "/(pages)/user/page": "app/(pages)/user/page.js",
   "/(pages)/user/profile/page": "app/(pages)/user/profile/page.js",
-  "/_not-found/page": "app/_not-found/page.js"
+  "/(pages)/user/request/leaves/page": "app/(pages)/user/request/leaves/page.js",
+  "/(pages)/user/request/page": "app/(pages)/user/request/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js"
 }

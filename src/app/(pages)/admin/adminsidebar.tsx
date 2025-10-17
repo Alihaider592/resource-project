@@ -10,7 +10,7 @@ import {
   FiLogOut,
   FiMenu,
   FiPlus,
-  FiHome,
+  FiGrid,
   FiUser,
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
@@ -68,8 +68,8 @@ export default function AdminDashboardLayout({ children }: Props) {
             href="/admin"
             className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
           >
-            <FiHome size={20} />
-            {isSidebarOpen && <span>Home</span>}
+            <FiGrid size={20} />
+            {isSidebarOpen && <span>Dashboard</span>}
           </Link>
 
           {/* ✅ Updated Dynamic Profile Button */}
