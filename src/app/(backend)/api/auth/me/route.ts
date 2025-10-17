@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import connectDatabase from "@/app/(backend)/lib/db";
 
-// Import models with correct types
 import User, { IUser } from "@/app/(backend)/models/User";
 import TeamLead, { ITeamLead } from "@/app/(backend)/models/teamlead";
 import AddUser, { ISAddUser } from "@/app/(backend)/models/adduser";
@@ -18,7 +17,7 @@ interface DecodedToken extends JwtPayload {
 }
 
 export interface EmployeeData {
-  _id?: string; // Added this line
+  _id?: string;
   employeeId?: string;
   firstName?: string;
   lastName?: string;
@@ -60,7 +59,7 @@ const mapUserToEmployeeData = (
 ): EmployeeData => {
   if ("employeeId" in user) {
     return {
-      _id: user._id?.toString(), // Added this line
+      _id: user._id?.toString(),
       employeeId: user.employeeId ?? undefined,
       firstName: user.firstName ?? undefined,
       lastName: user.lastName ?? undefined,
@@ -97,9 +96,9 @@ const mapUserToEmployeeData = (
   }
 
   return {
-    _id: user._id?.toString(), // Added this line
+    _id: user._id?.toString(),
     email: user.email,
-    role: user.role,
+    role: user.role ?? undefined,
     avatar: "avatar" in user ? user.avatar ?? null : null,
   };
 };
@@ -129,6 +128,12 @@ export async function GET(request: Request) {
     }
 
     const employee: EmployeeData = mapUserToEmployeeData(user);
+
+    // ✅ Normalize role for frontend
+    if (employee.role) {
+      const role = employee.role.toLowerCase().replace(/\s+/g, "");
+      employee.role = role === "user" || role === "simpleuser" ? "simple user" : role;
+    }
 
     return NextResponse.json({ success: true, user: employee });
   } catch (error) {

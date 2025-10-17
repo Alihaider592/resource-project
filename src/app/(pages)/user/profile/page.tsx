@@ -3,61 +3,72 @@
 import React, { useEffect, useState } from "react";
 import { EmployeeData } from "@/app/(backend)/api/auth/me/route";
 import { FiEdit3, FiSave } from "react-icons/fi";
-import toast, { Toaster } from "react-hot-toast"; // ✅ import toast
+import toast, { Toaster } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const gradients = [
-  ["#60a5fa", "#bfdbfe"], // blue
-  ["#4ade80", "#a7f3d0"], // green-teal
-  ["#818cf8", "#c7d2fe"], // indigo
-  ["#a78bfa", "#ddd6fe"], // purple
-  ["#f472b6", "#fbcfe8"], // pink
+  ["#60a5fa", "#bfdbfe"],
+  ["#4ade80", "#a7f3d0"],
+  ["#818cf8", "#c7d2fe"],
+  ["#a78bfa", "#ddd6fe"],
+  ["#f472b6", "#fbcfe8"],
 ];
 
 const ProfilePage: React.FC = () => {
   const [user, setUser] = useState<EmployeeData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [gradientIndex, setGradientIndex] = useState(0);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<EmployeeData>>({});
+  const [gradientIndex, setGradientIndex] = useState(0);
+  const router = useRouter();
 
-  // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("No token found, please login");
-          setLoading(false);
-          return;
-        }
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("No token found. Please login.");
+        router.push("/login");
+        return;
+      }
 
+      try {
         const res = await fetch("/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!res.ok) {
+          localStorage.removeItem("token");
           const errData = await res.json();
-          setError(errData.message || "Failed to fetch profile");
-          setLoading(false);
+          toast.error(errData.message || "Unauthorized. Please login.");
+          router.push("/login");
           return;
         }
 
         const data = await res.json();
-        setUser(data.user || null);
-        setFormData(data.user || {});
+        // ✅ Normalize role
+        const role = data.user.role?.toLowerCase();
+        if (!data.user || role !== "simple user") {
+          localStorage.removeItem("token");
+          toast.error("Unauthorized access.");
+          router.push("/login");
+          return;
+        }
+
+        setUser(data.user);
+        setFormData(data.user);
       } catch (err) {
         console.error(err);
-        setError("An unexpected error occurred");
+        localStorage.removeItem("token");
+        toast.error("An unexpected error occurred.");
+        router.push("/login");
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [router]);
 
-  // Gradient change every 5 minutes
   useEffect(() => {
     const interval = setInterval(() => {
       setGradientIndex((prev) => (prev + 1) % gradients.length);
@@ -69,17 +80,14 @@ const ProfilePage: React.FC = () => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Save profile
   const handleSave = async () => {
-    if (!user?._id) {
-      setError("User ID not found.");
-      return;
-    }
+    if (!user?._id) return toast.error("User ID not found.");
 
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        setError("Unauthorized. Please login.");
+        toast.error("Unauthorized. Please login.");
+        router.push("/login");
         return;
       }
 
@@ -94,7 +102,7 @@ const ProfilePage: React.FC = () => {
 
       if (!res.ok) {
         const errData = await res.json();
-        setError(errData.message || "Failed to update profile");
+        toast.error(errData.message || "Failed to update profile");
         return;
       }
 
@@ -102,36 +110,19 @@ const ProfilePage: React.FC = () => {
       setUser(updated.user);
       setFormData(updated.user);
       setEditing(false);
-      toast.success("Profile updated successfully!"); // ✅ toast instead of alert
+      toast.success("Profile updated successfully!");
     } catch (err) {
       console.error(err);
-      setError("Failed to update profile");
-      toast.error("Failed to update profile"); // ✅ error toast
+      toast.error("Failed to update profile");
     }
   };
 
   const currentGradient = `linear-gradient(90deg, ${gradients[gradientIndex][0]}, ${gradients[gradientIndex][1]})`;
 
-  // Helper function to display only HH:mm or HH:mm:ss for time fields
-  const displayTime = (value: string, key: string) => {
-    if (key === "joiningTime" || key === "leavingTime") {
-      const match = value.match(/\d{2}:\d{2}(:\d{2})?/);
-      if (match) return match[0];
-    }
-    return value;
-  };
-
   if (loading)
     return (
       <div className="flex justify-center items-center h-screen">
         <p className="text-gray-500 text-lg">Loading profile...</p>
-      </div>
-    );
-
-  if (error)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-red-500 text-lg">{error}</p>
       </div>
     );
 
@@ -144,14 +135,12 @@ const ProfilePage: React.FC = () => {
 
   return (
     <>
-      <Toaster position="top-right" /> {/* ✅ toast container */}
+      <Toaster position="top-right" />
       <div className="min-h-screen bg-gray-100 py-10 px-4">
         <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden relative">
+          {/* Header */}
           <div
-            style={{
-              backgroundImage: currentGradient,
-              transition: "background-image 2s ease-in-out",
-            }}
+            style={{ backgroundImage: currentGradient, transition: "background-image 2s ease-in-out" }}
             className="p-8 flex items-center gap-6 relative"
           >
             <div
@@ -173,10 +162,9 @@ const ProfilePage: React.FC = () => {
                 {user.firstName?.[0] ?? "U"}
               </div>
             )}
+
             <div>
-              <h1 className="text-4xl font-bold text-white">
-                {user.firstName} {user.lastName}
-              </h1>
+              <h1 className="text-4xl font-bold text-white">{user.firstName} {user.lastName}</h1>
               <p className="text-white text-lg">{user.role ?? "N/A"}</p>
               <p className="text-white text-sm">{user.department ?? ""}</p>
               <p className="text-white text-sm">{user.employeeId ?? ""}</p>
@@ -186,12 +174,12 @@ const ProfilePage: React.FC = () => {
           {/* Body */}
           <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             {Object.entries(formData)
-              .filter(([key]) => key !== "_id" && key !== "createdAt") // hide _id & createdAt
+              .filter(([key]) => key !== "_id" && key !== "createdAt")
               .map(([key, value]) => (
                 <ProfileField
                   key={key}
                   label={key}
-                  value={typeof value === "string" ? displayTime(value, key) : (value ?? "").toString()}
+                  value={(value ?? "").toString()}
                   editing={editing}
                   onChange={(val) => handleInputChange(key as keyof EmployeeData, val)}
                 />
