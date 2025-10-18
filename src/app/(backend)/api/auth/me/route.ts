@@ -47,7 +47,7 @@ export interface EmployeeData {
   education?: string;
   bankAccount?: string;
   salary?: string;
-  avatar?: string | null;
+  avatar?: string;
   timing?: string;
 }
 
@@ -57,6 +57,8 @@ export interface EmployeeData {
 const mapUserToEmployeeData = (
   user: IUser | ITeamLead | ISAddUser
 ): EmployeeData => {
+  const avatarValue = "avatar" in user && user.avatar ? user.avatar : "";
+
   if ("employeeId" in user) {
     return {
       _id: user._id?.toString(),
@@ -90,7 +92,7 @@ const mapUserToEmployeeData = (
       education: user.education ?? undefined,
       bankAccount: user.bankAccount ?? undefined,
       salary: user.salary != null ? String(user.salary) : undefined,
-      avatar: user.avatar ?? null,
+      avatar: avatarValue,
       timing: user.timing ?? undefined,
     };
   }
@@ -99,9 +101,64 @@ const mapUserToEmployeeData = (
     _id: user._id?.toString(),
     email: user.email,
     role: user.role ?? undefined,
-    avatar: "avatar" in user ? user.avatar ?? null : null,
+    avatar: avatarValue,
   };
 };
+
+/* -------------------------------------------------------------------------- */
+/* HELPER: NORMALIZE ROLE                                                     */
+/* -------------------------------------------------------------------------- */
+function normalizeRole(role?: string) {
+  if (!role) return role;
+  const r = role.toLowerCase().replace(/\s+/g, "");
+  switch (r) {
+    case "user":
+    case "simpleuser":
+      return "simple user";
+    case "hr":
+      return "HR";
+    case "teamlead":
+    case "teamlead":
+      return "Team Lead";
+    case "admin":
+      return "Admin";
+    default:
+      return role;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* TYPE-SAFE FIELD UPDATE HELPER                                              */
+/* -------------------------------------------------------------------------- */
+function updateUserFields<T extends IUser | ITeamLead | ISAddUser>(
+  user: T,
+  data: Partial<EmployeeData>,
+  allowedFields: (keyof EmployeeData)[]
+): void {
+  allowedFields.forEach((field) => {
+    const value = data[field];
+    if (value === undefined) return;
+
+    if (field === "avatar") {
+      (user as unknown as Record<string, string | undefined>)[field] = String(value);
+    } else if (field === "experienceYears" || field === "salary") {
+      (user as unknown as Record<string, string | undefined>)[field] =
+        value != null ? String(value) : undefined;
+    } else if (
+      field === "joining" ||
+      field === "leaving" ||
+      field === "joiningDate" ||
+      field === "leavingDate"
+    ) {
+      const dateValue = new Date(String(value));
+      if (!isNaN(dateValue.getTime())) {
+        (user as unknown as Record<string, Date | undefined>)[field] = dateValue;
+      }
+    } else {
+      (user as unknown as Record<string, unknown>)[field] = value;
+    }
+  });
+}
 
 /* -------------------------------------------------------------------------- */
 /* GET /api/auth/me                                                           */
@@ -111,7 +168,7 @@ export async function GET(request: Request) {
     await connectDatabase();
 
     const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ message: "No token provided" }, { status: 401 });
     }
 
@@ -128,19 +185,98 @@ export async function GET(request: Request) {
     }
 
     const employee: EmployeeData = mapUserToEmployeeData(user);
-
-    // ✅ Normalize role for frontend
-    if (employee.role) {
-      const role = employee.role.toLowerCase().replace(/\s+/g, "");
-      employee.role = role === "user" || role === "simpleuser" ? "simple user" : role;
-    }
+    if (employee.role) employee.role = normalizeRole(employee.role);
 
     return NextResponse.json({ success: true, user: employee });
-  } catch (error) {
-    console.error("Auth error:", error);
-    return NextResponse.json(
-      { message: "Invalid or expired token" },
-      { status: 401 }
-    );
+  } catch (error: unknown) {
+    console.error("Auth GET error:", (error as Error).message, error);
+    return NextResponse.json({ message: "Invalid or expired token" }, { status: 401 });
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* PUT /api/auth/me (update profile)                                          */
+/* -------------------------------------------------------------------------- */
+export async function PUT(request: Request) {
+  try {
+    await connectDatabase();
+
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ message: "No token provided" }, { status: 401 });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
+
+    const body: Partial<EmployeeData> = await request.json();
+
+    const user =
+      (await User.findById(decoded.id)) ||
+      (await TeamLead.findById(decoded.id)) ||
+      (await AddUser.findById(decoded.id));
+
+    if (!user) return NextResponse.json({ message: "User not found" }, { status: 404 });
+
+    // Require employeeId for AddUser
+    if ("employeeId" in user) {
+      if (!user.employeeId && !body.employeeId) {
+        return NextResponse.json(
+          { message: "`employeeId` is required for this user" },
+          { status: 400 }
+        );
+      }
+      if (body.employeeId) user.employeeId = body.employeeId;
+    }
+
+    // Allowed fields to update (including dates handled in updateUserFields)
+    const allowedFields: (keyof EmployeeData)[] = [
+      "firstName",
+      "lastName",
+      "phone",
+      "emergencyContact",
+      "cnic",
+      "birthday",
+      "joining",
+      "leaving",
+      "joiningDate",
+      "leavingDate",
+      "gender",
+      "maritalStatus",
+      "address",
+      "Branch",
+      "companybranch",
+      "city",
+      "state",
+      "zip",
+      "department",
+      "role",
+      "workType",
+      "experienceLevel",
+      "previousCompany",
+      "experienceYears",
+      "education",
+      "bankAccount",
+      "salary",
+      "avatar",
+      "timing",
+    ];
+
+    updateUserFields(user, body, allowedFields);
+
+    // Normalize role after update
+    if ("role" in body && body.role) {
+      (user as unknown as Record<string, string | undefined>).role = normalizeRole(body.role);
+    }
+
+    await user.save();
+
+    const employee: EmployeeData = mapUserToEmployeeData(user);
+    if (employee.role) employee.role = normalizeRole(employee.role);
+
+    return NextResponse.json({ success: true, user: employee });
+  } catch (error: unknown) {
+    console.error("Auth PUT error:", (error as Error).message, error);
+    return NextResponse.json({ message: "Failed to update profile" }, { status: 500 });
   }
 }

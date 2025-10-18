@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HRDashboardContent from "./HRDashboardContent";
+
 interface User {
   name: string;
   email: string;
-  role: "admin" | "HR" | "Team Lead" | "simple user";
+  role: string;
 }
 
 export default function HRDashboardPage() {
@@ -26,7 +27,7 @@ export default function HRDashboardPage() {
     })
       .then(res => res.json())
       .then(data => {
-        if (!data.user || data.user.role !== "HR") {
+        if (!data.user || data.user.role.toLowerCase() !== "hr") {
           router.push("/login");
         } else {
           localStorage.setItem("userName", data.user.name);
@@ -38,8 +39,7 @@ export default function HRDashboardPage() {
   }, [router]);
 
   if (loading) return <div>Loading...</div>;
+  if (!user) return null;
 
-  return (
-<HRDashboardContent userName="HR" />
-  );
+  return <HRDashboardContent userName={user.name} />;
 }

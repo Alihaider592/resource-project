@@ -38,16 +38,14 @@ const ProfilePage: React.FC = () => {
 
         if (!res.ok) {
           localStorage.removeItem("token");
-          const errData = await res.json();
+          const errData = await res.json().catch(() => ({}));
           toast.error(errData.message || "Unauthorized. Please login.");
           router.push("/login");
           return;
         }
 
         const data = await res.json();
-        // ✅ Normalize role
-        const role = data.user.role?.toLowerCase();
-        if (!data.user || role !== "simple user") {
+        if (!data.user) {
           localStorage.removeItem("token");
           toast.error("Unauthorized access.");
           router.push("/login");
@@ -91,7 +89,14 @@ const ProfilePage: React.FC = () => {
         return;
       }
 
-      const res = await fetch(`/api/admin/updateuser/${user._id}`, {
+      // Determine API endpoint
+      const role = user.role?.toLowerCase().replace(/\s+/g, "");
+      const updateUrl =
+        role === "admin"
+          ? `/api/admin/updateuser/${user._id}` // Admin can update any user
+          : `/api/auth/me`; // Others update self
+
+      const res = await fetch(updateUrl, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -101,14 +106,15 @@ const ProfilePage: React.FC = () => {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         toast.error(errData.message || "Failed to update profile");
         return;
       }
 
       const updated = await res.json();
-      setUser(updated.user);
-      setFormData(updated.user);
+      const updatedUser = updated.user || updated; // normalize
+      setUser(updatedUser);
+      setFormData(updatedUser);
       setEditing(false);
       toast.success("Profile updated successfully!");
     } catch (err) {
