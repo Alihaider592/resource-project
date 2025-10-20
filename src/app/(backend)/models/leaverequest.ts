@@ -2,21 +2,24 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 
 // Interface for LeaveRequest document
 export interface ILeaveRequest extends Document {
-  userId: Types.ObjectId; // ✅ Use ObjectId for MongoDB references
+  userId: Types.ObjectId; // MongoDB reference
   leaveType: string;
   startDate: Date;
   endDate: Date;
   reason: string;
-  status: "pending" | "approved" | "rejected"; // ✅ status field
+  status: "pending" | "approved" | "rejected"; // overall leave status
   approvers: {
     teamLead?: string | null;
     hr?: string | null;
+  };
+  approverStatus: {
+    [key: string]: "approve" | "reject"; // key = approver email
   };
 }
 
 const LeaveRequestSchema = new Schema<ILeaveRequest>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true }, // ✅ reference to User collection
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     leaveType: { type: String, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
@@ -31,6 +34,13 @@ const LeaveRequestSchema = new Schema<ILeaveRequest>(
     approvers: {
       teamLead: { type: String, default: null },
       hr: { type: String, default: null },
+    },
+
+    // NEW: track each approver's action
+    approverStatus: {
+      type: Map,
+      of: String, // "approve" or "reject"
+      default: {},
     },
   },
   { timestamps: true }
