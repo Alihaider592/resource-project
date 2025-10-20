@@ -7,6 +7,7 @@ import connectDatabase from "@/app/(backend)/lib/db";
 import User from "@/app/(backend)/models/User";
 import TeamLead from "@/app/(backend)/models/teamlead";
 import AddUser from "@/app/(backend)/models/adduser";
+import Admin from "@/app/(backend)/models/adduser"; // RE-ADDED: Ensure this file exists for your Admin model!
 
 // Standardize the JWT_SECRET constant
 // FIX: Corrected variable to JWT_SECRET
@@ -67,7 +68,7 @@ function normalizeRole(role?: string) {
       return "Team Lead";
     case "admin":
     case "administrator":
-      return "admin"; // Changed from 'admin' to 'Admin' for consistency
+      return "admin"; // Consistent normalization
     default:
       return role;
   }
@@ -126,7 +127,8 @@ export async function GET(req: NextRequest) {
     const user = 
         (await User.findById(decoded.id).lean()) as GenericUserDoc | null || 
         (await TeamLead.findById(decoded.id).lean()) as GenericUserDoc | null || 
-        (await AddUser.findById(decoded.id).lean()) as GenericUserDoc | null;
+        (await AddUser.findById(decoded.id).lean()) as GenericUserDoc | null ||
+        (await Admin.findById(decoded.id).lean()) as GenericUserDoc | null; // Added Admin check
 
 
     if (!user) {
@@ -185,7 +187,8 @@ export async function PUT(req: NextRequest) {
     const userDoc = 
         (await User.findById(decoded.id).exec() as GenericUserDoc | null) || 
         (await TeamLead.findById(decoded.id).exec() as GenericUserDoc | null) || 
-        (await AddUser.findById(decoded.id).exec() as GenericUserDoc | null);
+        (await AddUser.findById(decoded.id).exec() as GenericUserDoc | null) ||
+        (await Admin.findById(decoded.id).exec() as GenericUserDoc | null); // Added Admin check
 
     if (!userDoc) {
         console.log(`PUT /me: User ID ${decoded.id} not found after cascading search.`);
