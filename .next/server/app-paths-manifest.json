@@ -1,5 +1,4 @@
 {
-  "/(backend)/api/admin/adduser/route": "app/(backend)/api/admin/adduser/route.js",
   "/(backend)/api/admin/getusers/[id]/route": "app/(backend)/api/admin/getusers/[id]/route.js",
   "/(backend)/api/admin/getusers/route": "app/(backend)/api/admin/getusers/route.js",
   "/(backend)/api/admin/protectedRoute/route": "app/(backend)/api/admin/protectedRoute/route.js",
@@ -11,7 +10,6 @@
   "/(pages)/admin/profile/[id]/page": "app/(pages)/admin/profile/[id]/page.js",
   "/(pages)/admin/profile/page": "app/(pages)/admin/profile/page.js",
   "/(pages)/hr/Profile/page": "app/(pages)/hr/Profile/page.js",
-  "/(pages)/hr/addemployee/page": "app/(pages)/hr/addemployee/page.js",
   "/(pages)/hr/manage/page": "app/(pages)/hr/manage/page.js",
   "/(pages)/hr/page": "app/(pages)/hr/page.js",
   "/(pages)/login/page": "app/(pages)/login/page.js",
@@ -20,5 +18,6 @@
   "/(pages)/user/page": "app/(pages)/user/page.js",
   "/(pages)/user/profile/page": "app/(pages)/user/profile/page.js",
   "/_not-found/page": "app/_not-found/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js"
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js"
 }

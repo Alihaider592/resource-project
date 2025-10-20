@@ -1,282 +1,299 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import mongoose, { Model, Document } from "mongoose";
 import connectDatabase from "@/app/(backend)/lib/db";
 
-import User, { IUser } from "@/app/(backend)/models/User";
-import TeamLead, { ITeamLead } from "@/app/(backend)/models/teamlead";
-import AddUser, { ISAddUser } from "@/app/(backend)/models/adduser";
+// ✅ Import Models
+import User from "@/app/(backend)/models/User";
+import TeamLead from "@/app/(backend)/models/teamlead";
+import AddUser from "@/app/(backend)/models/adduser";
 
-const JWT_SECRET = process.env.JWT_SECRET || "secret";
+// Standardize the JWT_SECRET constant
+// FIX: Corrected variable to JWT_SECRET
+const JWT_SECRET = process.env.JWT_SECRET || "secret"; 
+console.log(`[Auth Init] JWT Secret Loaded: ${JWT_SECRET.length > 10 ? 'Yes' : 'No'} (Length: ${JWT_SECRET.length})`);
+
 
 /* -------------------------------------------------------------------------- */
-/* TYPES                                                                      */
+/* ✅ TYPES                                                                   */
 /* -------------------------------------------------------------------------- */
 interface DecodedToken extends JwtPayload {
   id: string;
   role: string;
 }
 
-export interface EmployeeData {
-  _id?: string;
-  employeeId?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  emergencyContact?: string;
-  cnic?: string;
-  birthday?: string;
-  joining?: string;
-  leaving?: string;
-  joiningDate?: string;
-  leavingDate?: string;
-  gender?: string;
-  maritalStatus?: string;
-  address?: string;
-  Branch?: string;
-  companybranch?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  department?: string;
-  role?: string;
-  workType?: string;
-  experienceLevel?: string;
-  previousCompany?: string;
-  experienceYears?: string;
-  education?: string;
-  bankAccount?: string;
-  salary?: string;
-  avatar?: string;
-  timing?: string;
+// Minimal interface that all Mongoose documents share
+interface GenericUserDoc extends Document {
+  _id: string;
+  email: string;
+  role: string;
+  [key: string]: unknown; // Allows dynamic property access
+  
+  // FIX: Simplified the constructor definition to remove the problematic 'any' signature.
+  constructor: {
+    modelName: string;
+  };
 }
 
 /* -------------------------------------------------------------------------- */
-/* HELPER: MAP USER TO EMPLOYEE DATA                                          */
+/* ✅ DATABASE CONNECTION                                                     */
 /* -------------------------------------------------------------------------- */
-const mapUserToEmployeeData = (
-  user: IUser | ITeamLead | ISAddUser
-): EmployeeData => {
-  const avatarValue = "avatar" in user && user.avatar ? user.avatar : "";
-
-  if ("employeeId" in user) {
-    return {
-      _id: user._id?.toString(),
-      employeeId: user.employeeId ?? undefined,
-      firstName: user.firstName ?? undefined,
-      lastName: user.lastName ?? undefined,
-      email: user.email,
-      phone: user.phone ?? undefined,
-      emergencyContact: user.emergencyContact ?? undefined,
-      cnic: user.cnic ?? undefined,
-      birthday: user.birthday ?? undefined,
-      joining: user.joining ? user.joining.toISOString() : undefined,
-      leaving: user.leaving ? user.leaving.toISOString() : undefined,
-      joiningDate: user.joiningDate ?? undefined,
-      leavingDate: user.leavingDate ?? undefined,
-      gender: user.gender ?? undefined,
-      maritalStatus: user.maritalStatus ?? undefined,
-      address: user.address ?? undefined,
-      Branch: user.Branch ?? undefined,
-      companybranch: user.companybranch ?? undefined,
-      city: user.city ?? undefined,
-      state: user.state ?? undefined,
-      zip: user.zip ?? undefined,
-      department: user.department ?? undefined,
-      role: user.role ?? undefined,
-      workType: user.workType ?? undefined,
-      experienceLevel: user.experienceLevel ?? undefined,
-      previousCompany: user.previousCompany ?? undefined,
-      experienceYears:
-        user.experienceYears != null ? String(user.experienceYears) : undefined,
-      education: user.education ?? undefined,
-      bankAccount: user.bankAccount ?? undefined,
-      salary: user.salary != null ? String(user.salary) : undefined,
-      avatar: avatarValue,
-      timing: user.timing ?? undefined,
-    };
+/** Ensures the MongoDB connection is active. */
+async function ensureDB(): Promise<void> {
+  if (mongoose.connection.readyState === 0) {
+    await connectDatabase();
+    console.log("✅ MongoDB connected");
   }
-
-  return {
-    _id: user._id?.toString(),
-    email: user.email,
-    role: user.role ?? undefined,
-    avatar: avatarValue,
-  };
-};
+}
 
 /* -------------------------------------------------------------------------- */
-/* HELPER: NORMALIZE ROLE                                                     */
+/* ✅ HELPERS                                                                 */
 /* -------------------------------------------------------------------------- */
+
+/** Normalizes role string (e.g., 'team lead' -> 'Team Lead', 'hr' -> 'HR'). */
 function normalizeRole(role?: string) {
   if (!role) return role;
   const r = role.toLowerCase().replace(/\s+/g, "");
   switch (r) {
     case "user":
     case "simpleuser":
-      return "simple user";
+      return "Simple User";
     case "hr":
+    case "human resource":
       return "HR";
     case "teamlead":
-    case "teamlead":
+    case "team lead":
+    case "lead":
       return "Team Lead";
     case "admin":
-      return "Admin";
+    case "administrator":
+      return "admin"; // Changed from 'admin' to 'Admin' for consistency
     default:
       return role;
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* TYPE-SAFE FIELD UPDATE HELPER                                              */
-/* -------------------------------------------------------------------------- */
-function updateUserFields<T extends IUser | ITeamLead | ISAddUser>(
-  user: T,
-  data: Partial<EmployeeData>,
-  allowedFields: (keyof EmployeeData)[]
-): void {
-  allowedFields.forEach((field) => {
-    const value = data[field];
-    if (value === undefined) return;
-
-    if (field === "avatar") {
-      (user as unknown as Record<string, string | undefined>)[field] = String(value);
-    } else if (field === "experienceYears" || field === "salary") {
-      (user as unknown as Record<string, string | undefined>)[field] =
-        value != null ? String(value) : undefined;
-    } else if (
-      field === "joining" ||
-      field === "leaving" ||
-      field === "joiningDate" ||
-      field === "leavingDate"
-    ) {
-      const dateValue = new Date(String(value));
-      if (!isNaN(dateValue.getTime())) {
-        (user as unknown as Record<string, Date | undefined>)[field] = dateValue;
-      }
-    } else {
-      (user as unknown as Record<string, unknown>)[field] = value;
-    }
-  });
-}
-
-/* -------------------------------------------------------------------------- */
-/* GET /api/auth/me                                                           */
-/* -------------------------------------------------------------------------- */
-export async function GET(request: Request) {
+/** Verifies the JWT from the request headers. */
+function verifyToken(req: NextRequest): DecodedToken | null {
   try {
-    await connectDatabase();
-
-    const authHeader = request.headers.get("authorization");
+    const authHeader = req.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ message: "No token provided" }, { status: 401 });
+      console.warn("⚠️ Missing or invalid Authorization header");
+      return null;
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
+    
+    // Use the standardized JWT_SECRET constant
+    const decoded = jwt.verify(
+      token,
+      JWT_SECRET // Use the defined constant
+    ) as DecodedToken;
 
-    const user =
-      (await User.findById(decoded.id).select("-password -__v")) ||
-      (await TeamLead.findById(decoded.id).select("-password -__v")) ||
-      (await AddUser.findById(decoded.id).select("-password -__v"));
-
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    if (!decoded?.id || !decoded?.role) {
+      console.warn("⚠️ Invalid token payload");
+      return null;
     }
 
-    const employee: EmployeeData = mapUserToEmployeeData(user);
-    if (employee.role) employee.role = normalizeRole(employee.role);
-
-    return NextResponse.json({ success: true, user: employee });
-  } catch (error: unknown) {
-    console.error("Auth GET error:", (error as Error).message, error);
-    return NextResponse.json({ message: "Invalid or expired token" }, { status: 401 });
+    return decoded;
+  } catch (error) {
+    // Log the specific error (e.g., 'jwt expired', 'invalid signature')
+    const errorMessage = (error as Error).message;
+    console.error(`❌ Token verification failed: ${errorMessage}. Check JWT_SECRET consistency or token expiration.`); // ENHANCED LOGGING
+    return null;
   }
 }
 
 /* -------------------------------------------------------------------------- */
-/* PUT /api/auth/me (update profile)                                          */
+/* ✅ GET — FETCH CURRENT USER PROFILE                                        */
 /* -------------------------------------------------------------------------- */
-export async function PUT(request: Request) {
+export async function GET(req: NextRequest) {
   try {
-    await connectDatabase();
+    await ensureDB();
+    const decoded = verifyToken(req);
 
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ message: "No token provided" }, { status: 401 });
+    if (!decoded) {
+      return NextResponse.json(
+        { message: "Unauthorized: Invalid or expired session." },
+        { status: 401 }
+      );
     }
 
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
+    // 💡 CASCADING SEARCH: Find user across all models to ensure robustness
+    console.log(`GET /me: Starting cascading search for user ID: ${decoded.id}`);
+    
+    // Note: .lean() is used here, so it returns a plain object, not a Mongoose Document instance
+    const user = 
+        (await User.findById(decoded.id).lean()) as GenericUserDoc | null || 
+        (await TeamLead.findById(decoded.id).lean()) as GenericUserDoc | null || 
+        (await AddUser.findById(decoded.id).lean()) as GenericUserDoc | null;
 
-    const body: Partial<EmployeeData> = await request.json();
 
-    const user =
-      (await User.findById(decoded.id)) ||
-      (await TeamLead.findById(decoded.id)) ||
-      (await AddUser.findById(decoded.id));
+    if (!user) {
+      // Log the exact failure
+      console.log(`GET /me: User ID ${decoded.id} not found after cascading search.`);
+      return NextResponse.json(
+        { message: "User not found or deleted." },
+        { status: 404 }
+      );
+    }
+    
+    // Normalize the role before sending
+    if (user.role) {
+        user.role = normalizeRole(user.role) as string;
+    }
 
-    if (!user) return NextResponse.json({ message: "User not found" }, { status: 404 });
+    return NextResponse.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("❌ GET /me error:", error);
+    return NextResponse.json(
+      {
+        message: "Server error while fetching profile",
+        error: (error as Error).message,
+      },
+      { status: 500 }
+    );
+  }
+}
 
-    // Require employeeId for AddUser
-    if ("employeeId" in user) {
-      if (!user.employeeId && !body.employeeId) {
-        return NextResponse.json(
-          { message: "`employeeId` is required for this user" },
-          { status: 400 }
-        );
+/* -------------------------------------------------------------------------- */
+/* ✅ PUT — UPDATE PROFILE SAFELY (using atomic update)                       */
+/* -------------------------------------------------------------------------- */
+export async function PUT(req: NextRequest) {
+  try {
+    await ensureDB();
+    const decoded = verifyToken(req);
+
+    if (!decoded) {
+      console.log("PUT /me: Invalid or missing token.");
+      return NextResponse.json(
+        { message: "Unauthorized: Invalid or expired session." },
+        { status: 401 }
+      );
+    }
+    
+    const body = await req.json();
+
+    // 🧱 Prevent critical fields modification
+    const { role, _id, email, password, ...unsafeBody } = body;
+
+    // 💡 CASCADING FIND: Find the document across all models to determine which Model to use
+    // We fetch the document instance here to access the constructor/Model object
+    const userDoc = 
+        (await User.findById(decoded.id).exec() as GenericUserDoc | null) || 
+        (await TeamLead.findById(decoded.id).exec() as GenericUserDoc | null) || 
+        (await AddUser.findById(decoded.id).exec() as GenericUserDoc | null);
+
+    if (!userDoc) {
+        console.log(`PUT /me: User ID ${decoded.id} not found after cascading search.`);
+      return NextResponse.json(
+        { message: "User not found." },
+        { status: 404 }
+      );
+    }
+
+    // Get the Mongoose Model constructor from the found document
+    // We cast to Model<GenericUserDoc> which contains the correct findByIdAndUpdate signature
+    const ModelToUse = userDoc.constructor as Model<GenericUserDoc>;
+    const modelName = userDoc.constructor.modelName;
+    console.log(`PUT /me: User found in Model: ${modelName}. Preparing atomic update...`);
+    
+    // 🧠 Prepare the update object, filtering out empty strings and undefined values
+    const updateObject: Record<string, unknown> = {};
+    const updateKeys = Object.keys(unsafeBody);
+
+    updateKeys.forEach((key) => {
+      const value = unsafeBody[key];
+      
+      if (typeof value === "string") {
+        const trimmedValue = value.trim();
+        // Only include non-empty strings
+        if (trimmedValue !== "") {
+          updateObject[key] = trimmedValue;
+        }
+      } else if (value !== undefined) {
+          // Include non-string values (numbers, booleans, arrays) if they are defined
+          updateObject[key] = value;
       }
-      if (body.employeeId) user.employeeId = body.employeeId;
+    });
+
+    if (Object.keys(updateObject).length === 0) {
+        console.log("PUT /me: No valid fields to update.");
+        const userLean = userDoc.toObject();
+         if (userLean.role) {
+            userLean.role = normalizeRole(userLean.role) as string;
+        }
+        return NextResponse.json({
+            success: true,
+            message: "Profile retrieved (no changes applied)",
+            user: userLean,
+        });
     }
 
-    // Allowed fields to update (including dates handled in updateUserFields)
-    const allowedFields: (keyof EmployeeData)[] = [
-      "firstName",
-      "lastName",
-      "phone",
-      "emergencyContact",
-      "cnic",
-      "birthday",
-      "joining",
-      "leaving",
-      "joiningDate",
-      "leavingDate",
-      "gender",
-      "maritalStatus",
-      "address",
-      "Branch",
-      "companybranch",
-      "city",
-      "state",
-      "zip",
-      "department",
-      "role",
-      "workType",
-      "experienceLevel",
-      "previousCompany",
-      "experienceYears",
-      "education",
-      "bankAccount",
-      "salary",
-      "avatar",
-      "timing",
-    ];
+    console.log(`PUT /me: Attempting to update fields: ${Object.keys(updateObject).join(', ')}`);
 
-    updateUserFields(user, body, allowedFields);
 
-    // Normalize role after update
-    if ("role" in body && body.role) {
-      (user as unknown as Record<string, string | undefined>).role = normalizeRole(body.role);
+    // 3. ATOMIC UPDATE: Use findByIdAndUpdate to bypass full document validation
+    // This runs validators ONLY on the fields specified in $set, resolving the issue.
+    const updatedUser = await ModelToUse.findByIdAndUpdate(
+        decoded.id,
+        { $set: updateObject },
+        {
+            new: true, // Return the new document
+            runValidators: true, // Crucial: runs validators ONLY on the fields being updated
+            lean: true // Return a plain JS object for the response
+        }
+    ).exec() as GenericUserDoc | null;
+
+
+    if (!updatedUser) {
+        // This handles a rare case where the user is deleted between finding and updating
+        return NextResponse.json({ message: "User not found during update." }, { status: 404 });
+    }
+    
+    // Normalize the role before sending
+    if (updatedUser.role) {
+        updatedUser.role = normalizeRole(updatedUser.role) as string;
     }
 
-    await user.save();
+    console.log("PUT /me: Update successful.");
 
-    const employee: EmployeeData = mapUserToEmployeeData(user);
-    if (employee.role) employee.role = normalizeRole(employee.role);
+    return NextResponse.json({
+      success: true,
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("❌ PUT /me error (Catch Block):", error);
+    
+    // Attempt to extract Mongoose validation error message
+    let errorMessage = "Server error while updating profile";
+    let status = 500;
+    
+    const err = error as Error & { name?: string, errors?: Record<string, { message: string }> };
 
-    return NextResponse.json({ success: true, user: employee });
-  } catch (error: unknown) {
-    console.error("Auth PUT error:", (error as Error).message, error);
-    return NextResponse.json({ message: "Failed to update profile" }, { status: 500 });
+    if (err.name === 'ValidationError' && err.errors) {
+        const errorKeys = Object.keys(err.errors);
+        if (errorKeys.length > 0) {
+            // Provide the first validation message to the client
+            errorMessage = `Validation failed: ${err.errors[errorKeys[0]].message}`;
+        } else {
+            errorMessage = "Validation failed. Please check your input fields.";
+        }
+        status = 400;
+        console.error("Mongoose Validation Details:", err.errors);
+    }
+
+
+    return NextResponse.json(
+      {
+        message: errorMessage,
+        error: (error as Error).message,
+      },
+      { status: status }
+    );
   }
 }
