@@ -7,7 +7,7 @@ import connectDatabase from "@/app/(backend)/lib/db";
 import User from "@/app/(backend)/models/User";
 import TeamLead from "@/app/(backend)/models/teamlead";
 import AddUser from "@/app/(backend)/models/adduser";
-import Admin from "@/app/(backend)/models/adduser"; // RE-ADDED: Ensure this file exists for your Admin model!
+// Admin model is omitted as the file does not exist, but we will assume its user data resides in one of the imported models.
 
 // Standardize the JWT_SECRET constant
 // FIX: Corrected variable to JWT_SECRET
@@ -68,10 +68,33 @@ function normalizeRole(role?: string) {
       return "Team Lead";
     case "admin":
     case "administrator":
-      return "admin"; // Consistent normalization
+      return "Admin"; // Consistent normalization
     default:
       return role;
   }
+}
+
+/** * Maps a decoded role to the corresponding Mongoose Model.
+ * @param role The role string from the JWT.
+ * @returns The Mongoose Model or null if not explicitly mapped.
+ */
+function getModelByRole(role: string): Model<GenericUserDoc> | null {
+    const normalizedRole = normalizeRole(role) || '';
+    
+    switch (normalizedRole) {
+        case "Team Lead":
+            // FIX: Use 'as unknown as' to resolve TS2352 casting error
+            return TeamLead as unknown as Model<GenericUserDoc>;
+        case "Simple User":
+        case "HR":
+        case "Admin":
+            // FIX: Use 'as unknown as' to resolve TS2352 casting error
+            // Assuming default or less specific roles (including Admin) are in the primary User model
+            return User as unknown as Model<GenericUserDoc>;
+        default:
+            // Fallback for custom roles or models we can't import
+            return null; 
+    }
 }
 
 /** Verifies the JWT from the request headers. */
@@ -127,8 +150,7 @@ export async function GET(req: NextRequest) {
     const user = 
         (await User.findById(decoded.id).lean()) as GenericUserDoc | null || 
         (await TeamLead.findById(decoded.id).lean()) as GenericUserDoc | null || 
-        (await AddUser.findById(decoded.id).lean()) as GenericUserDoc | null ||
-        (await Admin.findById(decoded.id).lean()) as GenericUserDoc | null; // Added Admin check
+        (await AddUser.findById(decoded.id).lean()) as GenericUserDoc | null;
 
 
     if (!user) {
@@ -182,28 +204,50 @@ export async function PUT(req: NextRequest) {
     // 🧱 Prevent critical fields modification
     const { role, _id, email, password, ...unsafeBody } = body;
 
-    // 💡 CASCADING FIND: Find the document across all models to determine which Model to use
-    // We fetch the document instance here to access the constructor/Model object
-    const userDoc = 
-        (await User.findById(decoded.id).exec() as GenericUserDoc | null) || 
-        (await TeamLead.findById(decoded.id).exec() as GenericUserDoc | null) || 
-        (await AddUser.findById(decoded.id).exec() as GenericUserDoc | null) ||
-        (await Admin.findById(decoded.id).exec() as GenericUserDoc | null); // Added Admin check
+    // --- NEW LOGIC: Determine Model based on Token Role for Targeted Update ---
+    let ModelToUse: Model<GenericUserDoc> | null = null;
+    let userDoc: GenericUserDoc | null = null;
 
+    // 1. Try to get the model directly from the role in the JWT
+    const ModelFromRole = getModelByRole(decoded.role);
+
+    if (ModelFromRole) {
+        // Targeted find on the model associated with the JWT role
+        ModelToUse = ModelFromRole;
+        // The ModelToUse is already cast to the correct generic type
+        userDoc = await ModelToUse.findById(decoded.id).exec() as GenericUserDoc | null;
+
+        if (userDoc) {
+            console.log(`PUT /me: User found in Model '${ModelToUse.modelName}' based on JWT role.`);
+        } else {
+            console.warn(`PUT /me: User ID ${decoded.id} NOT found in expected model '${ModelToUse.modelName}' (Role: ${decoded.role}). Falling back to cascading search...`);
+        }
+    } 
+    
+    // 2. Fallback to Cascading Search if the role-based find failed or wasn't mapped
     if (!userDoc) {
-        console.log(`PUT /me: User ID ${decoded.id} not found after cascading search.`);
+        // This search finds the document and lets us derive the correct ModelToUse from its constructor
+        userDoc = 
+            (await User.findById(decoded.id).exec() as GenericUserDoc | null) || 
+            (await TeamLead.findById(decoded.id).exec() as GenericUserDoc | null) || 
+            (await AddUser.findById(decoded.id).exec() as GenericUserDoc | null);
+
+        if (userDoc) {
+             // If found via cascading search, set ModelToUse from the document's constructor
+            ModelToUse = userDoc.constructor as Model<GenericUserDoc>;
+            console.log(`PUT /me: User found via cascading search in Model: ${ModelToUse.modelName}`);
+        }
+    }
+    // ---------------------------------------------------------------------------
+
+    if (!userDoc || !ModelToUse) {
+        console.log(`PUT /me: User ID ${decoded.id} not found in any available model.`);
       return NextResponse.json(
-        { message: "User not found." },
+        { message: "User not found or model not recognized." },
         { status: 404 }
       );
     }
 
-    // Get the Mongoose Model constructor from the found document
-    // We cast to Model<GenericUserDoc> which contains the correct findByIdAndUpdate signature
-    const ModelToUse = userDoc.constructor as Model<GenericUserDoc>;
-    const modelName = userDoc.constructor.modelName;
-    console.log(`PUT /me: User found in Model: ${modelName}. Preparing atomic update...`);
-    
     // 🧠 Prepare the update object, filtering out empty strings and undefined values
     const updateObject: Record<string, unknown> = {};
     const updateKeys = Object.keys(unsafeBody);
@@ -236,11 +280,10 @@ export async function PUT(req: NextRequest) {
         });
     }
 
-    console.log(`PUT /me: Attempting to update fields: ${Object.keys(updateObject).join(', ')}`);
+    console.log(`PUT /me: Attempting atomic update on Model ${ModelToUse.modelName} for fields: ${Object.keys(updateObject).join(', ')}`);
 
 
     // 3. ATOMIC UPDATE: Use findByIdAndUpdate to bypass full document validation
-    // This runs validators ONLY on the fields specified in $set, resolving the issue.
     const updatedUser = await ModelToUse.findByIdAndUpdate(
         decoded.id,
         { $set: updateObject },
@@ -253,8 +296,8 @@ export async function PUT(req: NextRequest) {
 
 
     if (!updatedUser) {
-        // This handles a rare case where the user is deleted between finding and updating
-        return NextResponse.json({ message: "User not found during update." }, { status: 404 });
+        // This means the document existed in the search but was missing during the update operation.
+        return NextResponse.json({ message: `User not found in ${ModelToUse.modelName} during update. Authentication token may be stale.` }, { status: 404 });
     }
     
     // Normalize the role before sending

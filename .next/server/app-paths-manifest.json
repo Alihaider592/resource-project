@@ -3,7 +3,6 @@
   "/(backend)/api/admin/updateuser/[id]/route": "app/(backend)/api/admin/updateuser/[id]/route.js",
   "/(backend)/api/auth/login/route": "app/(backend)/api/auth/login/route.js",
   "/(backend)/api/auth/me/route": "app/(backend)/api/auth/me/route.js",
-  "/(pages)/admin/page": "app/(pages)/admin/page.js",
   "/(pages)/admin/profile/page": "app/(pages)/admin/profile/page.js",
   "/(pages)/hr/Profile/page": "app/(pages)/hr/Profile/page.js",
   "/(pages)/hr/page": "app/(pages)/hr/page.js",
@@ -11,5 +10,6 @@
   "/(pages)/teamlead/page": "app/(pages)/teamlead/page.js",
   "/(pages)/teamlead/profile/page": "app/(pages)/teamlead/profile/page.js",
   "/(pages)/user/page": "app/(pages)/user/page.js",
-  "/(pages)/user/profile/page": "app/(pages)/user/profile/page.js"
+  "/(pages)/user/profile/page": "app/(pages)/user/profile/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js"
 }
