@@ -1,10 +1,6 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
   "/(backend)/api/user/profile/request/leave/route": "app/(backend)/api/user/profile/request/leave/route.js",
-  "/(pages)/hr/manage/page": "app/(pages)/hr/manage/page.js",
-  "/(pages)/hr/page": "app/(pages)/hr/page.js",
-  "/(pages)/hr/addemployee/page": "app/(pages)/hr/addemployee/page.js",
-  "/(pages)/teamlead/page": "app/(pages)/teamlead/page.js",
-  "/(pages)/teamlead/teamrequests/page": "app/(pages)/teamlead/teamrequests/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/(pages)/user/request/whf/page": "app/(pages)/user/request/whf/page.js",
   "/(pages)/user/request/leaves/page": "app/(pages)/user/request/leaves/page.js"
 }

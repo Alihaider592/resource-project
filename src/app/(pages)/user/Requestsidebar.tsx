@@ -6,7 +6,7 @@ import { FiFileText, FiCoffee, FiHome, FiKey } from "react-icons/fi";
 
 const subItems = [
   { name: "Leaves", icon: <FiFileText size={18} />, href: "/user/request/leaves" },
-  { name: "Work From Home", icon: <FiCoffee size={18} />, href: "/user/request/wfh" },
+  { name: "Work From Home", icon: <FiCoffee size={18} />, href: "/user/request/whf" },
   { name: "Home Loan", icon: <FiHome size={18} />, href: "/user/request/homeloan" },
   { name: "OTP", icon: <FiKey size={18} />, href: "/user/request/otp" },
 ];
