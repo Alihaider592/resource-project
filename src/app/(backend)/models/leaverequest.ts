@@ -1,25 +1,35 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-// Interface for LeaveRequest document
 export interface ILeaveRequest extends Document {
-  userId: Types.ObjectId; // MongoDB reference
+  name: string;
+  email: string;
   leaveType: string;
   startDate: Date;
   endDate: Date;
   reason: string;
-  status: "pending" | "approved" | "rejected"; // overall leave status
+  status: "pending" | "approved" | "rejected";
+
   approvers: {
     teamLead?: string | null;
     hr?: string | null;
   };
+
   approverStatus: {
-    [key: string]: "approve" | "reject"; // key = approver email
+    [key: string]: "approve" | "reject";
   };
+
+  approverComments: {
+    approver: string;
+    action: "approve" | "reject";
+    comment?: string;
+    date: Date;
+  }[];
 }
 
 const LeaveRequestSchema = new Schema<ILeaveRequest>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    name: { type: String, required: true },
+    email: { type: String, required: true },
     leaveType: { type: String, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
@@ -36,17 +46,25 @@ const LeaveRequestSchema = new Schema<ILeaveRequest>(
       hr: { type: String, default: null },
     },
 
-    // NEW: track each approver's action
     approverStatus: {
       type: Map,
-      of: String, // "approve" or "reject"
+      of: String, // approve | reject
       default: {},
     },
+
+    approverComments: [
+      {
+        approver: { type: String, required: true },
+        action: { type: String, enum: ["approve", "reject"], required: true },
+        comment: { type: String },
+        date: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
 
-// Avoid model overwrite in dev mode
+// Prevent model overwrite during hot reload
 const LeaveRequest =
   mongoose.models.LeaveRequest ||
   mongoose.model<ILeaveRequest>("LeaveRequest", LeaveRequestSchema);

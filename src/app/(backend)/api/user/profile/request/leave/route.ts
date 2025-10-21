@@ -1,152 +1,123 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDatabase from "@/app/(backend)/lib/db";
-import LeaveRequest, { ILeaveRequest } from "@/app/(backend)/models/leaverequest";
-import User from "@/app/(backend)/models/adduser";
-import { verifyAccess, DecodedUser } from "@/utils/authMiddleware";
+import LeaveRequest from "@/app/(backend)/models/leaverequest";
 
-// Roles enum
-export enum UserRole {
-  USER = "Simple user",
-  HR = "HR",
-  TEAM_LEAD = "Team Lead",
-  ADMIN = "Admin",
-}
-
-// ✅ Create a leave request
+/* -------------------------------------------------------------------------- */
+/* ✅ CREATE NEW LEAVE REQUEST (no auth)                                      */
+/* -------------------------------------------------------------------------- */
 export async function POST(req: NextRequest) {
   try {
     await connectDatabase();
 
-    const user: DecodedUser = await verifyAccess(req);
-    const { leaveType, startDate, endDate, reason } = await req.json();
+    const { name, email, leaveType, startDate, endDate, reason } = await req.json();
 
-    if (!leaveType || !startDate || !endDate || !reason) {
-      return NextResponse.json({ message: "Missing fields" }, { status: 400 });
-    }
-
-    const userId = user.id;
-    if (!userId) {
-      return NextResponse.json({ message: "Invalid or missing user ID" }, { status: 400 });
-    }
-
-    // Find HR and Team Lead (case-insensitive)
-    const teamLead = await User.findOne({ role: new RegExp(`^${UserRole.TEAM_LEAD}$`, "i") });
-    const hr = await User.findOne({ role: new RegExp(`^${UserRole.HR}$`, "i") });
-
-    if (!teamLead || !hr) {
+    if (!name || !email || !leaveType || !startDate || !endDate || !reason) {
       return NextResponse.json(
-        { message: "HR or Team Lead not found in the system. Cannot create leave request." },
+        { message: "All fields are required." },
         { status: 400 }
       );
     }
 
-    // Save leave request with approverStatus initialized
-    const newRequest: ILeaveRequest = await LeaveRequest.create({
-      userId,
+    const newLeave = await LeaveRequest.create({
+      name,
+      email,
       leaveType,
       startDate,
       endDate,
       reason,
       status: "pending",
-      approvers: {
-        teamLead: teamLead.email,
-        hr: hr.email,
-      },
-      approverStatus: {}, // will store { email: 'approve' | 'reject' }
+      approverComments: [],
     });
 
     return NextResponse.json(
-      { message: "Leave request submitted successfully", data: newRequest },
+      { message: "Leave request submitted successfully", data: newLeave },
       { status: 201 }
     );
-  } catch (err) {
-    console.error("❌ Leave request error:", err);
+  } catch (error) {
+    console.error("❌ Error submitting leave:", error);
     return NextResponse.json(
-      { message: err instanceof Error ? err.message : "Unknown error occurred" },
+      { message: "Server error while submitting leave" },
       { status: 500 }
     );
   }
 }
 
-// ✅ Fetch leave requests
-export async function GET(req: NextRequest) {
+/* -------------------------------------------------------------------------- */
+/* ✅ GET ALL LEAVE REQUESTS (for HR & TeamLead)                              */
+/* -------------------------------------------------------------------------- */
+export async function GET() {
   try {
     await connectDatabase();
 
-    const user: DecodedUser = await verifyAccess(req);
-    const userEmail = user.email;
+    const leaves = await LeaveRequest.find().sort({ createdAt: -1 });
 
-    let leaves: ILeaveRequest[];
-
-    // If user is HR or Team Lead → fetch leaves where they are approvers
-    const approverRoles = [UserRole.HR, UserRole.TEAM_LEAD];
-    if (approverRoles.includes(user.role as UserRole)) {
-      leaves = await LeaveRequest.find({
-        $or: [
-          { "approvers.hr": userEmail },
-          { "approvers.teamLead": userEmail },
-        ],
-      }).sort({ createdAt: -1 });
-    } else {
-      // Normal user → fetch own leaves
-      leaves = await LeaveRequest.find({ userId: user.id }).sort({ createdAt: -1 });
+    if (!leaves.length) {
+      return NextResponse.json(
+        { message: "No leave requests found", leaves: [] },
+        { status: 200 }
+      );
     }
 
-    return NextResponse.json({ message: "Leaves fetched successfully", leaves }, { status: 200 });
-  } catch (err) {
-    console.error("❌ Fetch leaves error:", err);
     return NextResponse.json(
-      { message: err instanceof Error ? err.message : "Unknown error occurred" },
+      { message: "Leaves fetched successfully", leaves },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("❌ Error fetching leaves:", error);
+    return NextResponse.json(
+      { message: "Server error while fetching leaves" },
       { status: 500 }
     );
   }
 }
 
-// ✅ Approve or reject leave request
+/* -------------------------------------------------------------------------- */
+/* ✅ UPDATE LEAVE REQUEST STATUS (approve/reject + comment)                  */
+/* -------------------------------------------------------------------------- */
 export async function PATCH(req: NextRequest) {
   try {
     await connectDatabase();
 
-    const user: DecodedUser = await verifyAccess(req);
-    const { leaveId, action } = await req.json();
+    const { leaveId, action, comment, approverName } = await req.json();
 
-    if (!leaveId || !["approve", "reject"].includes(action)) {
-      return NextResponse.json({ message: "Invalid request data" }, { status: 400 });
+    if (!leaveId || !action || !approverName) {
+      return NextResponse.json(
+        { message: "Missing required fields (leaveId, action, approverName)." },
+        { status: 400 }
+      );
     }
 
     const leave = await LeaveRequest.findById(leaveId);
-    if (!leave) return NextResponse.json({ message: "Leave not found" }, { status: 404 });
-
-    const userEmail = user.email;
-
-    if (![leave.approvers.hr, leave.approvers.teamLead].includes(userEmail)) {
-      return NextResponse.json({ message: "You are not authorized to approve/reject this leave" }, { status: 403 });
+    if (!leave) {
+      return NextResponse.json({ message: "Leave not found" }, { status: 404 });
     }
 
-    // Update approver status
-    leave.approverStatus = leave.approverStatus || {};
-    leave.approverStatus[userEmail] = action;
-
-    // Update overall status
-    const statuses = Object.values(leave.approverStatus);
-    if (statuses.includes("reject")) {
-      leave.status = "rejected";
-    } else if (
-      leave.approvers.hr && leave.approvers.teamLead &&
-      statuses.includes("approve") && statuses.length === 2
-    ) {
-      leave.status = "approved";
-    } else {
-      leave.status = "pending";
+    if (action === "reject" && !comment) {
+      return NextResponse.json(
+        { message: "Rejection reason is required when rejecting a leave." },
+        { status: 400 }
+      );
     }
+
+    leave.status = action === "approve" ? "approved" : "rejected";
+
+    leave.approverComments.push({
+      approver: approverName,
+      action,
+      comment: comment || "",
+      date: new Date(),
+    });
 
     await leave.save();
 
-    return NextResponse.json({ message: `Leave ${action}d successfully`, leave }, { status: 200 });
-  } catch (err) {
-    console.error("❌ Leave approval error:", err);
     return NextResponse.json(
-      { message: err instanceof Error ? err.message : "Unknown error occurred" },
+      { message: `Leave ${action}d successfully`, leave },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("❌ Error updating leave:", error);
+    return NextResponse.json(
+      { message: "Server error while updating leave" },
       { status: 500 }
     );
   }
