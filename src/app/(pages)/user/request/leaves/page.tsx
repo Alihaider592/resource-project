@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback, ChangeEvent, FormEvent } from 
 import toast, { Toaster } from "react-hot-toast";
 
 interface LeaveFormData {
+  name: string;
+  email: string;
   leaveType: string;
   startDate: string;
   endDate: string;
@@ -12,6 +14,8 @@ interface LeaveFormData {
 
 interface Leave {
   _id: string;
+  name: string;
+  email: string;
   leaveType: string;
   startDate: string;
   endDate: string;
@@ -26,6 +30,8 @@ interface Leave {
 
 export default function LeaveRequestPage() {
   const [formData, setFormData] = useState<LeaveFormData>({
+    name: "",
+    email: "",
     leaveType: "",
     startDate: "",
     endDate: "",
@@ -37,13 +43,11 @@ export default function LeaveRequestPage() {
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  // Fetch leaves
+  // ✅ Fetch leaves
   const fetchLeaves = useCallback(async () => {
-    if (!token) return;
-
     try {
       const res = await fetch("/api/user/profile/request/leave", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to fetch leaves");
@@ -56,8 +60,20 @@ export default function LeaveRequestPage() {
 
   useEffect(() => {
     fetchLeaves();
+
+    // Autofill name & email from localStorage (if saved)
+    const storedName = localStorage.getItem("userName");
+    const storedEmail = localStorage.getItem("userEmail");
+    if (storedName || storedEmail) {
+      setFormData((prev) => ({
+        ...prev,
+        name: storedName || "",
+        email: storedEmail || "",
+      }));
+    }
   }, [fetchLeaves]);
 
+  // ✅ Handle Input Changes
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -65,22 +81,17 @@ export default function LeaveRequestPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ✅ Submit Leave Form
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
-
-    if (!token) {
-      toast.error("Please login to submit a request");
-      setSubmitting(false);
-      return;
-    }
 
     try {
       const res = await fetch("/api/user/profile/request/leave", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(formData),
       });
@@ -89,7 +100,14 @@ export default function LeaveRequestPage() {
       if (!res.ok) throw new Error(data.message || "Submission failed");
 
       toast.success("✅ Leave request submitted successfully!");
-      setFormData({ leaveType: "", startDate: "", endDate: "", reason: "" });
+      setFormData({
+        name: formData.name,
+        email: formData.email,
+        leaveType: "",
+        startDate: "",
+        endDate: "",
+        reason: "",
+      });
       setShowForm(false);
       fetchLeaves();
     } catch (err) {
@@ -100,6 +118,7 @@ export default function LeaveRequestPage() {
     }
   };
 
+  // ✅ Format Dates
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString(undefined, {
@@ -109,12 +128,16 @@ export default function LeaveRequestPage() {
     });
   };
 
-  const pendingLeaves: Leave[] = leaves.filter((l) => l.status === "pending");
-  const approvedLeaves: Leave[] = leaves.filter((l) => l.status === "approved");
-  const rejectedLeaves: Leave[] = leaves.filter((l) => l.status === "rejected");
+  // ✅ Categorize Leaves
+  const pendingLeaves = leaves.filter((l) => l.status === "pending");
+  const approvedLeaves = leaves.filter((l) => l.status === "approved");
+  const rejectedLeaves = leaves.filter((l) => l.status === "rejected");
 
+  // ✅ Render Each Leave Row
   const renderLeaveRow = (leave: Leave) => (
     <tr key={leave._id} className="hover:bg-gray-50 transition-colors">
+      <td className="px-4 py-2">{leave.name}</td>
+      <td className="px-4 py-2">{leave.email}</td>
       <td className="px-4 py-2">{leave.leaveType}</td>
       <td className="px-4 py-2">
         {formatDate(leave.startDate)} → {formatDate(leave.endDate)}
@@ -124,15 +147,14 @@ export default function LeaveRequestPage() {
         {leave.approvers.teamLead || "-"}, {leave.approvers.hr || "-"}
       </td>
       <td
-  className={`px-2 py-1 text-[12px] mt-2 font-semibold text-center rounded-full text-white inline-block ${
-    leave.status === "pending"
-      ? "bg-yellow-500"
-      : leave.status === "approved"
-      ? "bg-green-500"
-      : "bg-red-500"
-  }`}
->
-
+        className={`px-2 py-1 text-[12px] font-semibold text-center rounded-full text-white inline-block ${
+          leave.status === "pending"
+            ? "bg-yellow-500"
+            : leave.status === "approved"
+            ? "bg-green-500"
+            : "bg-red-500"
+        }`}
+      >
         {leave.status.toUpperCase()}
       </td>
       <td className="px-4 py-2 text-gray-400 text-sm">{formatDate(leave.createdAt)}</td>
@@ -143,6 +165,7 @@ export default function LeaveRequestPage() {
     <div className="max-w-6xl mx-auto p-6 space-y-8 relative">
       <Toaster position="top-right" />
 
+      {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">My Leave Requests</h2>
         <button
@@ -171,6 +194,8 @@ export default function LeaveRequestPage() {
               <table className="min-w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-100">
+                    <th className="px-4 py-2">Name</th>
+                    <th className="px-4 py-2">Email</th>
                     <th className="px-4 py-2">Type</th>
                     <th className="px-4 py-2">Dates</th>
                     <th className="px-4 py-2">Reason</th>
@@ -189,14 +214,12 @@ export default function LeaveRequestPage() {
       {/* Modal Form */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Shadow Overlay */}
           <div
-            className="absolute inset-0 bg-gray-200 opacity-40 shadow-2xl"
+            className="absolute inset-0 bg-gray-200 opacity-40"
             onClick={() => setShowForm(false)}
           ></div>
 
-          {/* Form Modal */}
-          <div className="relative bg-white rounded-xl w-full max-w-md p-6 shadow-2xl animate-slideIn scale-100 transition-all duration-500">
+          <div className="relative bg-white rounded-xl w-full max-w-md p-6 shadow-2xl animate-slideIn">
             <button
               className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl font-bold"
               onClick={() => setShowForm(false)}
@@ -205,6 +228,34 @@ export default function LeaveRequestPage() {
             </button>
             <h2 className="text-xl font-bold mb-4 text-gray-800">Request Leave</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name */}
+              <div>
+                <label className="block font-medium mb-1 text-gray-700">Name</label>
+                <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter your name"
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 outline-none"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block font-medium mb-1 text-gray-700">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter your email"
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 outline-none"
+                />
+              </div>
+
+              {/* Leave Type */}
               <div>
                 <label className="block font-medium mb-1 text-gray-700">Leave Type</label>
                 <select
@@ -222,6 +273,7 @@ export default function LeaveRequestPage() {
                 </select>
               </div>
 
+              {/* Dates */}
               <div>
                 <label className="block font-medium mb-1 text-gray-700">Start Date</label>
                 <input
@@ -233,7 +285,6 @@ export default function LeaveRequestPage() {
                   className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 outline-none"
                 />
               </div>
-
               <div>
                 <label className="block font-medium mb-1 text-gray-700">End Date</label>
                 <input
@@ -246,6 +297,7 @@ export default function LeaveRequestPage() {
                 />
               </div>
 
+              {/* Reason */}
               <div>
                 <label className="block font-medium mb-1 text-gray-700">Reason</label>
                 <textarea
@@ -261,7 +313,7 @@ export default function LeaveRequestPage() {
 
               <button
                 type="submit"
-                disabled={submitting || !token}
+                disabled={submitting}
                 className="w-full bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition-all duration-300"
               >
                 {submitting ? "Submitting..." : "Submit Leave Request"}
@@ -271,7 +323,6 @@ export default function LeaveRequestPage() {
         </div>
       )}
 
-      {/* Slide-in Animation */}
       <style jsx>{`
         .animate-slideIn {
           transform: translateY(-20px);

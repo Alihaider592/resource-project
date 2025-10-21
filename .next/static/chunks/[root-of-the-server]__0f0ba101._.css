@@ -252,6 +252,7 @@
     --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --color-red-50: #fef2f2;
+    --color-red-100: #ffe2e2;
     --color-red-200: #ffcaca;
     --color-red-400: #ff6568;
     --color-red-500: #fb2c36;
@@ -381,6 +382,7 @@
   @supports (color: color(display-p3 0 0 0)) {
     :root, :host {
       --color-red-50: color(display-p3 .988669 .951204 .950419);
+      --color-red-100: color(display-p3 .980386 .889727 .887779);
       --color-red-200: color(display-p3 .969562 .798149 .794299);
       --color-red-400: color(display-p3 .933534 .431676 .423491);
       --color-red-500: color(display-p3 .903738 .262579 .253307);
@@ -456,6 +458,7 @@
   @supports (color: lab(0% 0 0)) {
     :root, :host {
       --color-red-50: lab(96.5005% 4.18508 1.52328);
+      --color-red-100: lab(92.243% 10.2865 3.83865);
       --color-red-200: lab(86.017% 19.8815 7.75869);
       --color-red-400: lab(63.7053% 60.745 31.3109);
       --color-red-500: lab(55.4814% 75.0732 48.8528);
@@ -1176,6 +1179,10 @@
 
   .mt-4 {
     margin-top: calc(var(--spacing) * 4);
+  }
+
+  .mt-5 {
+    margin-top: calc(var(--spacing) * 5);
   }
 
   .mt-6 {
@@ -2568,12 +2575,20 @@
     background-color: var(--color-red-50);
   }
 
+  .bg-red-100 {
+    background-color: var(--color-red-100);
+  }
+
   .bg-red-200 {
     background-color: var(--color-red-200);
   }
 
   .bg-red-500 {
     background-color: var(--color-red-500);
+  }
+
+  .bg-red-600 {
+    background-color: var(--color-red-600);
   }
 
   .bg-secondary {
@@ -3278,6 +3293,10 @@
     text-transform: lowercase;
   }
 
+  .italic {
+    font-style: italic;
+  }
+
   .not-italic {
     font-style: normal;
   }
@@ -3856,8 +3875,8 @@
   }
 
   @media (hover: hover) {
-    .hover\:bg-green-600:hover {
-      background-color: var(--color-green-600);
+    .hover\:bg-green-700:hover {
+      background-color: var(--color-green-700);
     }
   }
 

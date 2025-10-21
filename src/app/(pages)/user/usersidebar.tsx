@@ -48,7 +48,7 @@ export default function UserSidebarLayout({ children }: Props) {
       {/* Primary Sidebar */}
       <div
         className={`bg-purple-900 text-white shadow-md flex flex-col transition-all duration-300 z-20 ${
-          isOpen ? "w-64" : "w-20"
+          isOpen ? "w-56" : "w-20"
         }`}
       >
         {/* Header */}

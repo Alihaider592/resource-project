@@ -43,20 +43,15 @@ export default function HRDashboard({ userName }: HRDashboardProps) {
     const storedName = localStorage.getItem("userName");
     if (storedName) setHRName(storedName);
 
-    // ✅ Fetch employee count
     const fetchEmployeeCount = async () => {
       try {
-        const res = await fetch("/api/employees"); // adjust route if needed
+        const res = await fetch("/api/employees/count");
         const data = await res.json();
 
-        if (res.ok) {
-          // Support both array or { count: number } formats
-          const count = Array.isArray(data)
-            ? data.length
-            : data.count ?? 0;
-          setTotalEmployees(count);
+        if (res.ok && typeof data.count === "number") {
+          setTotalEmployees(data.count);
         } else {
-          console.warn("Failed to fetch employee count:", data.message);
+          console.warn("Failed to fetch employee count:", data);
           setTotalEmployees(0);
         }
       } catch (error) {
@@ -65,7 +60,6 @@ export default function HRDashboard({ userName }: HRDashboardProps) {
       }
     };
 
-    // ✅ Fetch leave data
     const fetchLeaves = async () => {
       try {
         const res = await fetch("/api/user/profile/request/leave");
@@ -74,9 +68,9 @@ export default function HRDashboard({ userName }: HRDashboardProps) {
         if (res.ok && Array.isArray(data.leaves)) {
           const leavesData = data.leaves as LeaveRequest[];
 
-          const pending = leavesData.filter((l: LeaveRequest) => l.status === "pending").length;
-          const approved = leavesData.filter((l: LeaveRequest) => l.status === "approved").length;
-          const rejected = leavesData.filter((l: LeaveRequest) => l.status === "rejected").length;
+          const pending = leavesData.filter((l) => l.status === "pending").length;
+          const approved = leavesData.filter((l) => l.status === "approved").length;
+          const rejected = leavesData.filter((l) => l.status === "rejected").length;
 
           setStats([
             { title: "Total Employees", value: totalEmployees, icon: <Users className="w-8 h-8" />, color: "green" },
@@ -92,7 +86,6 @@ export default function HRDashboard({ userName }: HRDashboardProps) {
       }
     };
 
-    // Fetch everything in parallel
     Promise.all([fetchEmployeeCount(), fetchLeaves()]);
   }, [totalEmployees]);
 
