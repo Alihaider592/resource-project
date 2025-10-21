@@ -65,7 +65,7 @@ export default function TeamLeadDashboardPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen p-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="mb-10">
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-2">

@@ -4,9 +4,7 @@ import HRSidebarLayout from "../HRSidebarLayout";
 const page = () => {
   return (
     <div>
-      {/* <HRSidebarLayout> */}
       <ProfilePage />
-      {/* </HRSidebarLayout> */}
     </div>
   );
 };

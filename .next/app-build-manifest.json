@@ -6,25 +6,100 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/(pages)/teamlead/layout": [
+    "/(pages)/hr/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/teamlead/layout.js"
+      "static/chunks/app/(pages)/hr/layout.js"
     ],
-    "/(pages)/teamlead/page": [
+    "/(pages)/hr/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/teamlead/page.js"
+      "static/chunks/app/(pages)/hr/page.js"
     ],
     "/(backend)/api/auth/me/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(backend)/api/auth/me/route.js"
     ],
+    "/(pages)/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/login/page.js"
+    ],
+    "/(backend)/api/auth/login/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(backend)/api/auth/login/route.js"
+    ],
+    "/(backend)/api/admin/protectedRoute/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(backend)/api/admin/protectedRoute/route.js"
+    ],
     "/(backend)/api/user/profile/request/leave/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(backend)/api/user/profile/request/leave/route.js"
+    ],
+    "/(pages)/hr/addemployee/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/hr/addemployee/page.js"
+    ],
+    "/(pages)/hr/manage/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/hr/manage/page.js"
+    ],
+    "/(backend)/api/admin/getusers/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(backend)/api/admin/getusers/route.js"
+    ],
+    "/(pages)/teamlead/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/teamlead/layout.js"
+    ],
+    "/(pages)/teamlead/profile/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/teamlead/profile/page.js"
+    ],
+    "/(pages)/user/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/user/layout.js"
+    ],
+    "/(pages)/user/profile/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/user/profile/page.js"
+    ],
+    "/(pages)/user/request/leaves/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/user/request/leaves/page.js"
+    ],
+    "/(pages)/teamlead/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/teamlead/page.js"
+    ],
+    "/(pages)/hr/Profile/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/hr/Profile/page.js"
+    ],
+    "/(pages)/hr/employee-requests/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/hr/employee-requests/page.js"
+    ],
+    "/(pages)/hr/leaves/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/hr/leaves/page.js"
     ],
     "/(pages)/teamlead/teamrequests/page": [
       "static/chunks/webpack.js",
@@ -35,6 +110,21 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/teamlead/leaves/page.js"
+    ],
+    "/(pages)/admin/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/admin/layout.js"
+    ],
+    "/(pages)/admin/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/admin/page.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

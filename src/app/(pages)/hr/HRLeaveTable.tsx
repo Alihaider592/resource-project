@@ -1,25 +1,26 @@
+
 "use client";
 
 import React from "react";
-import { LeaveRequest } from "./types"; 
+import { LeaveRequest } from "../teamlead/types";
 
 interface Props {
   leaves: LeaveRequest[];
 }
 
-export default function TeamLeadLeaveTable({ leaves }: Props) {
+export default function HRLeaveTable({ leaves }: Props) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse border border-gray-200">
         <thead>
-          <tr className="bg-teal-400 text-white ">
-            <th className="p-3">Employee Name</th>
-            <th className="p-3">Email</th>
-            <th className="p-3">Leave Type</th>
-            <th className="p-3">Start Date</th>
-            <th className="p-3">End Date</th>
-            <th className="p-3">Reason</th>
-            <th className="p-3">Status</th>
+          <tr className="bg-green-300">
+            <th className="p-3 ">Employee Name</th>
+            <th className="p-3 ">Email</th>
+            <th className="p-3 ">Leave Type</th>
+            <th className="p-3 ">Start Date</th>
+            <th className="p-3 ">End Date</th>
+            <th className="p-3 ">Reason</th>
+            <th className="p-3 ">Status</th>
           </tr>
         </thead>
         <tbody>

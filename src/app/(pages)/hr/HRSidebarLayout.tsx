@@ -18,9 +18,12 @@ export default function HRSidebarLayout({ children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Only open RequestSubSidebar if the current route is employee-requests
+  const isRequestActive = pathname.startsWith("/hr/employee-requests");
+
   const menuItems = [
     { name: "Dashboard", icon: <FiGrid size={20} />, href: "/hr" },
-    { name: "Profile", icon: <FiUser size={20} />, href: "/hr/profile" },
+    { name: "Profile", icon: <FiUser size={20} />, href: "/hr/Profile" },
     { name: "Add Employee", icon: <FiPlus size={20} />, href: "/hr/addemployee" },
     { name: "Manage Employees", icon: <FiUsers size={20} />, href: "/hr/manage" },
     { name: "Attendance", icon: <FiFileText size={20} />, href: "/hr/attendance" },
@@ -71,14 +74,17 @@ export default function HRSidebarLayout({ children }: Props) {
       </div>
 
       {/* Sub Sidebar */}
-      <motion.div
-        initial={{ width: 0, opacity: 0 }}
-        animate={{ width: 220, opacity: 1 }}
-        transition={{ type: "tween", duration: 0.8, ease: "easeInOut" }}
-        className="bg-green-600 h-full text-white shadow-md overflow-hidden z-10"
-      >
-        <RequestSubSidebar />
-      </motion.div>
+      {isRequestActive && (
+        <motion.div
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: 220, opacity: 1 }}
+          exit={{ width: 0, opacity: 0 }}
+          transition={{ type: "tween", duration: 0.5, ease: "easeInOut" }}
+          className="bg-green-600 h-full text-white shadow-md overflow-hidden z-10"
+        >
+          <RequestSubSidebar />
+        </motion.div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 p-6 overflow-auto">{children}</div>
