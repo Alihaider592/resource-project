@@ -6,46 +6,6 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
-    ],
-    "/(pages)/login/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/login/page.js"
-    ],
-    "/(backend)/api/auth/login/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(backend)/api/auth/login/route.js"
-    ],
-    "/(backend)/api/admin/protectedRoute/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(backend)/api/admin/protectedRoute/route.js"
-    ],
-    "/(pages)/hr/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/hr/layout.js"
-    ],
-    "/(pages)/hr/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/hr/page.js"
-    ],
-    "/(backend)/api/auth/me/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(backend)/api/auth/me/route.js"
-    ],
-    "/(backend)/api/user/profile/request/leave/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(backend)/api/user/profile/request/leave/route.js"
-    ],
     "/(pages)/teamlead/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -56,40 +16,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/teamlead/page.js"
     ],
-    "/(pages)/user/layout": [
+    "/(backend)/api/auth/me/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/user/layout.js"
+      "static/chunks/app/(backend)/api/auth/me/route.js"
     ],
-    "/(pages)/user/page": [
+    "/(backend)/api/user/profile/request/leave/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/user/page.js"
-    ],
-    "/(pages)/user/profile/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/user/profile/page.js"
-    ],
-    "/(pages)/user/request/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/user/request/page.js"
-    ],
-    "/(pages)/user/request/leaves/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/user/request/leaves/page.js"
-    ],
-    "/(pages)/hr/employee-requests/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/hr/employee-requests/page.js"
-    ],
-    "/(pages)/hr/leaves/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/hr/leaves/page.js"
+      "static/chunks/app/(backend)/api/user/profile/request/leave/route.js"
     ],
     "/(pages)/teamlead/teamrequests/page": [
       "static/chunks/webpack.js",

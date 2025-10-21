@@ -1,73 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React from "react";
+import { LeaveRequest } from "./types"; 
 
-interface LeaveRequest {
-  _id: string;
-  userId: string;
-  name: string;
-  leaveType: string;
-  startDate: string;
-  endDate: string;
-  reason: string;
-  status: "pending" | "approved" | "rejected";
-  approvers?: {
-    teamLead?: string | null;
-    hr?: string | null;
-  };
+interface Props {
+  leaves: LeaveRequest[];
 }
 
-export default function TeamLeadLeaveTable() {
-  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
-
-  useEffect(() => {
-    const fetchLeaves = async () => {
-      try {
-        const res = await fetch("/api/user/profile/request/leave");
-        const data = await res.json();
-        if (res.ok && Array.isArray(data.leaves)) {
-          const teamLeadLeaves = data.leaves.filter((l: LeaveRequest) => l.approvers?.teamLead);
-          setLeaves(teamLeadLeaves);
-        }
-      } catch (err) {
-        console.error("Failed to fetch leaves:", err);
-      }
-    };
-    fetchLeaves();
-  }, []);
-
+export default function TeamLeadLeaveTable({ leaves }: Props) {
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full bg-white rounded-xl shadow-md overflow-hidden">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="px-4 py-2 text-left text-gray-700 font-semibold">Employee</th>
-            <th className="px-4 py-2 text-left text-gray-700 font-semibold">Type</th>
-            <th className="px-4 py-2 text-left text-gray-700 font-semibold">Start</th>
-            <th className="px-4 py-2 text-left text-gray-700 font-semibold">End</th>
-            <th className="px-4 py-2 text-left text-gray-700 font-semibold">Reason</th>
-            <th className="px-4 py-2 text-left text-gray-700 font-semibold">Status</th>
+      <table className="w-full text-left border-collapse border border-gray-200">
+        <thead>
+          <tr className="bg-teal-500 text-white ">
+            <th className="p-3">Employee Name</th>
+            <th className="p-3">Email</th>
+            <th className="p-3">Leave Type</th>
+            <th className="p-3">Start Date</th>
+            <th className="p-3">End Date</th>
+            <th className="p-3">Reason</th>
+            <th className="p-3">Status</th>
           </tr>
         </thead>
         <tbody>
           {leaves.map((leave) => (
-            <tr key={leave._id} className="border-b last:border-none hover:bg-gray-50">
-              <td className="px-4 py-2">{leave.name}</td>
-              <td className="px-4 py-2">{leave.leaveType}</td>
-              <td className="px-4 py-2">{leave.startDate}</td>
-              <td className="px-4 py-2">{leave.endDate}</td>
-              <td className="px-4 py-2">{leave.reason}</td>
-              <td className="px-4 py-2">
+            <tr key={leave._id} className="hover:bg-gray-50">
+              <td className="p-3 ">{leave.name || "N/A"}</td>
+              <td className="p-3 ">{leave.email || "N/A"}</td>
+              <td className="p-3 ">{leave.leaveType}</td>
+              <td className="p-3 ">{leave.startDate}</td>
+              <td className="p-3 ">{leave.endDate}</td>
+              <td className="p-3 ">{leave.reason}</td>
+              <td className="p-3  capitalize">
                 <span
-                  className={`px-3 py-1 rounded-full text-white font-semibold ${
-                    leave.status === "pending"
-                      ? "bg-yellow-500"
-                      : leave.status === "approved"
-                      ? "bg-green-500"
-                      : "bg-red-500"
+                  className={`px-3 py-1 rounded-full font-semibold ${
+                    leave.status === "approved"
+                      ? "bg-green-100 text-green-700"
+                      : leave.status === "pending"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-red-100 text-red-700"
                   }`}
                 >
-                  {leave.status.toUpperCase()}
+                  {leave.status}
                 </span>
               </td>
             </tr>

@@ -1,67 +1,36 @@
 "use client";
 
-import { useEffect, useState, ReactElement } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Clock, CheckCircle, XCircle, ListTodo, Briefcase, ClipboardList } from "lucide-react";
-import TeamLeadLeaveTable from "./TeamLeadLeaveTable"; // leave table component
-
-interface StatCard {
-  title: string;
-  value: number;
-  icon: ReactElement;
-  color: string;
-}
-
-interface Task {
-  title: string;
-  status: string;
-}
-
-interface Project {
-  name: string;
-  progress: number;
-}
-
-interface LeaveRequest {
-  _id: string;
-  userId: string;
-  leaveType: string;
-  startDate: string;
-  endDate: string;
-  reason: string;
-  status: "pending" | "approved" | "rejected";
-  approvers?: {
-    teamLead?: string | null;
-    hr?: string | null;
-  };
-}
+import TeamLeadLeaveTable from "./TeamLeadLeaveTable";
+import { LeaveRequest, StatCard, Task, Project } from "./types";
 
 export default function TeamLeadDashboardPage() {
+  const [leadName, setLeadName] = useState("Team Lead");
+  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [stats, setStats] = useState<StatCard[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [leadName, setLeadName] = useState("Team Lead");
-  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
 
   useEffect(() => {
     const storedName = localStorage.getItem("userName");
     if (storedName) setLeadName(storedName);
 
-    // Fetch leaves from backend API
+    // Fetch leaves
     const fetchLeaves = async () => {
       try {
         const res = await fetch("/api/user/profile/request/leave");
         const data = await res.json();
 
         if (res.ok && Array.isArray(data.leaves)) {
-          // Include all leaves where teamLead is assigned (approved, rejected, pending)
           const teamLeadLeaves = data.leaves.filter(
-            (leave: LeaveRequest) => leave.approvers?.teamLead !== undefined
+            (l: LeaveRequest) => l.approvers?.teamLead !== undefined
           );
 
           setLeaves(teamLeadLeaves);
 
-          // Count stats
+          // Compute stats
           const pending = teamLeadLeaves.filter((l: LeaveRequest) => l.status === "pending").length;
           const approved = teamLeadLeaves.filter((l: LeaveRequest) => l.status === "approved").length;
           const rejected = teamLeadLeaves.filter((l: LeaveRequest) => l.status === "rejected").length;
@@ -75,7 +44,7 @@ export default function TeamLeadDashboardPage() {
           ]);
         }
       } catch (error) {
-        console.error("Error fetching leave requests:", error);
+        console.error("Error fetching leaves:", error);
       }
     };
 
@@ -120,19 +89,17 @@ export default function TeamLeadDashboardPage() {
               <p className="text-gray-500 text-sm">{stat.title}</p>
               <p className="text-2xl font-bold">{stat.value}</p>
             </div>
-            <div className={`p-3 rounded-full bg-${stat.color}-100 text-${stat.color}-600`}>
-              {stat.icon}
-            </div>
+            <div className={`p-3 rounded-full bg-${stat.color}-100 text-${stat.color}-600`}>{stat.icon}</div>
           </motion.div>
         ))}
       </div>
 
-      {/* Leave Requests Table */}
+      {/* Leave Table */}
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="bg-white rounded-xl shadow-lg p-6 mb-10">
         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
           <ClipboardList className="w-6 h-6 text-blue-600" /> Team Leave Requests
         </h2>
-        <TeamLeadLeaveTable leaves={leaves} /> {/* Pass leaves data */}
+        <TeamLeadLeaveTable leaves={leaves} />
       </motion.div>
 
       {/* Tasks */}
@@ -144,15 +111,13 @@ export default function TeamLeadDashboardPage() {
           {tasks.map((task, idx) => (
             <li key={idx} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
               <span className="font-medium text-gray-800">{task.title}</span>
-              <span
-                className={`text-sm px-3 py-1 rounded-full font-semibold ${
-                  task.status === "Completed"
-                    ? "bg-green-100 text-green-700"
-                    : task.status === "In Progress"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-              >
+              <span className={`text-sm px-3 py-1 rounded-full font-semibold ${
+                task.status === "Completed"
+                  ? "bg-green-100 text-green-700"
+                  : task.status === "In Progress"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-gray-200 text-gray-700"
+              }`}>
                 {task.status}
               </span>
             </li>
