@@ -2,20 +2,22 @@
 
 import { useEffect, useState, ReactElement } from "react";
 import { motion } from "framer-motion";
-import {
-  Users,
-  FileText,
-  CheckCircle,
-  XCircle,
-  ClipboardList,
-} from "lucide-react";
-import LeaveApprovalDashboard from "@/app/(forntend)/components/LeavesApprovalsDashboard";
+import { Users, FileText, CheckCircle, XCircle } from "lucide-react";
 
-// ✅ Interfaces
+// ✅ Props
 interface HRDashboardProps {
   userName?: string;
 }
 
+// ✅ Stat card interface
+interface StatCard {
+  title: string;
+  value: number;
+  icon: ReactElement;
+  color: string;
+}
+
+// ✅ Leave request interface
 interface LeaveRequest {
   _id: string;
   userId: string;
@@ -26,88 +28,75 @@ interface LeaveRequest {
   status: "pending" | "approved" | "rejected";
 }
 
-interface StatCard {
-  title: string;
-  value: number;
-  icon: ReactElement;
-  color: string;
-}
-
 export default function HRDashboard({ userName }: HRDashboardProps) {
   const [hrName, setHRName] = useState(userName || "HR");
   const [stats, setStats] = useState<StatCard[]>([]);
-  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [totalEmployees, setTotalEmployees] = useState<number>(0);
+  const [pendingLeaves, setPendingLeaves] = useState<number>(0);
+  const [approvedLeaves, setApprovedLeaves] = useState<number>(0);
+  const [rejectedLeaves, setRejectedLeaves] = useState<number>(0);
 
   useEffect(() => {
     const storedName = localStorage.getItem("userName");
     if (storedName) setHRName(storedName);
 
+    // ✅ Fetch employees count
     const fetchEmployeeCount = async () => {
       try {
-        const res = await fetch("/api/employees/count");
+        const res = await fetch("/api/employees");
         const data = await res.json();
-
-        if (res.ok && typeof data.count === "number") {
-          setTotalEmployees(data.count);
-        } else {
-          console.warn("Failed to fetch employee count:", data);
-          setTotalEmployees(0);
-        }
+        const count = Array.isArray(data) ? data.length : data.count ?? 0;
+        setTotalEmployees(count);
       } catch (error) {
-        console.error("Error fetching employee count:", error);
-        setTotalEmployees(0);
+        console.error("Failed to fetch employees:", error);
       }
     };
 
-    const fetchLeaves = async () => {
+    // ✅ Fetch leave stats
+    const fetchLeaveStats = async () => {
       try {
         const res = await fetch("/api/user/profile/request/leave");
         const data = await res.json();
-
         if (res.ok && Array.isArray(data.leaves)) {
-          const leavesData = data.leaves as LeaveRequest[];
+          const leavesData: LeaveRequest[] = data.leaves;
 
-          const pending = leavesData.filter((l) => l.status === "pending").length;
-          const approved = leavesData.filter((l) => l.status === "approved").length;
-          const rejected = leavesData.filter((l) => l.status === "rejected").length;
-
-          setStats([
-            { title: "Total Employees", value: totalEmployees, icon: <Users className="w-8 h-8" />, color: "green" },
-            { title: "Pending Leaves", value: pending, icon: <FileText className="w-8 h-8" />, color: "yellow" },
-            { title: "Approved Leaves", value: approved, icon: <CheckCircle className="w-8 h-8" />, color: "blue" },
-            { title: "Rejected Leaves", value: rejected, icon: <XCircle className="w-8 h-8" />, color: "red" },
-          ]);
-
-          setLeaves(leavesData);
+          setPendingLeaves(leavesData.filter((l: LeaveRequest) => l.status === "pending").length);
+          setApprovedLeaves(leavesData.filter((l: LeaveRequest) => l.status === "approved").length);
+          setRejectedLeaves(leavesData.filter((l: LeaveRequest) => l.status === "rejected").length);
         }
       } catch (error) {
-        console.error("Error fetching leaves:", error);
+        console.error("Failed to fetch leaves:", error);
       }
     };
 
-    Promise.all([fetchEmployeeCount(), fetchLeaves()]);
-  }, [totalEmployees]);
+    fetchEmployeeCount();
+    fetchLeaveStats();
+  }, []);
+
+  // ✅ Update stats when counts change
+  useEffect(() => {
+    setStats([
+      { title: "Total Employees", value: totalEmployees, icon: <Users className="w-8 h-8" />, color: "green" },
+      { title: "Pending Leaves", value: pendingLeaves, icon: <FileText className="w-8 h-8" />, color: "yellow" },
+      { title: "Approved Leaves", value: approvedLeaves, icon: <CheckCircle className="w-8 h-8" />, color: "blue" },
+      { title: "Rejected Leaves", value: rejectedLeaves, icon: <XCircle className="w-8 h-8" />, color: "red" },
+    ]);
+  }, [totalEmployees, pendingLeaves, approvedLeaves, rejectedLeaves]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* ✅ Header Section */}
-      <motion.div
+      {/* Header */}
+      <motion.h1
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="mb-10"
+        className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-10"
       >
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-2">
-          👋 Welcome back, <span className="text-green-600">{hrName}</span>
-        </h1>
-        <p className="text-gray-600 text-lg max-w-2xl">
-          Manage your employees and handle leave requests efficiently.
-        </p>
-      </motion.div>
+        👋 Welcome back, <span className="text-green-600">{hrName}</span>
+      </motion.h1>
 
-      {/* ✅ Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <motion.div
             key={index}
@@ -125,22 +114,6 @@ export default function HRDashboard({ userName }: HRDashboardProps) {
           </motion.div>
         ))}
       </div>
-
-      {/* ✅ Leave Requests Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        className="bg-white rounded-xl shadow-lg p-6"
-      >
-        <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <ClipboardList className="w-6 h-6 text-blue-600" />
-          Employee Leave Requests
-          <span className="ml-2 text-sm text-gray-500">({leaves.length} total)</span>
-        </h2>
-
-        <LeaveApprovalDashboard userRole="hr" />
-      </motion.div>
     </div>
   );
 }

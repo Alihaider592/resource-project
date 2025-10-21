@@ -2,18 +2,24 @@
 
 import { useEffect, useState, ReactElement } from "react";
 import { motion } from "framer-motion";
-import {
-  ClipboardList,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Briefcase,
-  ListTodo,
-} from "lucide-react";
-import LeaveApprovalDashboard from "@/app/(forntend)/components/LeavesApprovalsDashboard";
+import { Clock, CheckCircle, XCircle, ListTodo, Briefcase, ClipboardList } from "lucide-react";
+import TeamLeadLeaveTable from "./TeamLeadLeaveTable"; // leave table component
 
-interface TeamLeadDashboardProps {
-  userName?: string;
+interface StatCard {
+  title: string;
+  value: number;
+  icon: ReactElement;
+  color: string;
+}
+
+interface Task {
+  title: string;
+  status: string;
+}
+
+interface Project {
+  name: string;
+  progress: number;
 }
 
 interface LeaveRequest {
@@ -28,40 +34,34 @@ interface LeaveRequest {
     teamLead?: string | null;
     hr?: string | null;
   };
-  approverStatus?: Record<string, "approve" | "reject">;
 }
 
-interface StatCard {
-  title: string;
-  value: number;
-  icon: ReactElement;
-  color: string;
-}
-
-export default function TeamLeadDashboard({ userName }: TeamLeadDashboardProps) {
-  const [leadName, setLeadName] = useState(userName || "Team Lead");
+export default function TeamLeadDashboardPage() {
   const [stats, setStats] = useState<StatCard[]>([]);
-  const [tasks, setTasks] = useState<{ title: string; status: string }[]>([]);
-  const [projects, setProjects] = useState<{ name: string; progress: number }[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [leadName, setLeadName] = useState("Team Lead");
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
 
   useEffect(() => {
     const storedName = localStorage.getItem("userName");
     if (storedName) setLeadName(storedName);
 
+    // Fetch leaves from backend API
     const fetchLeaves = async () => {
       try {
         const res = await fetch("/api/user/profile/request/leave");
         const data = await res.json();
 
         if (res.ok && Array.isArray(data.leaves)) {
+          // Include all leaves where teamLead is assigned (approved, rejected, pending)
           const teamLeadLeaves = data.leaves.filter(
-            (leave: LeaveRequest) => leave.approvers?.teamLead
+            (leave: LeaveRequest) => leave.approvers?.teamLead !== undefined
           );
 
           setLeaves(teamLeadLeaves);
 
-          // ✅ Explicitly type `l`
+          // Count stats
           const pending = teamLeadLeaves.filter((l: LeaveRequest) => l.status === "pending").length;
           const approved = teamLeadLeaves.filter((l: LeaveRequest) => l.status === "approved").length;
           const rejected = teamLeadLeaves.filter((l: LeaveRequest) => l.status === "rejected").length;
@@ -73,22 +73,22 @@ export default function TeamLeadDashboard({ userName }: TeamLeadDashboardProps) 
             { title: "Rejected Requests", value: rejected, icon: <XCircle className="w-8 h-8" />, color: "red" },
             { title: "Total Requests", value: total, icon: <ClipboardList className="w-8 h-8" />, color: "blue" },
           ]);
-        } else {
-          console.warn("No leaves found or API error.");
         }
       } catch (error) {
-        console.error("Error fetching leaves:", error);
+        console.error("Error fetching leave requests:", error);
       }
     };
 
     fetchLeaves();
 
+    // Dummy tasks
     setTasks([
       { title: "Review project Alpha", status: "In Progress" },
       { title: "Weekly report meeting", status: "Pending" },
       { title: "Submit feedback", status: "Completed" },
     ]);
 
+    // Dummy projects
     setProjects([
       { name: "Project Alpha", progress: 90 },
       { name: "Project Beta", progress: 55 },
@@ -98,12 +98,7 @@ export default function TeamLeadDashboard({ userName }: TeamLeadDashboardProps) 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        className="mb-10"
-      >
+      <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="mb-10">
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-2">
           👋 Hello, <span className="text-blue-600">{leadName}</span>
         </h1>
@@ -112,11 +107,11 @@ export default function TeamLeadDashboard({ userName }: TeamLeadDashboardProps) 
         </p>
       </motion.div>
 
-      {/* Stats Section */}
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        {stats.map((stat, index) => (
+        {stats.map((stat, idx) => (
           <motion.div
-            key={index}
+            key={idx}
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.2 }}
             className={`bg-white p-6 rounded-xl shadow-md flex items-center justify-between border-l-4 border-${stat.color}-500`}
@@ -132,37 +127,22 @@ export default function TeamLeadDashboard({ userName }: TeamLeadDashboardProps) 
         ))}
       </div>
 
-      {/* Leave Requests */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="bg-white rounded-xl shadow-lg p-6 mb-10"
-      >
+      {/* Leave Requests Table */}
+      <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="bg-white rounded-xl shadow-lg p-6 mb-10">
         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <ClipboardList className="w-6 h-6 text-blue-600" />
-          Team Leave Requests
+          <ClipboardList className="w-6 h-6 text-blue-600" /> Team Leave Requests
         </h2>
-        <LeaveApprovalDashboard userRole="teamlead" />
+        <TeamLeadLeaveTable leaves={leaves} /> {/* Pass leaves data */}
       </motion.div>
 
       {/* Tasks */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="bg-white rounded-xl shadow-lg p-6 mb-10"
-      >
+      <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="bg-white rounded-xl shadow-lg p-6 mb-10">
         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <ListTodo className="w-6 h-6 text-green-600" />
-          Team Tasks
+          <ListTodo className="w-6 h-6 text-green-600" /> Team Tasks
         </h2>
         <ul className="space-y-3">
           {tasks.map((task, idx) => (
-            <li
-              key={idx}
-              className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
-            >
+            <li key={idx} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
               <span className="font-medium text-gray-800">{task.title}</span>
               <span
                 className={`text-sm px-3 py-1 rounded-full font-semibold ${
@@ -181,15 +161,9 @@ export default function TeamLeadDashboard({ userName }: TeamLeadDashboardProps) 
       </motion.div>
 
       {/* Projects */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="bg-white rounded-xl shadow-lg p-6"
-      >
+      <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="bg-white rounded-xl shadow-lg p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <Briefcase className="w-6 h-6 text-purple-600" />
-          Projects Overview
+          <Briefcase className="w-6 h-6 text-purple-600" /> Projects Overview
         </h2>
         <div className="space-y-4">
           {projects.map((project, idx) => (
@@ -199,10 +173,7 @@ export default function TeamLeadDashboard({ userName }: TeamLeadDashboardProps) 
                 <span className="text-sm text-gray-500">{project.progress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className="h-3 rounded-full bg-purple-500 transition-all duration-500"
-                  style={{ width: `${project.progress}%` }}
-                ></div>
+                <div className="h-3 rounded-full bg-purple-500 transition-all duration-500" style={{ width: `${project.progress}%` }}></div>
               </div>
             </div>
           ))}

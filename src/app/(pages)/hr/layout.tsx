@@ -1,15 +1,20 @@
 "use client";
 
 import React, { ReactNode } from "react";
-// import UserSidebarLayout from "./usersidebar";
 import HRSidebarLayout from "./HRSidebarLayout";
 
-interface userLayoutProps {
+interface UserLayoutProps {
   children: ReactNode;
 }
 
-const userLayout = ({ children }: userLayoutProps) => {
-  return <HRSidebarLayout>{children}</HRSidebarLayout>;
+const UserLayout = ({ children }: UserLayoutProps) => {
+  return (
+    <HRSidebarLayout>
+      <div className="flex-1 overflow-auto p-6 bg-gray-100">
+        {children}
+      </div>
+    </HRSidebarLayout>
+  );
 };
 
-export default userLayout;
+export default UserLayout;

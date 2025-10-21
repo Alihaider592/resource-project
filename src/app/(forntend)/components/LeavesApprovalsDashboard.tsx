@@ -1,6 +1,6 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
 
 interface Leave {
   _id: string;
@@ -10,7 +10,7 @@ interface Leave {
   startDate: string;
   endDate: string;
   reason: string;
-  status: "pending" | "approved" | "rejected";
+  status: string;
   approvers: {
     teamLead?: string | null;
     hr?: string | null;
@@ -28,24 +28,31 @@ interface Props {
   userRole: "teamlead" | "hr" | "user";
 }
 
-// Initialize Socket.IO client
-const socket: Socket = io();
-
 const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [comment, setComment] = useState<{ [key: string]: string }>({});
 
-  // Fetch initial leaves & listen for real-time updates
+  // -------------------- Fetch leaves via REST --------------------
   useEffect(() => {
     const fetchLeaves = async () => {
       try {
         const res = await fetch("/api/user/profile/request/leave");
+
+        if (!res.headers.get("content-type")?.includes("application/json")) {
+          throw new Error("Response is not JSON");
+        }
+
         const data = await res.json();
-        setLeaves(data.leaves || []);
-      } catch (err) {
-        console.error(err);
+
+        if (res.ok && Array.isArray(data.leaves)) {
+          setLeaves(data.leaves);
+        } else {
+          setLeaves([]);
+        }
+      } catch (error) {
+        console.error("Error fetching leaves:", error);
         setLeaves([]);
       } finally {
         setLoading(false);
@@ -53,18 +60,9 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
     };
 
     fetchLeaves();
-
-    // Listen for new leave requests
-    socket.on("new-leave", (newLeave: Leave) => {
-      setLeaves((prev) => [newLeave, ...prev]);
-    });
-
-    return () => {
-      socket.off("new-leave");
-    };
   }, []);
 
-  // Approve / Reject handler
+  // -------------------- Handle approve/reject --------------------
   const handleAction = async (leaveId: string, action: "approve" | "reject") => {
     if (action === "reject" && (!comment[leaveId] || comment[leaveId].trim() === "")) {
       alert("Please provide a comment before rejecting.");
@@ -100,7 +98,7 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
         alert(data.message || "Failed to update leave.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error updating leave:", err);
       alert("Something went wrong.");
     } finally {
       setActionLoading(null);
@@ -122,15 +120,13 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
       {leaves.map((leave) => {
         const approverDecision = leave.approverStatus?.[userRole];
         const hasActed = !!approverDecision;
-        const comments = leave.approverComments || [];
 
         return (
           <div
             key={leave._id}
             className="p-5 border border-gray-200 rounded-xl shadow-sm bg-white hover:shadow-md transition-all"
           >
-            {/* Header */}
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">
                   {leave.name} ({leave.email})
@@ -141,7 +137,7 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
                 </p>
               </div>
               <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center justify-center h-6 ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   leave.status === "pending"
                     ? "bg-yellow-100 text-yellow-800"
                     : leave.status === "approved"
@@ -153,12 +149,11 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
               </span>
             </div>
 
-            {/* Reason */}
             <p className="text-gray-700 mb-3">
               <strong>Reason:</strong> {leave.reason}
             </p>
 
-            {/* Approvers */}
+            {/* Approvers info */}
             <div className="flex flex-wrap gap-3 text-sm mb-3">
               <span className="bg-gray-100 px-3 py-1 rounded-lg">
                 👨‍💼 Team Lead:{" "}
@@ -170,14 +165,15 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
               </span>
             </div>
 
-            {/* Previous Comments */}
-            {comments.length > 0 && (
+            {/* Comments list */}
+            {leave.approverComments && leave.approverComments.length > 0 && (
               <div className="bg-gray-50 rounded-lg p-3 mb-3 text-sm">
                 <p className="font-medium text-gray-700 mb-1">Previous Actions:</p>
                 <ul className="space-y-1">
-                  {comments.map((c, idx) => (
+                  {leave.approverComments.map((c, idx) => (
                     <li key={idx} className="text-gray-600">
-                      <strong>{c.approver}</strong> {c.action}d — {c.comment || "No comment"} (
+                      <strong>{c.approver}</strong> {c.action}d —{" "}
+                      {c.comment || "No comment"} (
                       {new Date(c.date).toLocaleDateString()})
                     </li>
                   ))}
@@ -185,13 +181,15 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
               </div>
             )}
 
-            {/* Action buttons for approvers */}
+            {/* Action section */}
             {userRole !== "user" && !hasActed && leave.status === "pending" && (
               <div className="mt-4 space-y-3">
                 <textarea
                   placeholder="Add comment (required for reject)"
                   value={comment[leave._id] || ""}
-                  onChange={(e) => setComment({ ...comment, [leave._id]: e.target.value })}
+                  onChange={(e) =>
+                    setComment({ ...comment, [leave._id]: e.target.value })
+                  }
                   className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
                 <div className="flex gap-2">
@@ -217,7 +215,7 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
               </div>
             )}
 
-            {/* Already acted */}
+            {/* If already acted */}
             {hasActed && (
               <p className="mt-3 text-sm text-gray-500 italic">
                 You already {approverDecision}d this request.

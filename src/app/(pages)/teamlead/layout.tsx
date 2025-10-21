@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, ReactNode } from "react";
-import TeamLeadSidebar from "./teamleadsidebar";
+import TeamLeadSidebarLayout from "./teamleadsidebar";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -30,7 +30,6 @@ export default function TeamLeadLayout({ children }: Props) {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          console.warn("No token found, redirecting to login");
           router.replace("/login");
           return;
         }
@@ -39,7 +38,6 @@ export default function TeamLeadLayout({ children }: Props) {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // Attempt to parse JSON safely
         let data: MeResponse = {};
         try {
           data = (await res.json()) as MeResponse;
@@ -50,15 +48,12 @@ export default function TeamLeadLayout({ children }: Props) {
         }
 
         if (!res.ok || !data.user) {
-          console.error("Unauthorized or no user returned:", data);
           router.replace("/login");
           return;
         }
 
-        // Normalize role for comparison
         const roleNormalized = data.user.role.replace(/\s+/g, "").toLowerCase();
         if (roleNormalized !== "teamlead") {
-          console.error("Role mismatch, not a Team Lead:", data.user.role);
           router.replace("/login");
           return;
         }
@@ -92,9 +87,8 @@ export default function TeamLeadLayout({ children }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <TeamLeadSidebar user={user} />
-      <main className="flex-1 p-6 overflow-y-auto">{children}</main>
-    </div>
+    <TeamLeadSidebarLayout>
+      {children}
+    </TeamLeadSidebarLayout>
   );
 }
