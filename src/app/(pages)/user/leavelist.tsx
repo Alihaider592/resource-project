@@ -49,7 +49,7 @@ export default function LeaveList() {
           {leaves.map((leave) => (
             <div
               key={leave._id}
-              className="border border-gray-300 rounded-lg p-4 shadow-sm flex justify-between items-center"
+              className="flex justify-between items-center border border-gray-300 rounded-lg p-4 shadow-sm"
             >
               <div>
                 <p>
@@ -66,17 +66,19 @@ export default function LeaveList() {
                   {leave.approvers.teamLead || "-"}, {leave.approvers.hr || "-"}
                 </p>
               </div>
-              <span
-                className={`px-3 py-1 rounded-full font-semibold ${
-                  leave.status === "pending"
-                    ? "bg-yellow-200 text-yellow-800"
-                    : leave.status === "approved"
-                    ? "bg-green-200 text-green-800"
-                    : "bg-red-200 text-red-800"
-                }`}
-              >
-                {leave.status.toUpperCase()}
-              </span>
+              <div className="flex items-center p-5 mt-5 justify-center">
+                <span
+                  className={`px-3 py-1 mt-5 rounded-full font-semibold ${
+                    leave.status === "pending"
+                      ? "bg-yellow-200 text-yellow-800"
+                      : leave.status === "approved"
+                      ? "bg-green-200 text-green-800"
+                      : "bg-red-200 text-red-800"
+                  }`}
+                >
+                  {leave.status.toUpperCase()}
+                </span>
+              </div>
             </div>
           ))}
         </div>
