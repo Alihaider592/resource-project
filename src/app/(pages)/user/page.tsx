@@ -52,8 +52,8 @@ export default function UserDashboard() {
 
   const cards: DashboardCard[] = [
     { title: "My Profile", description: "View and update your account details.", icon: <User className="w-12 h-12 mb-3" />, href: "/user/profile", color: "purple" },
-    { title: "Leaves", description: "Apply and track your leaves.", icon: <FileText className="w-12 h-12 mb-3" />, href: "/user/leaves", color: "blue" },
-    { title: "Work From Home", description: "Request work from home days.", icon: <Home className="w-12 h-12 mb-3" />, href: "/user/wfh", color: "teal" },
+    { title: "Leaves", description: "Apply and track your leaves.", icon: <FileText className="w-12 h-12 mb-3" />, href: "/user/request/leaves", color: "blue" },
+    { title: "Work From Home", description: "Request work from home days.", icon: <Home className="w-12 h-12 mb-3" />, href: "/user/request/whf", color: "teal" },
     { title: "Payroll", description: "View your salary and payments.", icon: <CreditCard className="w-12 h-12 mb-3" />, href: "/user/payroll", color: "green" },
     { title: "Attendance", description: "Check attendance and working hours.", icon: <Calendar className="w-12 h-12 mb-3" />, href: "/user/attendance", color: "indigo" },
     { title: "Timings", description: "View shift schedules.", icon: <Clock className="w-12 h-12 mb-3" />, href: "/user/timings", color: "pink" },

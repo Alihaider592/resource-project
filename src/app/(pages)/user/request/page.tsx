@@ -16,7 +16,7 @@ const RequestPage = () => {
       title: "Work From Home",
       description: "Submit a WFH request for specific dates.",
       icon: <FiCoffee className="text-purple-700 text-3xl" />,
-      href: "/user/request/wfh",
+      href: "/user/request/whf",
     },
     {
       title: "Home Loan",

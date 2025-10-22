@@ -1,5 +1,10 @@
 {
   "pages": {
+    "/(backend)/api/user/profile/request/wfh/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(backend)/api/user/profile/request/wfh/route.js"
+    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -11,45 +16,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/user/layout.js"
     ],
-    "/(pages)/user/request/whf/page": [
+    "/(pages)/user/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/user/request/whf/page.js"
-    ],
-    "/(backend)/api/user/profile/request/wfh/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(backend)/api/user/profile/request/wfh/route.js"
+      "static/chunks/app/(pages)/user/page.js"
     ],
     "/(backend)/api/auth/me/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(backend)/api/auth/me/route.js"
-    ],
-    "/(pages)/hr/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/hr/layout.js"
-    ],
-    "/(pages)/hr/employee-requests/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/hr/employee-requests/page.js"
-    ],
-    "/(pages)/teamlead/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/teamlead/layout.js"
-    ],
-    "/(pages)/teamlead/teamrequests/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/teamlead/teamrequests/page.js"
-    ],
-    "/(pages)/teamlead/teamrequests/wfh/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/teamlead/teamrequests/wfh/page.js"
     ],
     "/(pages)/login/page": [
       "static/chunks/webpack.js",
@@ -66,20 +41,30 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(backend)/api/admin/protectedRoute/route.js"
     ],
-    "/(pages)/teamlead/page": [
+    "/(pages)/user/profile/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/teamlead/page.js"
+      "static/chunks/app/(pages)/user/profile/page.js"
+    ],
+    "/(pages)/user/request/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/user/request/page.js"
+    ],
+    "/(pages)/user/request/leaves/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/user/request/leaves/page.js"
     ],
     "/(backend)/api/user/profile/request/leave/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(backend)/api/user/profile/request/leave/route.js"
     ],
-    "/(pages)/hr/employee-requests/wfh/page": [
+    "/(pages)/user/request/whf/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/hr/employee-requests/wfh/page.js"
+      "static/chunks/app/(pages)/user/request/whf/page.js"
     ]
   }
 }

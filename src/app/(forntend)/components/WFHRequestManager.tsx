@@ -22,13 +22,19 @@ export default function WFHRequestManager({ role }: { role: "hr" | "teamlead" })
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
+  // ✅ Fetch all WFH requests (now unified)
   const fetchRequests = async () => {
     try {
-      const res = await fetch(`/api/${role}/request/wfh`);
+      const res = await fetch(`/api/request/wfh?role=${role}`);
       const data = await res.json();
-      if (res.ok) setRequests(data.requests);
+      if (res.ok) {
+        setRequests(data.requests);
+      } else {
+        toast.error(data.message || "Failed to fetch requests");
+      }
     } catch (err) {
       console.error("Error fetching requests:", err);
+      toast.error("Failed to load requests");
     } finally {
       setLoading(false);
     }
@@ -36,8 +42,9 @@ export default function WFHRequestManager({ role }: { role: "hr" | "teamlead" })
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [role]);
 
+  // ✅ Approve / Reject logic
   const handleAction = async (id: string, action: "approve" | "reject") => {
     if (action === "reject" && !rejectReason.trim()) {
       toast.error("Please provide a rejection reason");
@@ -45,11 +52,12 @@ export default function WFHRequestManager({ role }: { role: "hr" | "teamlead" })
     }
 
     try {
-      const res = await fetch(`/api/${role}/request/wfh/${id}`, {
+      const res = await fetch(`/api/request/wfh/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, rejectionReason: rejectReason }),
+        body: JSON.stringify({ action, rejectionReason: rejectReason, role }),
       });
+
       const data = await res.json();
 
       if (res.ok) {
@@ -71,7 +79,7 @@ export default function WFHRequestManager({ role }: { role: "hr" | "teamlead" })
         toast.error(data.message || "Action failed");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Action error:", err);
       toast.error("Something went wrong");
     }
   };
