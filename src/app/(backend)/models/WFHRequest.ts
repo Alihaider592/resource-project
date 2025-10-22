@@ -1,20 +1,22 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export interface IWFHRequest extends Document {
+export interface IWFH extends Document {
   name: string;
   email: string;
   startDate: string;
   endDate: string;
   reason: string;
-  workDescription: string; // what employee will do at home
+  workDescription: string;
   status: "pending" | "approved" | "rejected";
-  approverRole?: "hr" | "teamlead" | null;
+  approvers: {
+    hr?: string | null;
+    teamLead?: string | null;
+  };
   rejectionReason?: string | null;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
 }
 
-const WFHRequestSchema = new Schema<IWFHRequest>(
+const WorkFromHomeSchema = new Schema<IWFH>(
   {
     name: { type: String, required: true },
     email: { type: String, required: true },
@@ -22,18 +24,17 @@ const WFHRequestSchema = new Schema<IWFHRequest>(
     endDate: { type: String, required: true },
     reason: { type: String, required: true },
     workDescription: { type: String, required: true },
-    status: {
-      type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
+    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+    approvers: {
+      hr: { type: String, default: null },
+      teamLead: { type: String, default: null },
     },
-    approverRole: { type: String, enum: ["hr", "teamlead", null], default: null },
     rejectionReason: { type: String, default: null },
   },
   { timestamps: true }
 );
 
-const WFHRequest =
-  mongoose.models.WFHRequest || mongoose.model<IWFHRequest>("WFHRequest", WFHRequestSchema);
+const WorkFromHome =
+  mongoose.models.WorkFromHome || mongoose.model<IWFH>("WorkFromHome", WorkFromHomeSchema);
 
-export default WFHRequest;
+export default WorkFromHome;

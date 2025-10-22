@@ -1,1 +1,8 @@
-{}
+{
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/(pages)/user/request/whf/page": "app/(pages)/user/request/whf/page.js",
+  "/(pages)/hr/employee-requests/page": "app/(pages)/hr/employee-requests/page.js",
+  "/(pages)/teamlead/teamrequests/page": "app/(pages)/teamlead/teamrequests/page.js",
+  "/(pages)/teamlead/teamrequests/wfh/page": "app/(pages)/teamlead/teamrequests/wfh/page.js",
+  "/(pages)/hr/employee-requests/wfh/page": "app/(pages)/hr/employee-requests/wfh/page.js"
+}

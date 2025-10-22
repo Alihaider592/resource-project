@@ -20,6 +20,66 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(backend)/api/user/profile/request/wfh/route.js"
+    ],
+    "/(backend)/api/auth/me/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(backend)/api/auth/me/route.js"
+    ],
+    "/(pages)/hr/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/hr/layout.js"
+    ],
+    "/(pages)/hr/employee-requests/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/hr/employee-requests/page.js"
+    ],
+    "/(pages)/teamlead/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/teamlead/layout.js"
+    ],
+    "/(pages)/teamlead/teamrequests/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/teamlead/teamrequests/page.js"
+    ],
+    "/(pages)/teamlead/teamrequests/wfh/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/teamlead/teamrequests/wfh/page.js"
+    ],
+    "/(pages)/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/login/page.js"
+    ],
+    "/(backend)/api/auth/login/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(backend)/api/auth/login/route.js"
+    ],
+    "/(backend)/api/admin/protectedRoute/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(backend)/api/admin/protectedRoute/route.js"
+    ],
+    "/(pages)/teamlead/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/teamlead/page.js"
+    ],
+    "/(backend)/api/user/profile/request/leave/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(backend)/api/user/profile/request/leave/route.js"
+    ],
+    "/(pages)/hr/employee-requests/wfh/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/hr/employee-requests/wfh/page.js"
     ]
   }
 }

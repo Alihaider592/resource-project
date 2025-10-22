@@ -1,25 +1,22 @@
 "use client";
 
-// import TeamLeadSidebarLayout from "../TeamLeadSidebarLayout";
 import { FiFileText, FiCoffee, FiHome } from "react-icons/fi";
 import Link from "next/link";
 
 const requestTypes = [
   { name: "Leaves", icon: <FiFileText size={24} />, href: "/teamlead/leaves" },
-  { name: "Work From Home", icon: <FiCoffee size={24} />, href: "/teamlead/employee-requests/wfh" },
+  { name: "Work From Home", icon: <FiCoffee size={24} />, href: "/teamlead/teamrequests/wfh" },
   { name: "Home Loan", icon: <FiHome size={24} />, href: "/teamlead/employee-requests/homeloan" },
 ];
 
 export default function TeamLeadEmployeeRequestsPage() {
   return (
-    // <TeamLeadSidebarLayout>
       <div className="p-6">
         <h1 className="text-3xl font-bold mb-6 text-gray-800">Employee Requests</h1>
         <p className="mb-8 text-gray-600">
           Select a request type from the sidebar to view details.
         </p>
 
-        {/* Request cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {requestTypes.map((request) => (
             <Link key={request.name} href={request.href}>
@@ -35,6 +32,5 @@ export default function TeamLeadEmployeeRequestsPage() {
           ))}
         </div>
       </div>
-    // </TeamLeadSidebarLayout>
   );
 }

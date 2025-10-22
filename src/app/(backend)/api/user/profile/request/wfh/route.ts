@@ -1,65 +1,45 @@
 import { NextResponse } from "next/server";
-import jwt, { JwtPayload } from "jsonwebtoken";
 import connectDatabase from "@/app/(backend)/lib/db";
-import WFHRequest from "@/app/(backend)/models/WFHRequest";
-import User from "@/app/(backend)/models/User";
+import WorkFromHome from "@/app/(backend)/models/WFHRequest";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
-
-const getUserFromToken = async (req: Request) => {
-  const token = req.headers.get("authorization")?.split(" ")[1];
-  if (!token) return null;
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    const user = await User.findById(decoded.id).select("_id name email role");
-    return user;
-  } catch {
-    return null;
-  }
-};
-
+// POST → create new WFH request
 export async function POST(req: Request) {
+  await connectDatabase();
   try {
-    await connectDatabase();
-    const user = await getUserFromToken(req);
-    if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    const { name, email, startDate, endDate, reason, workDescription } = await req.json();
 
-    const { startDate, endDate, reason } = await req.json();
-    if (!startDate || !endDate || !reason)
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
+    if (!name || !email || !startDate || !endDate || !reason || !workDescription) {
+      return NextResponse.json({ message: "All fields are required" }, { status: 400 });
+    }
 
-    const newRequest = await WFHRequest.create({
-      user: user._id,
-      name: user.name,
-      email: user.email,
+    const request = await WorkFromHome.create({
+      name,
+      email,
       startDate,
       endDate,
       reason,
+      workDescription,
       status: "pending",
-      approvers: {
-        teamLead: null,
-        hr: null,
-      },
     });
 
-    return NextResponse.json({ request: newRequest }, { status: 201 });
+    return NextResponse.json({ message: "WFH request created", request }, { status: 201 });
   } catch (error) {
-    console.error("Error creating WFH request:", error);
+    console.error(error);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
 
+// GET → get all requests for logged-in employee
 export async function GET(req: Request) {
-  try {
-    await connectDatabase();
-    const user = await getUserFromToken(req);
-    if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  await connectDatabase();
 
-    const requests = await WFHRequest.find({ user: user._id }).sort({ createdAt: -1 });
-    return NextResponse.json({ requests }, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching WFH requests:", error);
-    return NextResponse.json({ message: "Server error" }, { status: 500 });
+  const url = new URL(req.url);
+  const email = url.searchParams.get("email");
+
+  if (!email) {
+    return NextResponse.json({ message: "Email required" }, { status: 400 });
   }
+
+  const requests = await WorkFromHome.find({ email }).sort({ createdAt: -1 });
+  return NextResponse.json({ requests });
 }
