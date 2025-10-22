@@ -3,11 +3,10 @@ import SignupUser from "@/app/(backend)/models/signupuser";
 import AddUser from "@/app/(backend)/models/adduser";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { Types } from "mongoose";
 
-// --- Type Definitions ---
+// --- Types ---
 interface UserDocument {
-  _id: string | Types.ObjectId;
+  _id: string;
   name: string;
   email: string;
   password: string;
@@ -21,7 +20,7 @@ interface AuthResult {
     name: string;
     email: string;
     role: string;
-    source: string;
+    source: "SignupUser" | "AddUser";
   };
 }
 
@@ -31,56 +30,43 @@ interface RegisterData {
   password: string;
 }
 
-// --- 1. LOGIN SERVICE LOGIC ---
-/**
- * Authenticates user (from either SignupUser or AddUser), verifies password, and returns a JWT token.
- * @throws {Error} for invalid credentials or server errors.
- */
+// --- 1. LOGIN SERVICE ---
 export async function authenticateUser(email: string, password: string): Promise<AuthResult> {
   await connectDatabase();
 
   const JWT_SECRET = process.env.JWT_SECRET;
-  if (!JWT_SECRET) {
-    throw new Error("Server misconfiguration: JWT_SECRET is missing.");
-  }
+  if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined");
 
-  // Try both collections
-  let user: UserDocument | null = (await SignupUser.findOne({ email }).lean()) as UserDocument | null;
-  let source = "SignupUser";
+  // Check SignupUser first
+  let user = await SignupUser.findOne({ email }).lean() as UserDocument | null;
+  let source: "SignupUser" | "AddUser" = "SignupUser";
 
   if (!user) {
-    user = (await AddUser.findOne({ email }).lean()) as UserDocument | null;
+    user = await AddUser.findOne({ email }).lean() as UserDocument | null;
     source = "AddUser";
   }
 
-  if (!user) {
-    throw new Error("Invalid email or password");
-  }
+  if (!user) throw new Error("Invalid email or password");
 
-  // Verify password
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new Error("Invalid email or password");
-  }
-
-  const userIdString = user._id.toString();
+  if (!isMatch) throw new Error("Invalid email or password");
 
   // Generate JWT
   const token = jwt.sign(
     {
-      id: userIdString,
+      id: user._id.toString(),
       name: user.name,
       email: user.email,
       role: user.role,
     },
     JWT_SECRET,
-    { expiresIn: "1h" }
+    { expiresIn: "7d" }
   );
 
   return {
     token,
     user: {
-      id: userIdString,
+      id: user._id.toString(),
       name: user.name,
       email: user.email,
       role: user.role,
@@ -89,24 +75,16 @@ export async function authenticateUser(email: string, password: string): Promise
   };
 }
 
-// --- 2. SIGNUP SERVICE LOGIC ---
-/**
- * Registers a new user with role = "simple user"
- * @throws {Error} if user exists or required fields are missing.
- */
-export async function registerUser(userData: RegisterData): Promise<AuthResult["user"]> {
+// --- 2. SIGNUP SERVICE ---
+export async function registerUser(data: RegisterData) {
   await connectDatabase();
 
-  const { name, email, password } = userData;
+  const { name, email, password } = data;
 
-  if (!name || !email || !password) {
-    throw new Error("Missing required fields (name, email, password)");
-  }
+  if (!name || !email || !password) throw new Error("Missing required fields");
 
-  const existingUser = await SignupUser.findOne({ email });
-  if (existingUser) {
-    throw new Error("User already exists");
-  }
+  const exists = await SignupUser.findOne({ email });
+  if (exists) throw new Error("User already exists");
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -126,16 +104,12 @@ export async function registerUser(userData: RegisterData): Promise<AuthResult["
   };
 }
 
-// --- 3. ME SERVICE LOGIC ---
-/**
- * Returns minimal user profile data (for token verification).
- */
-export async function getUserProfile(decodedUser: {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}) {
-  const { id, name, email, role } = decodedUser;
-  return { id, name, email, role };
+// --- 3. GET USER PROFILE SERVICE ---
+export async function getUserProfile(decodedUser: { id: string; name: string; email: string; role: string; }) {
+  return {
+    id: decodedUser.id,
+    name: decodedUser.name,
+    email: decodedUser.email,
+    role: decodedUser.role,
+  };
 }

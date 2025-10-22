@@ -126,7 +126,7 @@ function verifyToken(req: NextRequest): DecodedToken | null {
 }
 
 /* -------------------------------------------------------------------------- */
-/* ✅ GET — FETCH CURRENT USER PROFILE                                        */
+/* ✅ GET — FETCH CURRENT USER PROFILE (UPDATED)                               */
 /* -------------------------------------------------------------------------- */
 export async function GET(req: NextRequest) {
   try {
@@ -134,24 +134,37 @@ export async function GET(req: NextRequest) {
     const decoded = verifyToken(req);
 
     if (!decoded) {
+      console.warn("GET /me: Unauthorized, token missing or invalid");
       return NextResponse.json(
         { message: "Unauthorized: Invalid or expired session." },
         { status: 401 }
       );
     }
 
-    console.log(`GET /me: Starting cascading search for user ID: ${decoded.id}`);
+    console.log(`GET /me: Looking up user ID: ${decoded.id} with role: ${decoded.role}`);
 
-    const user =
-      ((await User.findById(decoded.id).lean()) as GenericUserDoc | null) ||
-      ((await TeamLead.findById(decoded.id).lean()) as GenericUserDoc | null) ||
-      ((await AddUser.findById(decoded.id).lean()) as GenericUserDoc | null);
+    let user: GenericUserDoc | null = null;
+
+    // Try fetching user based on normalized role first
+    const ModelFromRole = getModelByRole(decoded.role);
+    if (ModelFromRole) {
+      user = (await ModelFromRole.findById(decoded.id).lean()) as GenericUserDoc | null;
+    }
+
+    // Fallback: try all models if not found
+    if (!user) {
+      user =
+        ((await User.findById(decoded.id).lean()) as GenericUserDoc | null) ||
+        ((await TeamLead.findById(decoded.id).lean()) as GenericUserDoc | null) ||
+        ((await AddUser.findById(decoded.id).lean()) as GenericUserDoc | null);
+    }
 
     if (!user) {
-      console.log(`GET /me: User ID ${decoded.id} not found.`);
+      console.warn(`GET /me: User not found for ID ${decoded.id}`);
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
+    // Normalize role string for frontend
     if (user.role) {
       user.role = normalizeRole(user.role) as string;
     }

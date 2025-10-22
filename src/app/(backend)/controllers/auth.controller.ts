@@ -1,8 +1,5 @@
-// import { authenticateUser, registerUser, getUserProfile } from "../services/auth.service";
-import { authenticateUser,registerUser,getUserProfile } from "../services /auth.service";
-import { Types } from "mongoose";
-
-// --- Type Definitions ---
+import { authenticateUser, registerUser, getUserProfile } from "../services /auth.service";
+// --- Types ---
 interface Credentials {
   email: string;
   password: string;
@@ -24,33 +21,37 @@ interface DecodedUser {
 // --- 1. LOGIN CONTROLLER ---
 export async function handleLoginRequest(credentials: Credentials) {
   try {
-    // Authenticate user and generate token
-    const authResult = await authenticateUser(credentials.email, credentials.password);
-    return authResult;
-  } catch (error: unknown) {
-    console.error("❌ Controller Error (Login):", error);
-    throw error;
+    const { email, password } = credentials;
+
+    if (!email || !password) throw new Error("Email and password are required");
+
+    const result = await authenticateUser(email, password);
+
+    return result; // { token, user }
+  } catch (err) {
+    console.error("❌ Controller Error (Login):", err);
+    throw err;
   }
 }
 
 // --- 2. SIGNUP CONTROLLER ---
-export async function handleSignupRequest(userData: RegisterData) {
+export async function handleSignupRequest(data: RegisterData) {
   try {
-    const user = await registerUser(userData);
-    return user;
-  } catch (error: unknown) {
-    console.error("❌ Controller Error (Signup):", error);
-    throw error;
+    if (!data.name || !data.email || !data.password) throw new Error("All fields are required");
+    return await registerUser(data);
+  } catch (err) {
+    console.error("❌ Controller Error (Signup):", err);
+    throw err;
   }
 }
 
 // --- 3. ME CONTROLLER ---
-export async function handleMeRequest(decodedUser: DecodedUser) {
+export async function handleMeRequest(user: DecodedUser) {
   try {
-    const userProfile = await getUserProfile(decodedUser);
-    return userProfile;
-  } catch (error: unknown) {
-    console.error("❌ Controller Error (Me):", error);
-    throw error;
+    if (!user.id) throw new Error("Invalid user");
+    return await getUserProfile(user);
+  } catch (err) {
+    console.error("❌ Controller Error (Me):", err);
+    throw err;
   }
 }
