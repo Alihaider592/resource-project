@@ -1,8 +1,1 @@
-{
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/(pages)/login/page": "app/(pages)/login/page.js",
-  "/(pages)/user/request/leaves/page": "app/(pages)/user/request/leaves/page.js",
-  "/(pages)/user/request/whf/page": "app/(pages)/user/request/whf/page.js",
-  "/(pages)/hr/page": "app/(pages)/hr/page.js",
-  "/(pages)/teamlead/page": "app/(pages)/teamlead/page.js"
-}
+{}

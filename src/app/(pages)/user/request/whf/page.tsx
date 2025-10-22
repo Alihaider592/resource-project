@@ -1,190 +1,191 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
-import { motion } from "framer-motion";
-import { LeaveRequest } from "../../../teamlead/types";
+import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import toast from "react-hot-toast";
 
+// ✅ Define the interface for each WFH request
+interface WFHRequest {
+  _id: string;
+  name: string;
+  email: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  workDescription: string;
+  status: "pending" | "approved" | "rejected";
+  rejectionReason?: string;
+}
+
 export default function WorkFromHomePage() {
-  const [requests, setRequests] = useState<LeaveRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    startDate: "",
+    endDate: "",
+    reason: "",
+    workDescription: "",
+  });
 
-  // Form state
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [reason, setReason] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [requests, setRequests] = useState<WFHRequest[]>([]);
 
-  // Fetch user's WFH requests
+  // ✅ Fetch requests (without page refresh)
+  const fetchRequests = async () => {
+    try {
+      const res = await fetch("/api/user/profile/request/wfh");
+      const data = await res.json();
+      if (res.ok) setRequests(data.requests);
+    } catch (err) {
+      console.error("Error fetching requests:", err);
+    }
+  };
+
   useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const res = await fetch("/api/user/profile/request/wfh");
-        const data = await res.json();
-        if (res.ok && Array.isArray(data.requests)) {
-          setRequests(data.requests);
-        } else {
-          setRequests([]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch WFH requests:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchRequests();
   }, []);
 
-  // Submit WFH request
-  const handleSubmit = async (e: FormEvent) => {
+  // ✅ Handle form input
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // ✅ Submit Work From Home request
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!startDate || !endDate || !reason) {
-      toast.error("Please fill all fields");
-      return;
-    }
-    setSubmitting(true);
     try {
       const res = await fetch("/api/user/profile/request/wfh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startDate, endDate, reason }),
+        body: JSON.stringify(form),
       });
       const data = await res.json();
+
       if (res.ok) {
-        toast.success("WFH request submitted!");
-        setRequests((prev) => [...prev, data.request]);
-        setStartDate("");
-        setEndDate("");
-        setReason("");
+        toast.success("Request sent!");
+        setForm({
+          name: "",
+          email: "",
+          startDate: "",
+          endDate: "",
+          reason: "",
+          workDescription: "",
+        });
+        fetchRequests(); // instantly update UI
       } else {
-        toast.error(data.message || "Failed to submit request");
+        toast.error(data.message || "Error sending request");
       }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to submit request");
-    } finally {
-      setSubmitting(false);
+    } catch (err) {
+      console.error("Error submitting request:", err);
+      toast.error("Server error");
     }
   };
 
   return (
-    <div className="min-h-screen p-6">
-      <motion.h1
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-10"
-      >
-         Work From Home
-      </motion.h1>
+    <div className="p-6 max-w-3xl mx-auto space-y-8">
+      <h2 className="text-2xl font-bold">Work From Home Request</h2>
 
-      {/* WFH Form */}
-      <motion.form
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+      {/* ✅ Form */}
+      <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-xl shadow-lg p-6 mb-10 space-y-4"
+        className="space-y-3 bg-white shadow p-4 rounded-lg"
       >
-        <h2 className="text-2xl font-bold text-gray-800">Apply for WFH</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">
-              Start Date
-            </label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">
-              End Date
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">Reason</label>
-          <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-2"
-            rows={3}
+        <input
+          name="name"
+          placeholder="Full Name"
+          value={form.name}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        />
+        <input
+          name="email"
+          placeholder="Email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        />
+        <div className="flex gap-2">
+          <input
+            name="startDate"
+            type="date"
+            value={form.startDate}
+            onChange={handleChange}
+            className="border rounded p-2 flex-1"
+            required
+          />
+          <input
+            name="endDate"
+            type="date"
+            value={form.endDate}
+            onChange={handleChange}
+            className="border rounded p-2 flex-1"
+            required
           />
         </div>
+        <textarea
+          name="reason"
+          placeholder="Reason"
+          value={form.reason}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          rows={2}
+          required
+        />
+        <textarea
+          name="workDescription"
+          placeholder="What work will you do at home?"
+          value={form.workDescription}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          rows={3}
+          required
+        />
         <button
           type="submit"
-          disabled={submitting}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
         >
-          {submitting ? "Submitting..." : "Submit Request"}
+          Send Request
         </button>
-      </motion.form>
+      </form>
 
-      {/* WFH Requests Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="bg-white rounded-xl shadow-lg p-6"
-      >
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          My WFH Requests
-        </h2>
-        {loading ? (
-          <p className="text-gray-500">Loading...</p>
-        ) : requests.length === 0 ? (
-          <p className="text-gray-500">No WFH requests submitted.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse border border-gray-200">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="p-3 border border-gray-200">Start Date</th>
-                  <th className="p-3 border border-gray-200">End Date</th>
-                  <th className="p-3 border border-gray-200">Reason</th>
-                  <th className="p-3 border border-gray-200">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.map((req) => (
-                  <tr key={req._id} className="hover:bg-gray-50">
-                    <td className="p-3 border border-gray-200">
-                      {req.startDate}
-                    </td>
-                    <td className="p-3 border border-gray-200">
-                      {req.endDate}
-                    </td>
-                    <td className="p-3 border border-gray-200">{req.reason}</td>
-                    <td className="p-3 border border-gray-200 capitalize">
-                      <span
-                        className={`px-3 py-1 rounded-full font-semibold ${
-                          req.status === "approved"
-                            ? "bg-green-100 text-green-700"
-                            : req.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {req.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* ✅ Requests List */}
+      <h3 className="text-xl font-semibold mt-6">My WFH Requests</h3>
+      <div className="space-y-3">
+        {requests.length === 0 && <p>No requests yet.</p>}
+
+        {requests.map((r) => (
+          <div
+            key={r._id}
+            className="border rounded-lg p-3 shadow-sm bg-gray-50 flex justify-between items-center"
+          >
+            <div>
+              <p className="font-medium">{r.reason}</p>
+              <p className="text-sm text-gray-600">
+                {r.startDate} → {r.endDate}
+              </p>
+              <p className="text-sm text-gray-700 italic">
+                {r.workDescription}
+              </p>
+            </div>
+
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                r.status === "approved"
+                  ? "bg-green-200 text-green-800"
+                  : r.status === "rejected"
+                  ? "bg-red-200 text-red-800"
+                  : "bg-yellow-200 text-yellow-800"
+              }`}
+            >
+              {r.status.toUpperCase()}
+            </span>
           </div>
-        )}
-      </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
