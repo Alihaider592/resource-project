@@ -69,14 +69,14 @@ export default function WorkFromHomePage() {
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50">
+    <div className="min-h-screen p-6">
       <motion.h1
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-10"
       >
-        🏠 Work From Home
+         Work From Home
       </motion.h1>
 
       {/* WFH Form */}
