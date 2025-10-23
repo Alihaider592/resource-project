@@ -492,3 +492,4 @@ export default function WorkFromHomeDashboard() {
     </div>
   );
 }
+
