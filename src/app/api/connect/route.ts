@@ -1,69 +1,4 @@
-
-// import { NextResponse } from "next/server";
-// import connectToDatabase from "@/lib/db";
-// import User from "@/models/User";
-
-// // Define TypeScript interface for request body
-// interface UserBody {
-//   name: string;
-//   email: string;
-//   phonenumber: string;
-//   companyname?: string;
-//   comment?: string;
-// }
-
-// export async function POST(request: Request) {
-//   try {
-//     await connectToDatabase();
-
-//     // Parse and type the request body
-//     const body: UserBody = await request.json();
-//     const { name, email, phonenumber, companyname, comment } = body;
-
-//     // Validate required fields
-//     if (!name || !email || !phonenumber) {
-//       return NextResponse.json(
-//         { error: "Name, email, and phone number are required." },
-//         { status: 400 }
-//       );
-//     }
-
-//     // Check for duplicate email
-//     const existingUser = await User.findOne({ email });
-//     if (existingUser) {
-//       return NextResponse.json(
-//         { error: "User with this email already exists." },
-//         { status: 409 }
-//       );
-//     }
-
-//     // Create new user
-//     const newUser = new User({
-//       name,
-//       email,
-//       phonenumber,
-//       companyname,
-//       comment,
-//     });
-
-//     await newUser.save();
-
-//     return NextResponse.json(newUser, { status: 201 });
-//   } catch (error) {
-//     // Safer error handling
-//     const message =
-//       error instanceof Error ? error.message : "Something went wrong";
-//     return NextResponse.json({ error: message }, { status: 500 });
-//   }
-// }
-
-
-
-// export async function GET() {
-//   return NextResponse.json({ message: "API is working!" });
-// }
 import { NextResponse } from "next/server";
-// import connectToDatabase from "@/lib/db";
 import connectToDatabase from "@/app/(backend)/lib/db";
 import User from "@/app/(backend)/models/User";
 
@@ -76,37 +11,56 @@ interface UserBody {
   comment?: string;
 }
 
+// ✅ POST: Add or update a user
 export async function POST(request: Request) {
   try {
     await connectToDatabase();
 
-    // Parse and type the request body
     const body: UserBody = await request.json();
     const { name, email, phonenumber, companyname, comment } = body;
 
-    // Validate required fields
     if (!name || !email || !phonenumber) {
       return NextResponse.json(
-        { error: "Name, email, and phone number are required." },
+        { success: false, message: "Name, email, and phone number are required." },
         { status: 400 }
       );
     }
 
-    // Create new user or update existing one
     const user = await User.findOneAndUpdate(
-      { email }, // search by email
-      { name, phonenumber, companyname, comment }, // update fields
-      { new: true, upsert: true } // create if not exists
+      { email },
+      { name, phonenumber, companyname, comment },
+      { new: true, upsert: true }
     );
 
-    return NextResponse.json(user, { status: 200 });
+    return NextResponse.json({
+      success: true,
+      message: "User saved successfully.",
+      user,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Something went wrong";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("❌ POST /api/connect error:", message);
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
 
+// ✅ GET: Fetch all users (main fix)
 export async function GET() {
-  return NextResponse.json({ message: "API is working!" });
+  try {
+    await connectToDatabase();
+
+    const users = await User.find().select("-__v"); // exclude internal fields
+
+    return NextResponse.json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Database connection failed";
+    console.error("❌ GET /api/connect error:", message);
+    return NextResponse.json({ success: false, message }, { status: 500 });
+  }
 }

@@ -250,22 +250,61 @@ const EmployeeStepForm: React.FC = () => {
 
             {/* Step 4 */}
             {step === 4 && (
-              <section>
-                <h3 className="text-xl font-semibold mb-4 text-gray-800">Experience Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <select name="experienceLevel" value={employee.experienceLevel} onChange={handleChange} className="border rounded-md px-3 py-2">
-                    <option value="">Experience Level</option>
-                    <option>Fresher</option>
-                    <option>Experienced</option>
-                  </select>
-                  <Input name="previousCompany" placeholder="Previous Company" value={employee.previousCompany} onChange={handleChange} disabled={employee.experienceLevel === "Fresher"} />
-                  <Input name="experienceYears" placeholder="Years of Experience" value={employee.experienceYears} onChange={handleChange} disabled={employee.experienceLevel === "Fresher"} />
-                  <Input name="joiningDate" type="date" value={employee.joiningDate} onChange={handleChange} disabled={employee.experienceLevel === "Fresher"} />
-                  <Input name="leavingDate" type="date" value={employee.leavingDate} onChange={handleChange} disabled={employee.experienceLevel === "Fresher"} />
-                  <Input name="Branch" placeholder="Branch" value={employee.Branch} onChange={handleChange} disabled={employee.experienceLevel === "Fresher"} />
-                </div>
-              </section>
-            )}
+  <section>
+    <h3 className="text-xl font-semibold mb-4 text-gray-800">Experience Details</h3>
+    <div className="grid grid-cols-2 gap-4">
+      {/* Experience Level Dropdown */}
+      <select
+        name="experienceLevel"
+        value={employee.experienceLevel}
+        onChange={handleChange}
+        className="border rounded-md px-3 py-2"
+      >
+        <option value="">Experience Level</option>
+        <option value="Fresher">Fresher</option>
+        <option value="Experienced">Experienced</option>
+      </select>
+
+      {/* Other fields disabled if Fresher is selected */}
+      <Input
+        name="previousCompany"
+        placeholder="Previous Company"
+        value={employee.previousCompany}
+        onChange={handleChange}
+        disabled={employee.experienceLevel?.toLowerCase() === "fresher"}
+      />
+      <Input
+        name="experienceYears"
+        placeholder="Years of Experience"
+        value={employee.experienceYears}
+        onChange={handleChange}
+        disabled={employee.experienceLevel?.toLowerCase() === "fresher"}
+      />
+      <Input
+        name="joiningDate"
+        type="date"
+        value={employee.joiningDate}
+        onChange={handleChange}
+        disabled={employee.experienceLevel?.toLowerCase() === "fresher"}
+      />
+      <Input
+        name="leavingDate"
+        type="date"
+        value={employee.leavingDate}
+        onChange={handleChange}
+        disabled={employee.experienceLevel?.toLowerCase() === "fresher"}
+      />
+      <Input
+        name="Branch"
+        placeholder="Branch"
+        value={employee.Branch}
+        onChange={handleChange}
+        disabled={employee.experienceLevel?.toLowerCase() === "fresher"}
+      />
+    </div>
+  </section>
+)}
+
 
             {/* Step 5 */}
             {step === 5 && (

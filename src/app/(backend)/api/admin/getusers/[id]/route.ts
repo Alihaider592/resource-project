@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import connectDatabase from "@/app/(backend)/lib/db";
-import User from "@/app/(backend)/models/User";
+import AddUser from "@/app/(backend)/models/adduser"; // ✅ correct model
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-// ✅ GET user by ID (admin only)
+// GET user by ID (admin only)
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }
@@ -27,14 +27,14 @@ export async function GET(
       email: string;
     };
 
-    if (!decoded || (decoded.role !== "admin" && decoded.role !== "HR")) {
+    if (!decoded || (decoded.role !== "Admin" && decoded.role !== "HR")) {
       return NextResponse.json(
         { success: false, message: "Access denied. Admins or HR only." },
         { status: 403 }
       );
     }
 
-    const { id } = params;
+    const { id } = await params; // ✅ make sure params is awaited if it's a Promise
     if (!id) {
       return NextResponse.json(
         { success: false, message: "User ID is required." },
@@ -42,7 +42,7 @@ export async function GET(
       );
     }
 
-    const user = await User.findById(id).select("-password"); // omit password
+    const user = await AddUser.findById(id).select("-password"); // ✅ query correct collection
 
     if (!user) {
       return NextResponse.json(
