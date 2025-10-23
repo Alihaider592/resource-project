@@ -61,7 +61,6 @@ export default function Navbar() {
               alt="Resourceinn HR software logo - Smart business empowerment solutions."
             />
           </Link>
-
           <ul className="flex gap-5 items-center">
             <li className={isActive("/") ? "active-link" : ""}>
               <Link href="/">Home</Link>
