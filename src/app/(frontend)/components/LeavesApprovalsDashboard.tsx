@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import { FiClock, FiCheckCircle, FiXCircle, FiUsers, FiCalendar, FiSend, FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 interface Leave {
   _id: string;
@@ -10,7 +12,7 @@ interface Leave {
   startDate: string;
   endDate: string;
   reason: string;
-  status: string;
+  status: "pending" | "approved" | "rejected";
   approvers: {
     teamLead?: string | null;
     hr?: string | null;
@@ -33,39 +35,70 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [comment, setComment] = useState<{ [key: string]: string }>({});
+  const [expandedLeaveId, setExpandedLeaveId] = useState<string | null>(null); // State for expandable row
 
+  // -------------------- UI Helpers --------------------
+  const getStatusClasses = (status: Leave["status"]) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "approved":
+        return "bg-green-100 text-green-800 border-green-300";
+      case "rejected":
+        return "bg-red-100 text-red-800 border-red-300";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-300";
+    }
+  };
+  
+  const getStatusIcon = (status: Leave["status"]) => {
+    switch (status) {
+      case "pending":
+        return <FiClock className="w-4 h-4 mr-1" />;
+      case "approved":
+        return <FiCheckCircle className="w-4 h-4 mr-1" />;
+      case "rejected":
+        return <FiXCircle className="w-4 h-4 mr-1" />;
+      default:
+        return null;
+    }
+  };
+
+  const handleToggleExpand = (leaveId: string) => {
+    setExpandedLeaveId(prev => (prev === leaveId ? null : leaveId));
+  };
+  
   // -------------------- Fetch leaves via REST --------------------
   useEffect(() => {
     const fetchLeaves = async () => {
+      setLoading(true);
       try {
         const res = await fetch("/api/user/profile/request/leave");
-
         if (!res.headers.get("content-type")?.includes("application/json")) {
-          throw new Error("Response is not JSON");
+          throw new Error("Invalid response format from server.");
         }
-
         const data = await res.json();
-
         if (res.ok && Array.isArray(data.leaves)) {
           setLeaves(data.leaves);
         } else {
           setLeaves([]);
+          if (data.message) toast.error(`Error fetching leaves: ${data.message}`);
         }
       } catch (error) {
         console.error("Error fetching leaves:", error);
+        toast.error("Could not load leave requests.");
         setLeaves([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchLeaves();
   }, []);
 
   // -------------------- Handle approve/reject --------------------
   const handleAction = async (leaveId: string, action: "approve" | "reject") => {
     if (action === "reject" && (!comment[leaveId] || comment[leaveId].trim() === "")) {
-      alert("Please provide a comment before rejecting.");
+      toast.error("Please provide a comment before rejecting.");
       return;
     }
 
@@ -94,137 +127,223 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
           prev.map((l) => (l._id === leaveId ? data.leave : l))
         );
         setComment({ ...comment, [leaveId]: "" });
+        setExpandedLeaveId(null); // Collapse the row after action
+        toast.success(`Leave request ${action}d successfully!`);
       } else {
-        alert(data.message || "Failed to update leave.");
+        toast.error(data.message || "Failed to update leave.");
       }
     } catch (err) {
       console.error("Error updating leave:", err);
-      alert("Something went wrong.");
+      toast.error("An unexpected error occurred.");
     } finally {
       setActionLoading(null);
     }
   };
 
+  // -------------------- Loading / Empty States --------------------
   if (loading)
-    return <p className="text-gray-500 animate-pulse">Loading leave requests...</p>;
-
-  if (!leaves.length)
     return (
-      <div className="text-center text-gray-600 font-medium mt-10">
-        No leave requests found.
+      <div className="flex justify-center items-center h-40">
+        <FiClock className="w-6 h-6 text-indigo-500 animate-spin mr-2" />
+        <p className="text-gray-600 font-medium">Loading leave requests...</p>
       </div>
     );
 
+  if (!leaves.length)
+    return (
+      <div className="text-center p-10 mt-10 border border-dashed border-gray-300 rounded-xl bg-white shadow-lg max-w-5xl mx-auto">
+        <FiSend className="w-10 h-10 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-700">All Clear!</h3>
+        <p className="text-gray-500">
+          No pending leave requests found for your attention.
+        </p>
+      </div>
+    );
+
+  // -------------------- Main Component Render --------------------
   return (
-    <div className="space-y-6 p-4">
-      {leaves.map((leave) => {
-        const approverDecision = leave.approverStatus?.[userRole];
-        const hasActed = !!approverDecision;
+    <>
+      <Toaster position="top-center" />
+      <div className="p-4 sm:p-8 min-h-screen font-sans">
+        <h1 className="text-3xl font-bold text-gray-800 mb-8 border-l-4 border-teal-500 pl-4">
+          Leave Approval Dashboard
+        </h1>
+        
+        {/* Table Container */}
+        <div className="max-w-5xl mx-auto overflow-x-auto bg-white rounded-2xl shadow-2xl border border-gray-200">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  Employee
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  Dates
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {leaves.map((leave, index) => {
+                const isExpanded = expandedLeaveId === leave._id;
+                const approverDecision = leave.approverStatus?.[userRole];
+                const hasActed = !!approverDecision;
 
-        return (
-          <div
-            key={leave._id}
-            className="p-5 border border-gray-200 rounded-xl shadow-sm bg-white hover:shadow-md transition-all"
-          >
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">
-                  {leave.name} ({leave.email})
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {leave.leaveType} | {new Date(leave.startDate).toLocaleDateString()} →{" "}
-                  {new Date(leave.endDate).toLocaleDateString()}
-                </p>
-              </div>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  leave.status === "pending"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : leave.status === "approved"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
-                {leave.status.toUpperCase()}
-              </span>
-            </div>
+                return (
+                  <React.Fragment key={leave._id}>
+                    {/* Main Row */}
+                    <tr
+                      className={`transition-all duration-200 cursor-pointer ${isExpanded ? 'bg-indigo-50/70' : (index % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100')}`}
+                      onClick={() => handleToggleExpand(leave._id)}
+                    >
+                      {/* Employee */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-semibold text-gray-900">{leave.name}</div>
+                        <div className="text-xs text-gray-500">{leave.email}</div>
+                      </td>
+                      {/* Type */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 font-medium">{leave.leaveType}</td>
+                      {/* Dates */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
+                      </td>
+                      {/* Status */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full border ${getStatusClasses(leave.status)}`}>
+                          {getStatusIcon(leave.status)}
+                          {leave.status.toUpperCase()}
+                        </span>
+                      </td>
+                      {/* Details/Toggle */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button className="flex items-center justify-end text-indigo-600 hover:text-indigo-800 transition-colors w-full">
+                          {isExpanded ? 'Collapse' : 'View Details'}
+                          {isExpanded ? <FiChevronUp className="w-5 h-5 ml-1" /> : <FiChevronDown className="w-5 h-5 ml-1" />}
+                        </button>
+                      </td>
+                    </tr>
 
-            <p className="text-gray-700 mb-3">
-              <strong>Reason:</strong> {leave.reason}
-            </p>
+                    {/* Expandable Detail Row */}
+                    {isExpanded && (
+                      <tr className="bg-white border-t border-indigo-200/50 shadow-inner">
+                        <td colSpan={5} className="p-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            
+                            {/* Reason */}
+                            <div className="md:col-span-1 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <p className="font-bold text-gray-800 mb-1">Reason for Leave:</p>
+                                <p className="text-gray-700 italic text-sm">{leave.reason || "No reason provided."}</p>
+                            </div>
 
-            {/* Approvers info */}
-            <div className="flex flex-wrap gap-3 text-sm mb-3">
-              <span className="bg-gray-100 px-3 py-1 rounded-lg">
-                👨‍💼 Team Lead:{" "}
-                {leave.approvers?.teamLead || <span className="text-gray-400">N/A</span>}
-              </span>
-              <span className="bg-gray-100 px-3 py-1 rounded-lg">
-                🧑‍💼 HR:{" "}
-                {leave.approvers?.hr || <span className="text-gray-400">N/A</span>}
-              </span>
-            </div>
+                            {/* Approvers */}
+                            <div className="md:col-span-1 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                                <p className="font-bold text-gray-800 mb-2">Approvers:</p>
+                                <div className="space-y-1 text-sm">
+                                  <p className="flex justify-between">
+                                    <span className="text-indigo-800 font-medium">Team Lead:</span>
+                                    <span className="text-gray-700">{leave.approvers?.teamLead || "N/A"}</span>
+                                  </p>
+                                  <p className="flex justify-between">
+                                    <span className="text-indigo-800 font-medium">HR:</span>
+                                    <span className="text-gray-700">{leave.approvers?.hr || "N/A"}</span>
+                                  </p>
+                                </div>
+                            </div>
+                            
+                            {/* Review History */}
+                            {leave.approverComments && leave.approverComments.length > 0 && (
+                              <div className="md:col-span-1 p-4 bg-gray-100 rounded-lg border border-gray-300 max-h-40 overflow-y-auto">
+                                <p className="font-bold text-gray-800 mb-2">Review History:</p>
+                                <ul className="space-y-2 text-sm">
+                                  {leave.approverComments.map((c, idx) => (
+                                    <li key={idx} className={`flex items-start ${c.action === 'reject' ? 'text-red-700' : 'text-green-700'}`}>
+                                      <FiClock className="w-4 h-4 mt-0.5 mr-2 flex-shrink-0 text-gray-500" />
+                                      <div className="flex-grow">
+                                          <strong className="text-gray-900">{c.approver}</strong> <span className={`font-medium ${c.action === 'reject' ? 'text-red-600' : 'text-green-600'}`}>{c.action}d</span> ({new Date(c.date).toLocaleDateString()})<br/>
+                                          <span className="italic text-gray-600">{c.comment || "No comment provided."}</span>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
 
-            {/* Comments list */}
-            {leave.approverComments && leave.approverComments.length > 0 && (
-              <div className="bg-gray-50 rounded-lg p-3 mb-3 text-sm">
-                <p className="font-medium text-gray-700 mb-1">Previous Actions:</p>
-                <ul className="space-y-1">
-                  {leave.approverComments.map((c, idx) => (
-                    <li key={idx} className="text-gray-600">
-                      <strong>{c.approver}</strong> {c.action}d —{" "}
-                      {c.comment || "No comment"} (
-                      {new Date(c.date).toLocaleDateString()})
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                          {/* Action Section */}
+                          {userRole !== "user" && leave.status === "pending" && (
+                            <div className="mt-6 pt-4 border-t border-gray-200 space-y-3">
+                              <h4 className="text-lg font-bold text-gray-800">Your Action</h4>
+                              <textarea
+                                placeholder="Add comment (required for rejection)"
+                                value={comment[leave._id] || ""}
+                                onChange={(e) =>
+                                  setComment({ ...comment, [leave._id]: e.target.value })
+                                }
+                                rows={2}
+                                className="w-full border-2 border-gray-300 rounded-xl p-3 text-base focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-shadow"
+                              />
+                              <div className="flex gap-4">
+                                {/* Approve Button */}
+                                <button
+                                  disabled={actionLoading === leave._id}
+                                  onClick={() => handleAction(leave._id, "approve")}
+                                  className="flex items-center justify-center w-full px-4 py-3 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                >
+                                  {actionLoading === leave._id ? (
+                                    <>
+                                      <FiClock className="w-5 h-5 mr-2 animate-spin" /> Processing...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FiCheckCircle className="w-5 h-5 mr-2" /> Approve
+                                    </>
+                                  )}
+                                </button>
+                                
+                                {/* Reject Button */}
+                                <button
+                                  disabled={
+                                    actionLoading === leave._id ||
+                                    !comment[leave._id] ||
+                                    comment[leave._id].trim() === ""
+                                  }
+                                  onClick={() => handleAction(leave._id, "reject")}
+                                  className="flex items-center justify-center w-full px-4 py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                >
+                                   <FiXCircle className="w-5 h-5 mr-2" /> Reject
+                                </button>
+                              </div>
+                            </div>
+                          )}
 
-            {/* Action section */}
-            {userRole !== "user" && !hasActed && leave.status === "pending" && (
-              <div className="mt-4 space-y-3">
-                <textarea
-                  placeholder="Add comment (required for reject)"
-                  value={comment[leave._id] || ""}
-                  onChange={(e) =>
-                    setComment({ ...comment, [leave._id]: e.target.value })
-                  }
-                  className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <div className="flex gap-2">
-                  <button
-                    disabled={actionLoading === leave._id}
-                    onClick={() => handleAction(leave._id, "approve")}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                  >
-                    {actionLoading === leave._id ? "Processing..." : "Approve"}
-                  </button>
-                  <button
-                    disabled={
-                      actionLoading === leave._id ||
-                      !comment[leave._id] ||
-                      comment[leave._id].trim() === ""
-                    }
-                    onClick={() => handleAction(leave._id, "reject")}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-                  >
-                    Reject
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* If already acted */}
-            {hasActed && (
-              <p className="mt-3 text-sm text-gray-500 italic">
-                You already {approverDecision}d this request.
-              </p>
-            )}
-          </div>
-        );
-      })}
-    </div>
+                          {/* If already acted */}
+                          {hasActed && (
+                            <div className={`mt-4 p-4 rounded-xl text-base font-semibold border-2 ${approverDecision === 'approve' ? 'bg-green-50 text-green-700 border-green-300' : 'bg-red-50 text-red-700 border-red-300'} md:col-span-3`}>
+                              <p>
+                                  <FiCheckCircle className="inline w-5 h-5 mr-2" />
+                                  You have already **{approverDecision}d** this request.
+                              </p>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
   );
 };
 
