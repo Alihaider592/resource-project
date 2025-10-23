@@ -398,13 +398,13 @@ export default function LeaveRequestPage() {
       {showForm && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div
-            className="absolute inset-0 bg-gray-900 bg-opacity-70 backdrop-blur-sm transition-opacity"
+            className="absolute inset-0 backdrop-blur-sm bg-opacity-70 backdrop-blur-sm transition-opacity"
             onClick={() => setShowForm(false)}
           ></div>
           <div className="fixed inset-y-0 right-0 max-w-xl w-full">
             <div className="h-full flex flex-col bg-white shadow-2xl rounded-l-2xl animate-slideInRight">
               {/* Form Header */}
-              <div className="px-6 py-6 bg-indigo-600 text-white flex justify-between items-center rounded-tl-2xl">
+              <div className="px-6 py-6 bg-purple-600 text-white flex justify-between items-center rounded-tl-2xl">
                 <div>
                   <h2 className="text-2xl font-extrabold">
                     Submit New Leave Request
@@ -540,7 +540,7 @@ export default function LeaveRequestPage() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="w-full flex items-center justify-center bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-3 rounded-xl font-extrabold shadow-xl shadow-indigo-500/50 hover:from-indigo-700 hover:to-indigo-600 transition-all duration-300 disabled:opacity-60 disabled:shadow-none focus:outline-none focus:ring-4 focus:ring-indigo-300 transform hover:scale-[1.005]"
+                      className="w-full flex items-center justify-center bg-purple-600 text-white py-3 rounded-xl font-extrabold shadow-xl shadow-indigo-500/50 hover:from-indigo-700 hover:to-indigo-600 transition-all duration-300 disabled:opacity-60 disabled:shadow-none focus:outline-none focus:ring-4 focus:ring-indigo-300 transform hover:scale-[1.005]"
                     >
                       {submitting ? (
                         <>
