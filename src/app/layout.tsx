@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Navbar from "@/app/(forntend)/components/Navbar";
-import Footer from "@/app/(forntend)/components/footer";
+import Navbar from "@/app/(frontend)/components/Navbar";
+import Footer from "@/app/(frontend)/components/footer";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import connectdatabase from "@/app/(backend)/lib/db"; 
+import connectdatabase from "@/app/(backend)/lib/db";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +25,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  await connectdatabase(); 
+  await connectdatabase();
 
   return (
     <html lang="en">

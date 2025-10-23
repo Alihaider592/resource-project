@@ -1,11 +1,11 @@
-import AdminPage from '@/app/(forntend)/dashboard/welcompage';
-import React from 'react';
+import AdminPage from "@/app/(frontend)/dashboard/welcompage";
+import React from "react";
 const page = () => {
   return (
     <div>
-      <AdminPage/>
+      <AdminPage />
     </div>
   );
-}
+};
 
 export default page;

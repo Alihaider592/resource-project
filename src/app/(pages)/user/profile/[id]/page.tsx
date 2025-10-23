@@ -2,9 +2,18 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { FiArrowLeft, FiMail, FiPhone, FiMapPin, FiBriefcase, FiEdit3, FiSave } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+  FiBriefcase,
+  FiEdit3,
+  FiSave,
+} from "react-icons/fi";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast"; // ✅ import toast
+import toast, { Toaster } from "react-hot-toast";
+import { jwtDecode } from "jwt-decode";
 
 interface ApiResponse {
   user?: Record<string, unknown>;
@@ -12,12 +21,13 @@ interface ApiResponse {
 }
 
 interface UserProfileProps {
-  userType?: "admin" | "hr"; // default is admin
+  userType?: "admin" | "hr";
 }
 
 const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
-  const params = useParams();
+  const params = useParams<{ id?: string }>();
   const router = useRouter();
+
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
@@ -27,15 +37,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
   const getImageUrl = (img?: string) => {
     if (!img || typeof img !== "string") return null;
     if (img.startsWith("http")) return img;
-    return `https://res.cloudinary.com/dk9i3x5la/image/upload/${img.replace(/^uploads\//, "")}`;
+    return `https://res.cloudinary.com/dk9i3x5la/image/upload/${img.replace(
+      /^uploads\//,
+      ""
+    )}`;
   };
 
   useEffect(() => {
-    if (!params.id) return;
-
     const fetchUser = async () => {
       setLoading(true);
       setErrorMsg(null);
+
       try {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -44,10 +56,31 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
           return;
         }
 
+        let userId = params?.id ?? null;
+        console.log("🧩 params.id:", params?.id);
+
+        // ✅ Use logged-in user’s ID only if no param is provided
+        if (!userId) {
+          try {
+            const decoded = jwtDecode<{ id: string }>(token);
+            userId = decoded.id;
+            console.log("Decoded userId from JWT:", userId);
+          } catch (err) {
+            console.error("JWT decode failed:", err);
+            setErrorMsg("Invalid authentication token.");
+            return;
+          }
+        }
+
+        if (!userId) {
+          setErrorMsg("User ID is missing.");
+          return;
+        }
+
         const endpoint =
           userType === "hr"
-            ? `/api/hr/getusers/${params.id}`
-            : `/api/admin/getusers/${params.id}`;
+            ? `/api/hr/getusers/${userId}`
+            : `/api/admin/getusers/${userId}`;
 
         const res = await axios.get<ApiResponse>(endpoint, {
           headers: { Authorization: `Bearer ${token}` },
@@ -74,9 +107,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
     };
 
     void fetchUser();
-  }, [params.id, router, userType]);
+  }, [params?.id, router, userType]);
 
-  const hiddenFields = ["avatar", "picture", "_id", "createdAt", "updatedAt", "joiningDate", "leaving", "leavingDate", "password"];
+  const hiddenFields = [
+    "avatar",
+    "picture",
+    "_id",
+    "createdAt",
+    "updatedAt",
+    "joiningDate",
+    "leavingDate",
+    "password",
+  ];
 
   const getFieldIcon = (key: string) => {
     switch (key.toLowerCase()) {
@@ -124,24 +166,31 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
         setUser(res.data.user);
         setFormData(res.data.user);
         setEditing(false);
-        toast.success("Profile updated successfully!"); // ✅ toast instead of alert
+        toast.success("Profile updated successfully!");
       } else {
         setErrorMsg(res.data.message || "Failed to update user.");
       }
     } catch (error: unknown) {
       console.error("Update user failed:", error);
-      setErrorMsg("Failed to update user.");
+      toast.error("Failed to update user.");
     }
   };
 
   if (loading)
-    return <div className="flex justify-center items-center min-h-screen text-gray-600 text-lg">Loading profile...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen text-gray-600 text-lg">
+        Loading profile...
+      </div>
+    );
 
   if (errorMsg)
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-red-600 font-medium">
         ❌ {errorMsg}
-        <button onClick={() => router.back()} className="mt-4 text-purple-600 underline font-medium">
+        <button
+          onClick={() => router.back()}
+          className="mt-4 text-purple-600 underline font-medium"
+        >
           ← Go Back
         </button>
       </div>
@@ -151,34 +200,50 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-gray-500">
         ❌ No profile found
-        <button onClick={() => router.back()} className="mt-4 text-purple-600 underline font-medium">
+        <button
+          onClick={() => router.back()}
+          className="mt-4 text-purple-600 underline font-medium"
+        >
           ← Go Back
         </button>
       </div>
     );
 
-  const imageUrl = getImageUrl((user.picture as string) || (user.avatar as string));
+  const imageUrl = getImageUrl(
+    (user.picture as string) || (user.avatar as string)
+  );
 
   return (
     <>
-      <Toaster position="top-right" /> {/* ✅ Toast container */}
+      <Toaster position="top-right" />
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white py-12 px-4 flex justify-center">
         <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden relative">
-          {/* Edit Icon Top Right */}
-          <div className="absolute top-4 right-4 p-2 rounded-full bg-white shadow-md hover:bg-gray-100 cursor-pointer transition-all z-10"
-               onClick={() => editing ? handleSave() : setEditing(true)}
-               title={editing ? "Save Profile" : "Edit Profile"}>
-            {editing ? <FiSave className="text-gray-700 w-5 h-5" /> : <FiEdit3 className="text-gray-700 w-5 h-5" />}
+          {/* Edit Icon */}
+          <div
+            className="absolute top-4 right-4 p-2 rounded-full bg-white shadow-md hover:bg-gray-100 cursor-pointer transition-all z-10"
+            onClick={() => (editing ? handleSave() : setEditing(true))}
+            title={editing ? "Save Profile" : "Edit Profile"}
+          >
+            {editing ? (
+              <FiSave className="text-gray-700 w-5 h-5" />
+            ) : (
+              <FiEdit3 className="text-gray-700 w-5 h-5" />
+            )}
           </div>
 
+          {/* Header */}
           <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-8 flex flex-col items-center text-white">
             {imageUrl ? (
               <div className="relative w-36 h-36 rounded-full shadow-lg ring-4 ring-white overflow-hidden">
                 <img
                   src={imageUrl}
-                  alt={`${user.firstName as string || "User"} ${user.lastName as string || ""}`}
+                  alt={`${
+                    (user.firstName as string) || "User"
+                  } ${(user.lastName as string) || ""}`}
                   className="w-full h-full object-cover rounded-full"
-                  onError={(e) => ((e.target as HTMLImageElement).src = "/fallback-avatar.png")}
+                  onError={(e) =>
+                    ((e.target as HTMLImageElement).src = "/fallback-avatar.png")
+                  }
                 />
               </div>
             ) : (
@@ -186,16 +251,23 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
                 {(user.firstName as string)?.charAt(0)?.toUpperCase() || "U"}
               </div>
             )}
-            <h1 className="text-3xl font-bold mt-4">{user.firstName as string} {user.lastName as string}</h1>
-            <p className="text-sm mt-1 capitalize">{user.role as string || "Simple User"}</p>
+            <h1 className="text-3xl font-bold mt-4">
+              {user.firstName as string} {user.lastName as string}
+            </h1>
+            <p className="text-sm mt-1 capitalize">
+              {(user.role as string) || "Simple User"}
+            </p>
           </div>
 
+          {/* Fields */}
           <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
             {Object.entries(formData).map(([key, value]) => {
               if (!value && !editing) return null;
               if (hiddenFields.includes(key)) return null;
 
-              const label = key.replace(/([A-Z])/g, " $1").replace(/^./, str => str.toUpperCase());
+              const label = key
+                .replace(/([A-Z])/g, " $1")
+                .replace(/^./, (str) => str.toUpperCase());
               const displayValue =
                 typeof value === "string" && key.toLowerCase().includes("date")
                   ? new Date(value).toLocaleDateString()
@@ -215,11 +287,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
                       <input
                         type="text"
                         value={displayValue}
-                        onChange={(e) => handleInputChange(key, e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange(key, e.target.value)
+                        }
                         className="mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 w-full"
                       />
                     ) : (
-                      <span className="text-gray-800 font-medium">{displayValue}</span>
+                      <span className="text-gray-800 font-medium">
+                        {displayValue}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -227,6 +303,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
             })}
           </div>
 
+          {/* Footer */}
           <div className="p-8 flex justify-start bg-gray-50 border-t border-gray-100">
             <button
               onClick={() => router.back()}

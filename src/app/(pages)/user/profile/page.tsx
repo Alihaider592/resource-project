@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { EmployeeData } from "@/app/(backend)/api/auth/me/route";
+import { EmployeeData } from "@/app/(frontend)/components/form/(adduserform)/EmployeeStepForm";
 import { FiEdit3, FiSave } from "react-icons/fi";
 import toast, { Toaster } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const gradients = [
   ["#60a5fa", "#bfdbfe"],
@@ -14,11 +15,16 @@ const gradients = [
   ["#f472b6", "#fbcfe8"],
 ];
 
+// ✅ Extend EmployeeData to include _id
+interface ExtendedEmployeeData extends EmployeeData {
+  _id?: string;
+}
+
 const ProfilePage: React.FC = () => {
-  const [user, setUser] = useState<EmployeeData | null>(null);
+  const [user, setUser] = useState<ExtendedEmployeeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState<Partial<EmployeeData>>({});
+  const [formData, setFormData] = useState<Partial<ExtendedEmployeeData>>({});
   const [gradientIndex, setGradientIndex] = useState(0);
   const router = useRouter();
 
@@ -74,7 +80,10 @@ const ProfilePage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleInputChange = (key: keyof EmployeeData, value: string) => {
+  const handleInputChange = (
+    key: keyof ExtendedEmployeeData,
+    value: string
+  ) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -146,7 +155,10 @@ const ProfilePage: React.FC = () => {
         <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden relative">
           {/* Header */}
           <div
-            style={{ backgroundImage: currentGradient, transition: "background-image 2s ease-in-out" }}
+            style={{
+              backgroundImage: currentGradient,
+              transition: "background-image 2s ease-in-out",
+            }}
             className="p-8 flex items-center gap-6 relative"
           >
             <div
@@ -154,15 +166,23 @@ const ProfilePage: React.FC = () => {
               onClick={() => (editing ? handleSave() : setEditing(true))}
               title={editing ? "Save Profile" : "Edit Profile"}
             >
-              {editing ? <FiSave className="text-gray-700 w-5 h-5" /> : <FiEdit3 className="text-gray-700 w-5 h-5" />}
+              {editing ? (
+                <FiSave className="text-gray-700 w-5 h-5" />
+              ) : (
+                <FiEdit3 className="text-gray-700 w-5 h-5" />
+              )}
             </div>
 
             {user.avatar ? (
-              <img
-                src={user.avatar}
-                alt={`${user.firstName} ${user.lastName}`}
-                className="w-28 h-28 rounded-full border-4 border-white object-cover shadow-lg"
-              />
+              <div className="relative w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden">
+                {/* ✅ Replaced <img> with Next.js <Image /> */}
+                <Image
+                  src=""
+                  alt={`${user.firstName} ${user.lastName}`}
+                  fill
+                  className="object-cover"
+                />
+              </div>
             ) : (
               <div className="w-28 h-28 rounded-full border-4 border-white flex items-center justify-center text-white font-bold text-3xl shadow-lg bg-gray-300">
                 {user.firstName?.[0] ?? "U"}
@@ -170,7 +190,9 @@ const ProfilePage: React.FC = () => {
             )}
 
             <div>
-              <h1 className="text-4xl font-bold text-white">{user.firstName} {user.lastName}</h1>
+              <h1 className="text-4xl font-bold text-white">
+                {user.firstName} {user.lastName}
+              </h1>
               <p className="text-white text-lg">{user.role ?? "N/A"}</p>
               <p className="text-white text-sm">{user.department ?? ""}</p>
               <p className="text-white text-sm">{user.employeeId ?? ""}</p>
@@ -187,7 +209,9 @@ const ProfilePage: React.FC = () => {
                   label={key}
                   value={(value ?? "").toString()}
                   editing={editing}
-                  onChange={(val) => handleInputChange(key as keyof EmployeeData, val)}
+                  onChange={(val) =>
+                    handleInputChange(key as keyof ExtendedEmployeeData, val)
+                  }
                 />
               ))}
           </div>
@@ -204,7 +228,12 @@ interface ProfileFieldProps {
   onChange?: (value: string) => void;
 }
 
-const ProfileField: React.FC<ProfileFieldProps> = ({ label, value, editing, onChange }) => (
+const ProfileField: React.FC<ProfileFieldProps> = ({
+  label,
+  value,
+  editing,
+  onChange,
+}) => (
   <div className="bg-gray-50 p-4 rounded-xl shadow-sm flex flex-col hover:shadow-md transition-shadow duration-200">
     <span className="text-gray-400 text-sm">{label}</span>
     {editing ? (

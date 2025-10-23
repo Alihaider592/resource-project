@@ -1,11 +1,11 @@
-import React from 'react';
-import LoginForm from '@/app/(forntend)/components/form/login';
+import React from "react";
+import LoginForm from "@/app/(frontend)/components/form/login";
 const page = () => {
   return (
     <div>
-      <LoginForm/>
+      <LoginForm />
     </div>
   );
-}
+};
 
 export default page;

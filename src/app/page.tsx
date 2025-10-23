@@ -2,18 +2,18 @@
 
 import { Toaster } from "react-hot-toast";
 
-import Hero from "@/app/(forntend)/components/hero";
-import Slider from "@/app/(forntend)/components/slider";
-import Technology from "@/app/(forntend)/components/technologyCard";
-import Features from "@/app/(forntend)/components/features";
-import Source from "@/app/(forntend)/components/sourceImg";
-import Multicards from "@/app/(forntend)/components/malitiCards";
-import CardsGrid from "@/app/(forntend)/components/placeCards/displayCards/display";
-import Cando from "@/app/(forntend)/components/cando";
-import Sessions from "@/app/(forntend)/components/widthCards/widthMap/map";
-import Frame from "@/app/(forntend)/components/frame/iframe";
-import Service from "@/app/(forntend)/components/hrmCards/hrmCards";
-import Conection from "@/app/(forntend)/components/form/conection";
+import Hero from "@/app/(frontend)/components/hero";
+import Slider from "@/app/(frontend)/components/slider";
+import Technology from "@/app/(frontend)/components/technologyCard";
+import Features from "@/app/(frontend)/components/features";
+import Source from "@/app/(frontend)/components/sourceImg";
+import Multicards from "@/app/(frontend)/components/malitiCards";
+import CardsGrid from "@/app/(frontend)/components/placeCards/displayCards/display";
+import Cando from "@/app/(frontend)/components/cando";
+import Sessions from "@/app/(frontend)/components/widthCards/widthMap/map";
+import Frame from "@/app/(frontend)/components/frame/iframe";
+import Service from "@/app/(frontend)/components/hrmCards/hrmCards";
+import Conection from "@/app/(frontend)/components/form/conection";
 
 export default function Home() {
   return (

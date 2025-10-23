@@ -1,4 +1,4 @@
-import Start from "@/app/(forntend)/components/start";
+import Start from "@/app/(frontend)/components/start";
 export default function AboutSection() {
   return (
     <div>

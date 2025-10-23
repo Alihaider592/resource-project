@@ -36,7 +36,7 @@ export class AuthError extends Error {
  */
 export async function verifyAccess(
   req: NextRequest,
-  allowedRoles: UserRole[] = [] // optional
+  allowedRoles: UserRole[] = [] 
 ): Promise<DecodedUser> {
   const authHeader = req.headers.get("authorization");
 
@@ -49,7 +49,6 @@ export async function verifyAccess(
   try {
     const decoded = jwt.verify(token, SECRET!) as DecodedUser;
 
-    // ✅ Optional role-based access check
     if (allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {
       console.warn(
         `🚫 Access Denied: User ${decoded.email} (${decoded.role}) tried to access a restricted route`
