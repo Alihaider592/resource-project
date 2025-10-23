@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -301,19 +303,25 @@ const RequestTable = ({ title, requests, role, fetchRequests, isManagementView =
               rows={4}
             />
             <div className="flex justify-end gap-3">
-              <button
+              {/* Corrected: Changed opening tag to motion.button */}
+              <motion.button
                 onClick={() => { setRejectingId(null); setRejectReason(""); }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
               >
                 Cancel
-              </button>
-              <button
+              </motion.button>
+              {/* Corrected: Changed opening tag to motion.button */}
+              <motion.button
                 onClick={() => handleAction(rejectingId, "reject")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 disabled={submitting || !rejectReason.trim()}
                 className={`px-4 py-2 rounded-lg text-white font-semibold transition ${submitting || !rejectReason.trim() ? "bg-red-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}
               >
                 {submitting ? "Submitting..." : "Confirm Rejection"}
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         </motion.div>

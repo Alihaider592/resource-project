@@ -3,7 +3,7 @@ import UserProfile from "@/app/(frontend)/components/viewprofile/profile";
 const HRProfilePage = () => {
   return (
     <div>
-      <UserProfile  />
+      <UserProfile userType="admin" />
     </div>
   );
 };
