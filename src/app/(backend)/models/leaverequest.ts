@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface ILeaveRequest extends Document {
+  userId: string;  // <-- Add this
   name: string;
   email: string;
   leaveType: string;
@@ -28,6 +29,8 @@ export interface ILeaveRequest extends Document {
 
 const LeaveRequestSchema = new Schema<ILeaveRequest>(
   {
+    userId: { type: String, required: true },  // <-- Add this
+
     name: { type: String, required: true },
     email: { type: String, required: true },
     leaveType: { type: String, required: true },
@@ -64,7 +67,6 @@ const LeaveRequestSchema = new Schema<ILeaveRequest>(
   { timestamps: true }
 );
 
-// Prevent model overwrite during hot reload
 const LeaveRequest =
   mongoose.models.LeaveRequest ||
   mongoose.model<ILeaveRequest>("LeaveRequest", LeaveRequestSchema);

@@ -15,7 +15,7 @@ export default function RequestSubSidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="bg-purple-800 text-white w-56 p-4 flex flex-col border-l border-purple-700">
+    <div className=" bg-purple-800 text-white w-56 p-4 flex flex-col border-l border-purple-700">
       <h2 className="text-lg font-semibold mb-4">Requests</h2>
       <nav className="flex flex-col gap-2">
         {subItems.map((item) => {

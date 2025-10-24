@@ -248,7 +248,7 @@ const ProfilePage: React.FC = () => {
             <div className="shrink-0">
               {user.avatar ? (
                 <div className="relative w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden">
-                  <Image src={user.avatar} alt={`${user.firstName} ${user.lastName}`} fill className="object-cover" />
+                  <Image src="" alt={`${user.firstName} ${user.lastName}`} fill className="object-cover" />
                 </div>
               ) : (
                 <div className="w-28 h-28 rounded-full border-4 border-white flex items-center justify-center text-white font-extrabold text-4xl shadow-xl bg-gray-300">

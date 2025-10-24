@@ -36,7 +36,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "All fields are required." }, { status: 400 });
     }
 
+    // Extract user ID from token
+    const authHeader = req.headers.get("authorization") || "";
+    const token = authHeader.replace("Bearer ", "");
+    if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+    const jwt = await import("jsonwebtoken");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "") as { id: string };
+
     const newLeave = await LeaveRequest.create({
+      userId: decoded.id, // Store user ID
       name,
       email,
       leaveType,
@@ -63,13 +72,23 @@ export async function POST(req: NextRequest) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* ✅ GET ALL LEAVE REQUESTS                                                   */
+/* ✅ GET ALL LEAVE REQUESTS (user-specific)                                   */
 /* -------------------------------------------------------------------------- */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await connectDatabase();
 
-    const leaves = await LeaveRequest.find().sort({ createdAt: -1 }).lean();
+    // Get token from headers
+    const authHeader = req.headers.get("authorization") || "";
+    const token = authHeader.replace("Bearer ", "");
+    if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+    // Decode token to get user ID
+    const jwt = await import("jsonwebtoken");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "") as { id: string };
+
+    // Filter leaves by user ID
+    const leaves = await LeaveRequest.find({ userId: decoded.id }).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json({
       message: leaves.length > 0 ? "✅ Leaves fetched successfully" : "No leave requests found.",
