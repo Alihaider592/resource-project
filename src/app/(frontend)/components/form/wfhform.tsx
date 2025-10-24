@@ -20,19 +20,39 @@ export default function WFHForm({ userRole, onRequestSubmitted }: WFHFormProps) 
     endDate: "",
   });
 
+  const [emailEditable, setEmailEditable] = useState(true);
+
   useEffect(() => {
-    const name = localStorage.getItem("userName") || "";
-    const email = localStorage.getItem("userEmail") || "";
-    setFormData((prev) => ({ ...prev, name, email }));
+    // Simulate token decode or localStorage
+    const tokenEmail = localStorage.getItem("userEmail") || "";
+    const tokenName = localStorage.getItem("userName") || "";
+
+    setFormData((prev) => ({
+      ...prev,
+      email: tokenEmail,
+      name: tokenName,
+    }));
+
+    if (tokenEmail) setEmailEditable(false); // disable if email exists
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const token = localStorage.getItem("jwtToken");
+    if (!token) return toast.error("User not authenticated");
+
     const res = await fetch("/api/user/profile/request/wfh", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(formData),
     });
+
+    const data = await res.json();
+
     if (res.ok) {
       toast.success("WFH request submitted!");
       setFormData((prev) => ({
@@ -44,7 +64,7 @@ export default function WFHForm({ userRole, onRequestSubmitted }: WFHFormProps) 
       }));
       onRequestSubmitted();
     } else {
-      toast.error("Failed to submit WFH request");
+      toast.error(data.message || "Failed to submit WFH request");
     }
   };
 
@@ -60,8 +80,9 @@ export default function WFHForm({ userRole, onRequestSubmitted }: WFHFormProps) 
         <input
           className="border p-2 rounded w-full bg-gray-100"
           value={formData.email}
-          readOnly
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           placeholder="Email"
+          disabled={!emailEditable}
         />
       </div>
 

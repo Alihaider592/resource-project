@@ -1,3 +1,4 @@
+// workfromhome.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -7,20 +8,25 @@ import WFHTable from "./WFHTable";
 type UserRole = "user" | "teamlead" | "hr";
 type ViewType = "my" | "all";
 
-export default function WorkFromHomePage() {
+interface WorkFromHomePageProps {
+  userRole?: UserRole; // optional prop
+}
+
+export default function WorkFromHomePage({ userRole: propRole }: WorkFromHomePageProps) {
   const [view, setView] = useState<ViewType>("my");
-  const [userRole, setUserRole] = useState<UserRole>("user");
+  const [userRole, setUserRole] = useState<UserRole>(propRole || "user");
   const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole") as UserRole;
     const storedEmail = localStorage.getItem("userEmail") || "";
 
-    if (storedRole === "user" || storedRole === "teamlead" || storedRole === "hr") {
+    if (!propRole && (storedRole === "user" || storedRole === "teamlead" || storedRole === "hr")) {
       setUserRole(storedRole);
     }
+
     setUserEmail(storedEmail);
-  }, []);
+  }, [propRole]);
 
   return (
     <div className="p-6">
@@ -32,7 +38,9 @@ export default function WorkFromHomePage() {
         <button
           onClick={() => setView("all")}
           className={`px-4 py-2 rounded-lg font-semibold ${
-            view === "all" ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            view === "all"
+              ? "bg-purple-600 text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
         >
           All Requests
@@ -40,7 +48,9 @@ export default function WorkFromHomePage() {
         <button
           onClick={() => setView("my")}
           className={`px-4 py-2 rounded-lg font-semibold ${
-            view === "my" ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            view === "my"
+              ? "bg-purple-600 text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
         >
           My Requests
