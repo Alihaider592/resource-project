@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 type UserRole = "user" | "teamlead" | "hr";
+type ViewType = "my" | "all";
 
 interface WFHRequest {
   _id: string;
@@ -16,42 +17,40 @@ interface WFHRequest {
   status: "pending" | "approved" | "rejected";
 }
 
+// ✅ Add userEmail here
 interface WFHTableProps {
   userRole: UserRole;
+  userEmail: string; // <-- required prop
+  view: ViewType;
 }
 
-export default function WFHTable({ userRole }: WFHTableProps) {
+export default function WFHTable({ userRole, userEmail, view }: WFHTableProps) {
   const [requests, setRequests] = useState<WFHRequest[]>([]);
   const [filter, setFilter] = useState<WFHRequest["status"] | "all">("all");
 
-  const token = localStorage.getItem("jwtToken");
-  const userEmail = localStorage.getItem("userEmail");
+  const filters: Array<WFHRequest["status"] | "all"> = ["all", "pending", "approved", "rejected"];
 
   const fetchRequests = async () => {
-    if (!token) return toast.error("User not authenticated");
-
     try {
-      const res = await fetch("/api/user/profile/request/wfh", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch("/api/user/profile/request/wfh");
       const data = await res.json();
-      if (res.ok) {
-        if (userRole === "user") {
-          setRequests(data.requests.filter((r: WFHRequest) => r.email === userEmail));
-        } else {
-          setRequests(data.requests);
-        }
-      } else toast.error(data.message || "Error fetching WFH requests");
-    } catch {
-      toast.error("Failed to fetch requests");
+
+      if (!res.ok) throw new Error(data.message || "Error fetching WFH requests");
+
+      if (userRole === "user") {
+        setRequests(data.requests.filter((r: WFHRequest) => r.email === userEmail));
+      } else {
+        setRequests(data.requests);
+      }
+    } catch (err) {
+      toast.error((err as Error).message || "Failed to fetch requests");
     }
   };
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [userEmail, userRole]);
 
-  const filters: Array<WFHRequest["status"] | "all"> = ["all", "pending", "approved", "rejected"];
   const filtered = requests.filter((r) => (filter === "all" ? true : r.status === filter));
 
   return (
@@ -62,7 +61,9 @@ export default function WFHTable({ userRole }: WFHTableProps) {
             key={f}
             onClick={() => setFilter(f)}
             className={`px-3 py-1 rounded-md text-sm font-medium ${
-              filter === f ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              filter === f
+                ? "bg-purple-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -95,7 +96,11 @@ export default function WFHTable({ userRole }: WFHTableProps) {
                   <td className="p-3 border">{r.endDate}</td>
                   <td
                     className={`p-3 border font-medium ${
-                      r.status === "approved" ? "text-green-600" : r.status === "rejected" ? "text-red-600" : "text-yellow-600"
+                      r.status === "approved"
+                        ? "text-green-600"
+                        : r.status === "rejected"
+                        ? "text-red-600"
+                        : "text-yellow-600"
                     }`}
                   >
                     {r.status.toUpperCase()}
