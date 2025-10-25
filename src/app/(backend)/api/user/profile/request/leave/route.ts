@@ -74,21 +74,24 @@ export async function POST(req: NextRequest) {
 /* -------------------------------------------------------------------------- */
 /* ✅ GET ALL LEAVE REQUESTS (user-specific)                                   */
 /* -------------------------------------------------------------------------- */
+/* ✅ GET ALL LEAVE REQUESTS (user-specific) */
 export async function GET(req: NextRequest) {
   try {
     await connectDatabase();
 
-    // Get token from headers
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.replace("Bearer ", "");
     if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    // Decode token to get user ID
     const jwt = await import("jsonwebtoken");
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "") as { id: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "") as { id: string; email?: string };
 
-    // Filter leaves by user ID
-    const leaves = await LeaveRequest.find({ userId: decoded.id }).sort({ createdAt: -1 }).lean();
+    // Query using both userId and email for backward compatibility
+    const leaves = await LeaveRequest.find({
+      $or: [{ userId: decoded.id }, { email: decoded.email }],
+    })
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json({
       message: leaves.length > 0 ? "✅ Leaves fetched successfully" : "No leave requests found.",

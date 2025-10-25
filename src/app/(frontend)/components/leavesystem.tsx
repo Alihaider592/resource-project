@@ -29,18 +29,29 @@ export default function LeaveRequestPage({ userRole }: LeaveSystemProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to fetch leaves");
 
-      const userLeaves = Array.isArray(data.leaves)
-        ? data.leaves
-            .filter((l: Leave) => l.email === storedEmail) // Show only user's own leaves
-            .sort((a: Leave, b: Leave) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        : [];
+      let filteredLeaves: Leave[] = [];
 
-      setLeaves(userLeaves);
+      if (Array.isArray(data.leaves)) {
+        if (userRole === "user") {
+          // Regular users only see their own requests
+          filteredLeaves = data.leaves.filter((l: Leave) => l.email === storedEmail);
+        } else if (userRole === "teamlead" || userRole === "hr") {
+          // Teamlead and HR also only see their own requests in "My Leaves"
+          filteredLeaves = data.leaves.filter((l: Leave) => l.email === storedEmail);
+        }
+
+        filteredLeaves.sort(
+          (a: Leave, b: Leave) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+
+      setLeaves(filteredLeaves);
       setCurrentPage(1);
     } catch (err) {
       if (err instanceof Error) toast.error(err.message);
     }
-  }, [token, storedEmail]);
+  }, [token, storedEmail, userRole]);
 
   useEffect(() => {
     fetchLeaves();
@@ -75,12 +86,17 @@ export default function LeaveRequestPage({ userRole }: LeaveSystemProps) {
       <section className="bg-white rounded-2xl shadow-lg border border-gray-200 mt-4 overflow-hidden">
         {/* Filters */}
         <div className="p-4 bg-gray-50 border-b border-gray-100 flex flex-wrap justify-between items-center gap-3">
-          <h3 className="text-xl font-bold text-gray-700">Leave History ({allFilteredLeaves.length})</h3>
+          <h3 className="text-xl font-bold text-gray-700">
+            Leave History ({allFilteredLeaves.length})
+          </h3>
           <div className="flex space-x-2">
             {(["all", "pending", "approved", "rejected"] as const).map(btn => (
               <button
                 key={btn}
-                onClick={() => { setFilter(btn); setCurrentPage(1); }}
+                onClick={() => {
+                  setFilter(btn);
+                  setCurrentPage(1);
+                }}
                 className={`px-4 py-2 text-sm font-medium rounded-full ${
                   filter === btn
                     ? "bg-indigo-600 text-white"
