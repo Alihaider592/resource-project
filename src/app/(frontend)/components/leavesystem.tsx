@@ -14,50 +14,60 @@ export default function LeaveRequestPage({ userRole }: LeaveSystemProps) {
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+
   const itemsPerPage = 10;
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const storedName = typeof window !== "undefined" ? localStorage.getItem("userName") : "";
   const storedEmail = typeof window !== "undefined" ? localStorage.getItem("userEmail") : "";
 
+  // 🟢 Fetch only logged-in user's leaves (token-based)
   const fetchLeaves = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      toast.error("User not logged in");
+      return;
+    }
+
+    setLoading(true);
     try {
       const res = await fetch("/api/user/profile/request/leave", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
+
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.message || "Failed to fetch leaves");
 
-      let filteredLeaves: Leave[] = [];
+      // ✅ backend already returns only user's leaves (no email filtering required)
+      const sorted = Array.isArray(data.leaves)
+        ? data.leaves.sort(
+            (a: Leave, b: Leave) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+        : [];
 
-      if (Array.isArray(data.leaves)) {
-        if (userRole === "user") {
-          // Regular users only see their own requests
-          filteredLeaves = data.leaves.filter((l: Leave) => l.email === storedEmail);
-        } else if (userRole === "teamlead" || userRole === "hr") {
-          // Teamlead and HR also only see their own requests in "My Leaves"
-          filteredLeaves = data.leaves.filter((l: Leave) => l.email === storedEmail);
-        }
-
-        filteredLeaves.sort(
-          (a: Leave, b: Leave) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      }
-
-      setLeaves(filteredLeaves);
-      setCurrentPage(1);
+      setLeaves(sorted);
     } catch (err) {
       if (err instanceof Error) toast.error(err.message);
+    } finally {
+      setLoading(false);
+      setCurrentPage(1);
     }
-  }, [token, storedEmail, userRole]);
+  }, [token]);
 
   useEffect(() => {
     fetchLeaves();
   }, [fetchLeaves]);
 
-  const allFilteredLeaves = leaves.filter(l => (filter === "all" ? true : l.status === filter));
+  // 🟡 Filtering logic
+  const allFilteredLeaves = leaves.filter((l) =>
+    filter === "all" ? true : l.status === filter
+  );
+
   const totalPages = Math.ceil(allFilteredLeaves.length / itemsPerPage);
   const paginatedLeaves = allFilteredLeaves.slice(
     (currentPage - 1) * itemsPerPage,
@@ -65,7 +75,11 @@ export default function LeaveRequestPage({ userRole }: LeaveSystemProps) {
   );
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    new Date(d).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
 
   return (
     <div className="relative">
@@ -90,7 +104,7 @@ export default function LeaveRequestPage({ userRole }: LeaveSystemProps) {
             Leave History ({allFilteredLeaves.length})
           </h3>
           <div className="flex space-x-2">
-            {(["all", "pending", "approved", "rejected"] as const).map(btn => (
+            {(["all", "pending", "approved", "rejected"] as const).map((btn) => (
               <button
                 key={btn}
                 onClick={() => {
@@ -111,7 +125,11 @@ export default function LeaveRequestPage({ userRole }: LeaveSystemProps) {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          {paginatedLeaves.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-10 text-gray-500 animate-pulse">
+              Loading leave requests...
+            </div>
+          ) : paginatedLeaves.length > 0 ? (
             <table className="min-w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-100/70 text-gray-600 uppercase text-xs tracking-wider">
@@ -126,14 +144,16 @@ export default function LeaveRequestPage({ userRole }: LeaveSystemProps) {
                 </tr>
               </thead>
               <tbody>
-                {paginatedLeaves.map(l => (
+                {paginatedLeaves.map((l) => (
                   <LeaveRow key={l._id} leave={l} formatDate={formatDate} />
                 ))}
               </tbody>
             </table>
           ) : (
             <div className="text-center py-10 text-gray-500">
-              {filter === "all" ? "No leave requests found." : `No ${filter} requests to display.`}
+              {filter === "all"
+                ? "No leave requests found."
+                : `No ${filter} requests to display.`}
             </div>
           )}
         </div>
