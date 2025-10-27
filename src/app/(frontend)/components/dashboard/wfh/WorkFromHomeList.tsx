@@ -36,9 +36,22 @@ interface WorkFromHomeListProps {
   user: { name: string; email: string; role: "user" | "teamlead" | "hr" };
 }
 
+interface ActionPayload {
+  action: "approve" | "reject";
+  approver: string;
+  role: "teamlead" | "hr";
+  reason?: string;
+}
+
 export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
   const [requests, setRequests] = useState<WFHRequest[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [rejectModal, setRejectModal] = useState<{
+    visible: boolean;
+    requestId: string | null;
+  }>({ visible: false, requestId: null });
+  const [rejectReason, setRejectReason] = useState("");
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -71,21 +84,33 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
       return;
     }
 
-    // For reject, ask for reason
-    let reason: string | undefined;
     if (action === "reject") {
-      reason = prompt("Please provide a reason for rejection:")?.trim();
-      if (!reason) {
-        toast.error("Rejection reason is required.");
-        return;
-      }
+      setRejectModal({ visible: true, requestId: id });
+      setRejectReason(""); // reset reason
+      return;
     }
+
+    await performAction(id, action, role);
+  };
+
+  const performAction = async (
+    id: string,
+    action: "approve" | "reject",
+    role: "teamlead" | "hr",
+    reason?: string
+  ) => {
+    const payload: ActionPayload = {
+      action,
+      approver: user.email,
+      role,
+    };
+    if (action === "reject") payload.reason = reason?.trim() || "";
 
     try {
       const res = await fetch(`/api/user/profile/request/wfh/action/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, approver: user.email, role, reason }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -99,6 +124,24 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
     } catch (error) {
       console.error("❌ Action error:", error);
       toast.error("Something went wrong while updating the request");
+    }
+  };
+
+  const submitReject = async () => {
+    const trimmedReason = rejectReason.trim();
+    if (!trimmedReason) {
+      toast.error("Rejection reason is required.");
+      return;
+    }
+    if (rejectModal.requestId) {
+      await performAction(
+        rejectModal.requestId,
+        "reject",
+        user.role as "teamlead" | "hr",
+        trimmedReason
+      );
+      setRejectModal({ visible: false, requestId: null });
+      setRejectReason("");
     }
   };
 
@@ -220,6 +263,38 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
           </tbody>
         </table>
       </div>
+
+      {/* Reject modal */}
+      {rejectModal.visible && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-96">
+            <h2 className="text-lg font-bold mb-2">Rejection Reason</h2>
+            <textarea
+              className="w-full border p-2 rounded mb-4"
+              rows={4}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Enter reason for rejection..."
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() =>
+                  setRejectModal({ visible: false, requestId: null })
+                }
+                className="px-4 py-2 border rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitReject}
+                className="px-4 py-2 bg-red-500 text-white rounded"
+              >
+                Submit Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
