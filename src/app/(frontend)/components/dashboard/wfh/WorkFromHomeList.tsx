@@ -35,7 +35,6 @@ interface WFHRequest {
 interface WorkFromHomeListProps {
   user: { name: string; email: string; role: "user" | "teamlead" | "hr" };
 }
-
 interface ActionPayload {
   action: "approve" | "reject";
   approver: string;
@@ -47,6 +46,7 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
   const [requests, setRequests] = useState<WFHRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Rejection modal state
   const [rejectModal, setRejectModal] = useState<{
     visible: boolean;
     requestId: string | null;
@@ -86,50 +86,46 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
 
     if (action === "reject") {
       setRejectModal({ visible: true, requestId: id });
-      setRejectReason(""); // reset reason
       return;
     }
 
+    // Approve
     await performAction(id, action, role);
   };
 
-  const performAction = async (
-    id: string,
-    action: "approve" | "reject",
-    role: "teamlead" | "hr",
-    reason?: string
-  ) => {
-    const payload: ActionPayload = {
-      action,
-      approver: user.email,
-      role,
-    };
-    if (action === "reject") payload.reason = reason?.trim() || "";
+const performAction = async (
+  id: string,
+  action: "approve" | "reject",
+  role: "teamlead" | "hr",
+  reason?: string
+) => {
+  try {
+    const payload: ActionPayload = { action, approver: user.email, role };
+if (action === "reject") payload.reason = reason;
 
-    try {
-      const res = await fetch(`/api/user/profile/request/wfh/action/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
 
-      const data = await res.json();
+    const res = await fetch(`/api/user/profile/request/wfh/action/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-      if (data.success) {
-        toast.success(`Request ${action}d successfully`);
-        fetchRequests();
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      console.error("❌ Action error:", error);
-      toast.error("Something went wrong while updating the request");
+    const data = await res.json();
+
+    if (data.success) {
+      toast.success(`Request ${action}d successfully`);
+      fetchRequests();
+    } else {
+      toast.error(data.message);
     }
-  };
+  } catch (error) {
+    console.error("❌ Action error:", error);
+    toast.error("Something went wrong while updating the request");
+  }
+};
 
   const submitReject = async () => {
-    const trimmedReason = rejectReason.trim();
-    if (!trimmedReason) {
+    if (!rejectReason.trim()) {
       toast.error("Rejection reason is required.");
       return;
     }
@@ -138,7 +134,7 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
         rejectModal.requestId,
         "reject",
         user.role as "teamlead" | "hr",
-        trimmedReason
+        rejectReason
       );
       setRejectModal({ visible: false, requestId: null });
       setRejectReason("");

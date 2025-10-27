@@ -1,4 +1,12 @@
-import mongoose, { Schema, Document } from "mongoose";
+// src/app/(backend)/models/WorkFromHome.ts
+import mongoose, { Schema, model, Document } from "mongoose";
+
+interface Approval {
+  status: "approved" | "rejected";
+  reason?: string;
+  approver: string;
+  date: Date;
+}
 
 export interface IWorkFromHome extends Document {
   name: string;
@@ -8,21 +16,19 @@ export interface IWorkFromHome extends Document {
   reason: string;
   status: "pending" | "approved" | "rejected";
   approvals: {
-    teamlead?: { status: "approved" | "rejected"; reason?: string; date?: Date };
-    hr?: { status: "approved" | "rejected"; reason?: string; date?: Date };
+    teamlead?: Approval;
+    hr?: Approval;
   };
   createdAt: Date;
   updatedAt: Date;
 }
 
-const ApprovalSchema = new Schema(
-  {
-    status: { type: String, enum: ["approved", "rejected"] },
-    reason: { type: String },
-    date: { type: Date },
-  },
-  { _id: false } // No separate _id for approvals
-);
+const ApprovalSchema = new Schema<Approval>({
+  status: { type: String, enum: ["approved", "rejected"], required: true },
+  reason: { type: String },
+  approver: { type: String, required: true },
+  date: { type: Date, required: true },
+});
 
 const WorkFromHomeSchema = new Schema<IWorkFromHome>(
   {
@@ -33,11 +39,11 @@ const WorkFromHomeSchema = new Schema<IWorkFromHome>(
     reason: { type: String, required: true },
     status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
     approvals: {
-      teamlead: { type: ApprovalSchema, default: undefined },
-      hr: { type: ApprovalSchema, default: undefined },
+      teamlead: { type: ApprovalSchema, default: null },
+      hr: { type: ApprovalSchema, default: null },
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.WorkFromHome || mongoose.model("WorkFromHome", WorkFromHomeSchema);
+export default mongoose.models.WorkFromHome || model<IWorkFromHome>("WorkFromHome", WorkFromHomeSchema);
