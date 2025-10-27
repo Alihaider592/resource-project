@@ -1,72 +1,79 @@
-// workfromhome.tsx
-"use client";
+// "use client";
+// import React, { useState, ChangeEvent, FormEvent } from "react";
+// import toast from "react-hot-toast";
+// import { FiSend } from "react-icons/fi";
 
-import React, { useState, useEffect } from "react";
-import WFHForm from "./form/wfhform";
-import WFHTable from "./WFHTable";
+// interface User {
+//   name: string;
+//   email: string;
+//   role: "user" | "teamlead" | "hr";
+// }
 
-type UserRole = "user" | "teamlead" | "hr";
-type ViewType = "my" | "all";
+// interface WorkFromHomeFormProps {
+//   user: User;
+// }
 
-interface WorkFromHomePageProps {
-  userRole?: UserRole; // optional prop
-}
+// export const WorkFromHomeForm: React.FC<WorkFromHomeFormProps> = ({ user }) => {
+//   const [form, setForm] = useState({ date: "", reason: "" });
 
-export default function WorkFromHomePage({ userRole: propRole }: WorkFromHomePageProps) {
-  const [view, setView] = useState<ViewType>("my");
-  const [userRole, setUserRole] = useState<UserRole>(propRole || "user");
-  const [userEmail, setUserEmail] = useState("");
+//   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+//     setForm({ ...form, [e.target.name]: e.target.value });
+//   };
 
-  useEffect(() => {
-    const storedRole = localStorage.getItem("userRole") as UserRole;
-    const storedEmail = localStorage.getItem("userEmail") || "";
+//   const handleSubmit = async (e: FormEvent) => {
+//     e.preventDefault();
+//     try {
+//       const res = await fetch("/api/wfh/apply", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           ...form,
+//           name: user.name,
+//           email: user.email,
+//           role: user.role,
+//         }),
+//       });
 
-    if (!propRole && (storedRole === "user" || storedRole === "teamlead" || storedRole === "hr")) {
-      setUserRole(storedRole);
-    }
+//       const data = await res.json();
+//       data.success ? toast.success(data.message) : toast.error(data.message);
+//       setForm({ date: "", reason: "" });
+//     } catch (error) {
+//       toast.error("Something went wrong!");
+//       console.error(error);
+//     }
+//   };
 
-    setUserEmail(storedEmail);
-  }, [propRole]);
+//   return (
+//     <form
+//       onSubmit={handleSubmit}
+//       className="p-4 bg-white shadow rounded-xl space-y-3"
+//     >
+//       <h2 className="text-xl font-semibold">Apply for Work From Home</h2>
 
-  return (
-    <div className="p-6">
-      <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-gray-800">
-        Work From Home Requests
-      </h1>
+//       <input
+//         type="date"
+//         name="date"
+//         value={form.date}
+//         onChange={handleChange}
+//         className="w-full border p-2 rounded"
+//         required
+//       />
 
-      <div className="flex gap-4 mb-6">
-        <button
-          onClick={() => setView("all")}
-          className={`px-4 py-2 rounded-lg font-semibold ${
-            view === "all"
-              ? "bg-purple-600 text-white"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          }`}
-        >
-          All Requests
-        </button>
-        <button
-          onClick={() => setView("my")}
-          className={`px-4 py-2 rounded-lg font-semibold ${
-            view === "my"
-              ? "bg-purple-600 text-white"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          }`}
-        >
-          My Requests
-        </button>
-      </div>
+//       <textarea
+//         name="reason"
+//         value={form.reason}
+//         onChange={handleChange}
+//         placeholder="Reason..."
+//         className="w-full border p-2 rounded"
+//         required
+//       />
 
-      {view === "my" && (
-        <div className="mb-6">
-          <WFHForm
-            userRole={userRole}
-            onRequestSubmitted={() => window.location.reload()}
-          />
-        </div>
-      )}
-
-      <WFHTable userRole={userRole} userEmail={userEmail} view={view} />
-    </div>
-  );
-}
+//       <button
+//         type="submit"
+//         className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+//       >
+//         <FiSend /> Submit
+//       </button>
+//     </form>
+//   );
+// };

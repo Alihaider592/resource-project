@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDatabase from "@/app/(backend)/lib/db";
-import WFHRequest from "@/app/(backend)/models/WFHRequest";
+import WFHRequest from "@/app/(backend)/models/WorkFromHome";
 import jwt from "jsonwebtoken";
 
 export async function GET(req: NextRequest) {
