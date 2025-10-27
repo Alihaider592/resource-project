@@ -2,11 +2,18 @@
 
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
-import { FiCalendar, FiBriefcase, FiAperture, FiUser, FiHome, FiPlus, FiX } from "react-icons/fi";
+import { FiCalendar, FiBriefcase, FiUser, FiHome, FiPlus, FiX } from "react-icons/fi";
+// Assume these components are correctly implemented and available
+// import WorkFromHomeDashboard from "./WorkFromHomeDashboard";
+// import { WorkFromHomeForm } from "./WorkFromHomeForm";
+// import MyWFHRequests from "./MyWFHRequests";
+import MyWFHRequests from "@/app/(frontend)/components/dashboard/wfh/MyWFHRequests";
 import WorkFromHomeDashboard from "@/app/(frontend)/components/dashboard/wfh/WorkFromHomeDashboard";
 import { WorkFromHomeForm } from "@/app/(frontend)/components/form/WorkFromHomeForm";
-import MyWFHRequests from "@/app/(frontend)/components/dashboard/wfh/MyWFHRequests";
-
+// import WorkFromHome from "@/app/(backend)/models/WorkFromHome";
+const IconHome = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-10v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+);
 interface DecodedUser {
   name: string;
   email: string;
@@ -28,7 +35,9 @@ export default function HRWFHPage() {
   const [showForm, setShowForm] = useState(false); // toggle form visibility
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    // Note: In a real app, use a proper context/hook for auth state
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
     if (token) {
       try {
         const decoded = jwtDecode<DecodedUser>(token);
@@ -67,11 +76,11 @@ export default function HRWFHPage() {
         <button
           onClick={() => setActiveTab(tabKey)}
           className={`
-            flex items-center gap-2 px-6 py-2.5 rounded-t-xl font-semibold transition-all duration-200 text-base
+            flex items-center gap-2 px-6 py-3 font-semibold transition-all duration-200 text-base rounded-t-lg
             ${
               isActive
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 border-t border-x border-indigo-600"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-b-2 border-transparent"
+                ? "bg-white text-indigo-600 shadow-md border-t border-x border-gray-200"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-b border-gray-300"
             }
           `}
         >
@@ -82,24 +91,37 @@ export default function HRWFHPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto mt-12 px-4 md:px-8">
+    <div className="max-w-7xl mx-auto   relative">
       
-      {/* --- Header Section --- */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-4 border-b-2 border-gray-200">
-        <div className="mb-4 md:mb-0">
-          <h1 className="text-4xl font-extrabold text-gray-900 flex items-center gap-3">
-            <FiHome className="w-8 h-8 text-indigo-600" /> WFH Management Portal
-          </h1>
-          <p className="text-lg text-gray-600 mt-1">
-            Welcome, **{user.name}**! Your role: <span className="font-bold text-indigo-700">{user.role.toUpperCase()}</span>
-          </p>
+      {/* --- Main Header Section (Like LeaveRequestPage) --- */}
+      <div className="flex justify-between items-center pb-4 border-b border-indigo-200/50 mb-8">
+        <div>
+            <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
+                <FiHome className="w-7 h-7 text-indigo-600" /> WFH Management Portal
+            </h1>
+            <p className="mt-2 text-lg text-gray-700">
+  Welcome, <span className="font-semibold text-gray-900">{user.name}</span>!{' '}
+  Your role:{" "}
+  <span className="font-bold text-indigo-600 bg-indigo-100 px-2 py-1 rounded-lg shadow-sm">
+    {user.role.toUpperCase()}
+  </span>
+</p>
+
         </div>
+        
+        {/* Form Toggle Button */}
+        <button
+            onClick={() => setShowForm(true)}
+            className="bg-green-600 text-white px-6 py-2.5 rounded-xl hover:bg-green-700 transition flex items-center gap-2 font-semibold shadow-md shadow-green-500/30"
+        >
+            <FiPlus className="w-5 h-5" /> Request New WFH
+        </button>
       </div>
 
       {/* --- Tabs Navigation --- */}
-      <div className="flex gap-1 border-b border-gray-300 mb-8">
+      <div className="flex gap-1 border-b border-gray-300 mb-6">
         <TabButton
-          name="My Leaves"
+          name="My Applications"
           icon={<FiCalendar />}
           tabKey="myleaves"
         />
@@ -113,48 +135,96 @@ export default function HRWFHPage() {
       {/* --- Content Area --- */}
       {/* My Leaves Tab Content */}
       {activeTab === "myleaves" && (
-        <div className="space-y-8">
-          
-          {/* Form Toggle Button */}
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className={`
-              flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-colors duration-200 text-white shadow-lg
-              ${showForm ? "bg-red-500 hover:bg-red-600 shadow-red-500/30" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30"}
-            `}
-          >
-            {showForm ? <FiX /> : <FiPlus />}
-            {showForm ? "Hide WFH Application Form" : "Create New WFH Application"}
-          </button>
-
-          {/* Form Card (with animation) */}
-          {showForm && (
-            <div className="bg-white p-8 rounded-xl shadow-2xl border border-indigo-100 transition-all duration-500 ease-in-out transform scale-100 opacity-100">
-              <WorkFromHomeForm user={user} />
-            </div>
-          )}
-
-          {/* Requests List Card */}
-          <div className="bg-white p-8 rounded-xl shadow-2xl border border-indigo-100">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 border-b pb-3">
-                <FiCalendar className="text-indigo-500"/> Submitted Applications
+        <section className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+          {/* Requests List Card Header */}
+          <div className="p-6 border-b border-gray-100">
+            <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <FiCalendar className="text-indigo-500"/> My Submitted WFH Applications
             </h3>
+          </div>
+          {/* Requests List Content */}
+          <div className="p-6">
             <MyWFHRequests user={user} />
           </div>
-        </div>
+        </section>
       )}
 
       {/* Manage Requests Tab Content */}
       {activeTab === "manage" && (
-        <div className="bg-white p-8 rounded-xl shadow-2xl border border-red-100">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 border-b pb-3">
-                <FiBriefcase className="text-red-500"/> Requests Awaiting Your Action
-            </h3>
-            {/* 🎯 Note: user must be cast/asserted here if WorkFromHomeDashboard's props 
-               are strictly defined as 'hr' | 'teamlead' (ManagerRole). */}
-            <WorkFromHomeDashboard user={user} />
+        <section className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+            {/* Requests Management Card Header */}
+            <div className="p-6 border-b border-gray-100">
+                <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <FiBriefcase className="text-red-500"/> Requests Awaiting Your Action
+                </h3>
+            </div>
+            {/* Requests Management Content */}
+            <div className="p-6">
+                 {/* 🎯 Note: user must be cast/asserted here if WorkFromHomeDashboard's props 
+                 are strictly defined as 'hr' | 'teamlead' (ManagerRole). */}
+                <WorkFromHomeDashboard user={user} />
+            </div>
+        </section>
+      )}
+
+      {/* Slide-in WFH Form Drawer */}
+      {showForm && user && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowForm(false)}
+          />
+
+          {/* Drawer */}
+          <div className="ml-auto w-full max-w-xl h-full flex flex-col bg-white shadow-2xl  animate-slideInRight z-50">
+            
+            {/* Header (Mimicking the LeaveForm style) */}
+            <div className="flex justify-between items-center bg-purple-600 text-white px-6 py-4 sticky top-0 z-10 shadow-md">
+                <div className="flex items-center gap-4 bg-purple-600 text-white p-4 ">
+        <IconHome className="w-8 h-8 stroke-white" />
+        <div>
+            <h2 className="text-2xl font-extrabold">Work From Home Application</h2>
+            <p className="mt-1 text-sm text-indigo-200">
+                Request a day to work remotely.
+            </p>
+        </div>
+      </div>
+                <button
+                    onClick={() => setShowForm(false)}
+                    className="h-8 w-8 flex items-center justify-center text-indigo-200 hover:text-white transition-colors"
+                >
+                    <span className="sr-only">Close panel</span>
+                    <FiX className="h-7 w-7 stroke-2" />
+                </button>
+            </div>
+            
+            {/* Form Content */}
+            <div className="flex-1 overflow-y-auto p-0">
+                {/* NOTE: If the WorkFromHomeForm component has its own fixed 
+                  sizing (e.g., max-w-xl or margin-auto) inside it, you will 
+                  need to remove that internal wrapper to make it fill this drawer perfectly.
+                */}
+                <WorkFromHomeForm user={user} />
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Slide-in animation */}
+      <style jsx>{`
+        .animate-slideInRight {
+          transform: translateX(100%);
+          opacity: 0;
+          animation: slideInRight 0.4s forwards cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideInRight {
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }

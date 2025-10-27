@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
   FiClock,
@@ -9,12 +9,9 @@ import {
   FiUsers,
   FiCalendar,
   FiRefreshCcw,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
-
-interface Approval {
-  status: "approved" | "rejected";
-  reason?: string;
-}
 
 interface WFHRequest {
   _id: string;
@@ -25,41 +22,30 @@ interface WFHRequest {
   reason: string;
   role: "user" | "teamlead" | "hr";
   status: "pending" | "approved" | "rejected";
-  approvals: {
-    teamlead?: Approval;
-    hr?: Approval;
-  };
   createdAt?: string;
 }
 
 interface WorkFromHomeListProps {
   user: { name: string; email: string; role: "user" | "teamlead" | "hr" };
 }
-interface ActionPayload {
-  action: "approve" | "reject";
-  approver: string;
-  role: "teamlead" | "hr";
-  reason?: string;
-}
 
 export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
   const [requests, setRequests] = useState<WFHRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Rejection modal state
-  const [rejectModal, setRejectModal] = useState<{
-    visible: boolean;
-    requestId: string | null;
-  }>({ visible: false, requestId: null });
-  const [rejectReason, setRejectReason] = useState("");
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5; // number of requests per page
+  const totalPages = Math.ceil(requests.length / pageSize);
 
-  const fetchRequests = useCallback(async () => {
+  const fetchRequests = async () => {
     try {
       setLoading(true);
       const res = await fetch(
         `/api/user/profile/request/wfh/get?email=${user.email}&role=${user.role}`
       );
       const data = await res.json();
+
       if (!data.success) throw new Error(data.message);
       setRequests(data.requests || []);
     } catch (error) {
@@ -68,78 +54,48 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
     } finally {
       setLoading(false);
     }
-  }, [user.email, user.role]);
+  };
 
   useEffect(() => {
     fetchRequests();
-  }, [fetchRequests]);
+  }, []);
 
-  const handleAction = async (
-    id: string,
-    action: "approve" | "reject",
-    role: "teamlead" | "hr"
-  ) => {
+  const handleAction = async (id: string, action: "approve" | "reject") => {
     if (user.role === "user") {
       toast.error("You are not authorized to perform this action.");
       return;
     }
 
-    if (action === "reject") {
-      setRejectModal({ visible: true, requestId: id });
-      return;
-    }
+    try {
+      const res = await fetch(`/api/user/profile/request/wfh/action/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, approver: user.email }),
+      });
 
-    // Approve
-    await performAction(id, action, role);
-  };
-
-const performAction = async (
-  id: string,
-  action: "approve" | "reject",
-  role: "teamlead" | "hr",
-  reason?: string
-) => {
-  try {
-    const payload: ActionPayload = { action, approver: user.email, role };
-if (action === "reject") payload.reason = reason;
-
-
-    const res = await fetch(`/api/user/profile/request/wfh/action/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      toast.success(`Request ${action}d successfully`);
-      fetchRequests();
-    } else {
-      toast.error(data.message);
-    }
-  } catch (error) {
-    console.error("❌ Action error:", error);
-    toast.error("Something went wrong while updating the request");
-  }
-};
-
-  const submitReject = async () => {
-    if (!rejectReason.trim()) {
-      toast.error("Rejection reason is required.");
-      return;
-    }
-    if (rejectModal.requestId) {
-      await performAction(
-        rejectModal.requestId,
-        "reject",
-        user.role as "teamlead" | "hr",
-        rejectReason
-      );
-      setRejectModal({ visible: false, requestId: null });
-      setRejectReason("");
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Request ${action}d successfully`);
+        fetchRequests();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error("❌ Action error:", error);
+      toast.error("Something went wrong while updating the request");
     }
   };
+
+  // Pagination helpers
+  const paginatedRequests = requests.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const nextPage = () =>
+    setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev));
+  const prevPage = () =>
+    setCurrentPage((prev) => (prev > 1 ? prev - 1 : prev));
 
   if (loading)
     return <p className="text-center text-gray-500 mt-10">Loading...</p>;
@@ -178,7 +134,7 @@ if (action === "reject") payload.reason = reason;
           </thead>
 
           <tbody>
-            {requests.map((req) => (
+            {paginatedRequests.map((req) => (
               <tr key={req._id} className="hover:bg-gray-50">
                 <td className="p-2 border-b">{req.name}</td>
                 <td className="p-2 border-b">{req.email}</td>
@@ -187,63 +143,35 @@ if (action === "reject") payload.reason = reason;
                 </td>
                 <td className="p-2 border-b">{req.workType}</td>
                 <td className="p-2 border-b">{req.reason}</td>
-
-                <td className="p-2 border-b text-center flex flex-col items-center gap-1">
+                <td className="p-2 border-b text-center">
                   {req.status === "pending" && (
-                    <span className="text-yellow-500 flex items-center gap-1">
+                    <span className="text-yellow-500 flex justify-center items-center gap-1">
                       <FiClock /> Pending
                     </span>
                   )}
                   {req.status === "approved" && (
-                    <span className="text-green-600 flex items-center gap-1">
+                    <span className="text-green-600 flex justify-center items-center gap-1">
                       <FiCheckCircle /> Approved
                     </span>
                   )}
                   {req.status === "rejected" && (
-                    <div className="text-red-600 flex flex-col items-center gap-1">
-                      <span className="flex items-center gap-1">
-                        <FiXCircle /> Rejected
-                      </span>
-                      {req.approvals.teamlead?.reason && (
-                        <small>TeamLead: {req.approvals.teamlead.reason}</small>
-                      )}
-                      {req.approvals.hr?.reason && (
-                        <small>HR: {req.approvals.hr.reason}</small>
-                      )}
-                    </div>
-                  )}
-                  {req.approvals.teamlead?.status && (
-                    <small>TeamLead: {req.approvals.teamlead.status}</small>
-                  )}
-                  {req.approvals.hr?.status && (
-                    <small>HR: {req.approvals.hr.status}</small>
+                    <span className="text-red-600 flex justify-center items-center gap-1">
+                      <FiXCircle /> Rejected
+                    </span>
                   )}
                 </td>
-
                 {(user.role === "teamlead" || user.role === "hr") && (
                   <td className="p-2 border-b text-center">
                     {req.status === "pending" ? (
                       <div className="flex gap-2 justify-center">
                         <button
-                          onClick={() =>
-                            handleAction(
-                              req._id,
-                              "approve",
-                              user.role as "teamlead" | "hr"
-                            )
-                          }
+                          onClick={() => handleAction(req._id, "approve")}
                           className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() =>
-                            handleAction(
-                              req._id,
-                              "reject",
-                              user.role as "teamlead" | "hr"
-                            )
-                          }
+                          onClick={() => handleAction(req._id, "reject")}
                           className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                         >
                           Reject
@@ -260,35 +188,26 @@ if (action === "reject") payload.reason = reason;
         </table>
       </div>
 
-      {/* Reject modal */}
-      {rejectModal.visible && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-96">
-            <h2 className="text-lg font-bold mb-2">Rejection Reason</h2>
-            <textarea
-              className="w-full border p-2 rounded mb-4"
-              rows={4}
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Enter reason for rejection..."
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() =>
-                  setRejectModal({ visible: false, requestId: null })
-                }
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitReject}
-                className="px-4 py-2 bg-red-500 text-white rounded"
-              >
-                Submit Reject
-              </button>
-            </div>
-          </div>
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-4">
+          <button
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            className="p-2 bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FiChevronLeft />
+          </button>
+          <span className="text-gray-700 font-medium">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className="p-2 bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FiChevronRight />
+          </button>
         </div>
       )}
     </div>
