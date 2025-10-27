@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { FiFileText, FiCoffee, FiHome } from "react-icons/fi";
 
 const hrRequestItems = [
-  { name: "Leaves", icon: <FiFileText size={18} />, href: "/hr/leaves" },
-  { name: "Work From Home", icon: <FiCoffee size={18} />, href: "/hr/employee-requests/wfh" },
+  { name: "Leaves", icon: <FiFileText size={18} />, href: "/hr/leaves" }, 
+  { name: "Work From Home", icon: <FiCoffee size={18} />, href: "/hr/wfh" },
   { name: "Home Loan", icon: <FiHome size={18} />, href: "/hr/employee-requests/homeloan" },
 ];
 

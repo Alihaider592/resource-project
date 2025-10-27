@@ -6,7 +6,7 @@ import { FiFileText, FiCoffee, FiHome } from "react-icons/fi";
 
 const teamLeadRequestItems = [
   { name: "Leaves", icon: <FiFileText size={18} />, href: "/teamlead/leaves" },
-  { name: "Work From Home", icon: <FiCoffee size={18} />, href: "/teamlead/teamrequests/wfh" },
+  { name: "Work From Home", icon: <FiCoffee size={18} />, href: "/teamlead/wfh" },
   { name: "Home Loan", icon: <FiHome size={18} />, href: "/teamlead/employee-requests/homeloan" },
 ];
 

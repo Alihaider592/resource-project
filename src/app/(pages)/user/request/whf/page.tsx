@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { WorkFromHomeForm } from "@/app/(frontend)/components/form/WorkFromHomeForm";
-import WorkFromHomeList from "@/app/(frontend)/components/dashboard/wfh/WorkFromHomeList";
+import WorkFromHomeList from "@/app/(frontend)/components/dashboard/wfh/WorkFromHomeDashboard";
 
 interface DecodedUser {
   name: string;

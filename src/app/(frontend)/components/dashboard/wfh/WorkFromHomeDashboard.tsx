@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
   FiClock,
@@ -11,11 +11,6 @@ import {
   FiRefreshCcw,
 } from "react-icons/fi";
 
-interface Approval {
-  status: "approved" | "rejected";
-  reason?: string;
-}
-
 interface WFHRequest {
   _id: string;
   name: string;
@@ -25,10 +20,6 @@ interface WFHRequest {
   reason: string;
   role: "user" | "teamlead" | "hr";
   status: "pending" | "approved" | "rejected";
-  approvals: {
-    teamlead?: Approval;
-    hr?: Approval;
-  };
   createdAt?: string;
 }
 
@@ -40,14 +31,18 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
   const [requests, setRequests] = useState<WFHRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRequests = useCallback(async () => {
+  // Fetch all requests
+  const fetchRequests = async () => {
     try {
       setLoading(true);
+
       const res = await fetch(
         `/api/user/profile/request/wfh/get?email=${user.email}&role=${user.role}`
       );
       const data = await res.json();
+
       if (!data.success) throw new Error(data.message);
+
       setRequests(data.requests || []);
     } catch (error) {
       console.error("❌ Failed to load WFH requests:", error);
@@ -55,38 +50,30 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
     } finally {
       setLoading(false);
     }
-  }, [user.email, user.role]);
+  };
 
   useEffect(() => {
     fetchRequests();
-  }, [fetchRequests]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleAction = async (
-    id: string,
-    action: "approve" | "reject",
-    role: "teamlead" | "hr"
-  ) => {
+  // Approve or Reject (only HR or TeamLead)
+  const handleAction = async (id: string, action: "approve" | "reject") => {
     if (user.role === "user") {
       toast.error("You are not authorized to perform this action.");
       return;
     }
 
-    // For reject, ask for reason
-    let reason: string | undefined;
-    if (action === "reject") {
-      reason = prompt("Please provide a reason for rejection:")?.trim();
-      if (!reason) {
-        toast.error("Rejection reason is required.");
-        return;
-      }
-    }
-
     try {
-      const res = await fetch(`/api/user/profile/request/wfh/action/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, approver: user.email, role, reason }),
-      });
+      // ✅ Use your existing action file route
+      const res = await fetch(
+        `/api/user/profile/request/wfh/action/${id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, approver: user.email }),
+        }
+      );
 
       const data = await res.json();
 
@@ -149,35 +136,21 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
                 <td className="p-2 border-b">{req.workType}</td>
                 <td className="p-2 border-b">{req.reason}</td>
 
-                <td className="p-2 border-b text-center flex flex-col items-center gap-1">
+                <td className="p-2 border-b text-center">
                   {req.status === "pending" && (
-                    <span className="text-yellow-500 flex items-center gap-1">
+                    <span className="text-yellow-500 flex justify-center items-center gap-1">
                       <FiClock /> Pending
                     </span>
                   )}
                   {req.status === "approved" && (
-                    <span className="text-green-600 flex items-center gap-1">
+                    <span className="text-green-600 flex justify-center items-center gap-1">
                       <FiCheckCircle /> Approved
                     </span>
                   )}
                   {req.status === "rejected" && (
-                    <div className="text-red-600 flex flex-col items-center gap-1">
-                      <span className="flex items-center gap-1">
-                        <FiXCircle /> Rejected
-                      </span>
-                      {req.approvals.teamlead?.reason && (
-                        <small>TeamLead: {req.approvals.teamlead.reason}</small>
-                      )}
-                      {req.approvals.hr?.reason && (
-                        <small>HR: {req.approvals.hr.reason}</small>
-                      )}
-                    </div>
-                  )}
-                  {req.approvals.teamlead?.status && (
-                    <small>TeamLead: {req.approvals.teamlead.status}</small>
-                  )}
-                  {req.approvals.hr?.status && (
-                    <small>HR: {req.approvals.hr.status}</small>
+                    <span className="text-red-600 flex justify-center items-center gap-1">
+                      <FiXCircle /> Rejected
+                    </span>
                   )}
                 </td>
 
@@ -186,25 +159,13 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
                     {req.status === "pending" ? (
                       <div className="flex gap-2 justify-center">
                         <button
-                          onClick={() =>
-                            handleAction(
-                              req._id,
-                              "approve",
-                              user.role as "teamlead" | "hr"
-                            )
-                          }
+                          onClick={() => handleAction(req._id, "approve")}
                           className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() =>
-                            handleAction(
-                              req._id,
-                              "reject",
-                              user.role as "teamlead" | "hr"
-                            )
-                          }
+                          onClick={() => handleAction(req._id, "reject")}
                           className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                         >
                           Reject

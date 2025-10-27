@@ -7,12 +7,22 @@ export interface IWorkFromHome extends Document {
   workType: string;
   reason: string;
   status: "pending" | "approved" | "rejected";
-  role: "user" | "teamlead" | "hr";
+  approvals: {
+    teamlead?: { status: "approved" | "rejected"; reason?: string; date?: Date };
+    hr?: { status: "approved" | "rejected"; reason?: string; date?: Date };
+  };
   createdAt: Date;
-  approvedBy?: string;
-  rejectedBy?: string;
-  updatedAt?: Date;
+  updatedAt: Date;
 }
+
+const ApprovalSchema = new Schema(
+  {
+    status: { type: String, enum: ["approved", "rejected"] },
+    reason: { type: String },
+    date: { type: Date },
+  },
+  { _id: false } // No separate _id for approvals
+);
 
 const WorkFromHomeSchema = new Schema<IWorkFromHome>(
   {
@@ -21,19 +31,13 @@ const WorkFromHomeSchema = new Schema<IWorkFromHome>(
     date: { type: String, required: true },
     workType: { type: String, required: true },
     reason: { type: String, required: true },
-    status: {
-      type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
+    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+    approvals: {
+      teamlead: { type: ApprovalSchema, default: undefined },
+      hr: { type: ApprovalSchema, default: undefined },
     },
-    role: { type: String, enum: ["user", "teamlead", "hr"], required: true },
-    approvedBy: { type: String, default: null },
-    rejectedBy: { type: String, default: null },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.WorkFromHome ||
-  mongoose.model<IWorkFromHome>("WorkFromHome", WorkFromHomeSchema);
+export default mongoose.models.WorkFromHome || mongoose.model("WorkFromHome", WorkFromHomeSchema);
