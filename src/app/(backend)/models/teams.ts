@@ -1,31 +1,34 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
-// Separate interface for TypeScript
+// TypeScript interfaces
 export interface ITeamBase {
   name: string;
-  members: { userId: string; role: "teamlead" | "member" }[];
+  members: { userId: Types.ObjectId; role: "teamlead" | "member" }[];
   projects: string[];
-  createdBy: string;
+  createdBy: Types.ObjectId;
+  status: "pending" | "approved" | "rejected"; // new field for request status
   createdAt: Date;
 }
 
-// Mongoose document type
 export interface ITeamDocument extends ITeamBase, Document {}
 
+// Member sub-schema
 const MemberSchema: Schema = new Schema({
-  userId: { type: String, required: true },
+  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   role: { type: String, enum: ["teamlead", "member"], required: true },
 });
 
+// Main Team schema
 const TeamSchema: Schema<ITeamDocument> = new Schema({
   name: { type: String, required: true },
   members: { type: [MemberSchema], required: true },
   projects: { type: [String], default: [] },
-  createdBy: { type: String, required: true },
+  createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" }, // default pending
   createdAt: { type: Date, default: Date.now },
 });
 
-// Validate that exactly one teamlead exists
+// Pre-save validation: exactly one teamlead
 TeamSchema.pre<ITeamDocument>("save", function (next) {
   const leadCount = this.members.filter(m => m.role === "teamlead").length;
   if (leadCount !== 1) {
@@ -34,7 +37,7 @@ TeamSchema.pre<ITeamDocument>("save", function (next) {
   next();
 });
 
-// Create Model
+// Create Mongoose model
 const TeamModel: Model<ITeamDocument> =
   mongoose.models.Team || mongoose.model<ITeamDocument>("Team", TeamSchema);
 

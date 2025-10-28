@@ -21,7 +21,7 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser, users }) => {
   const fetchTeams = async () => {
     try {
       // Added Authorization header
-      const res = await fetch("/api/teams", {
+      const res = await fetch("/api/teams/create", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();

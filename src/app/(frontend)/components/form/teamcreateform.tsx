@@ -1,36 +1,49 @@
-// TeamForm.tsx
+"use client";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { ITeam, IUser, Member } from "@/app/(backend)/models/types";
 
+// Helper to generate a valid MongoDB ObjectId (24-character hex)
+const generateObjectId = (): string => {
+  const timestamp = Math.floor(new Date().getTime() / 1000).toString(16);
+  return (
+    timestamp +
+    "xxxxxxxxxxxxxxxx"
+      .replace(/[x]/g, () => ((Math.random() * 16) | 0).toString(16))
+      .toLowerCase()
+  );
+};
+
 interface TeamFormProps {
   currentUser: { id: string; role: string };
   users: IUser[];
   initialTeam?: ITeam;
-  onSubmit: (team: ITeam) => Promise<void>;
   onCancel: () => void;
   isEditing: boolean;
+  onSubmit: (team: ITeam) => Promise<void>;
 }
 
 export const TeamForm: React.FC<TeamFormProps> = ({
   currentUser,
   users,
   initialTeam,
-  onSubmit,
   onCancel,
-  isEditing
+  isEditing,
+  onSubmit,
 }) => {
   const [teamName, setTeamName] = useState(initialTeam?.name || "");
-  const [projects, setProjects] = useState<string[]>(initialTeam?.projects || [""]);
-  const [teamLead, setTeamLead] = useState<string>(
-    initialTeam?.members.find(m => m.role === "teamlead")?.userId || ""
+  const [projects, setProjects] = useState<string[]>(
+    initialTeam?.projects || [""]
   );
-
-  // Members
+  const [teamLead, setTeamLead] = useState<string>(
+    initialTeam?.members.find((m) => m.role === "teamlead")?.userId || ""
+  );
   const [members, setMembers] = useState<string[]>(
     initialTeam
-      ? initialTeam.members.filter(m => m.role === "member").map(m => m.userId)
+      ? initialTeam.members
+          .filter((m) => m.role === "member")
+          .map((m) => m.userId)
       : []
   );
 
@@ -39,22 +52,20 @@ export const TeamForm: React.FC<TeamFormProps> = ({
 
   const toggleDropdown = () => {
     setTempSelected(members);
-    setDropdownOpen(prev => !prev);
+    setDropdownOpen((prev) => !prev);
   };
 
   const handleCheckboxToggle = (userId: string) => {
-    setTempSelected(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    setTempSelected((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
     );
   };
 
-  // Select all / deselect all
   const handleSelectAll = () => {
-    if (tempSelected.length === users.length) {
-      setTempSelected([]);
-    } else {
-      setTempSelected(users.map(u => u.id));
-    }
+    if (tempSelected.length === users.length) setTempSelected([]);
+    else setTempSelected(users.map((u) => u.id));
   };
 
   const handleDone = () => {
@@ -62,12 +73,6 @@ export const TeamForm: React.FC<TeamFormProps> = ({
     setDropdownOpen(false);
   };
 
-  const handleRemoveMember = (index: number) => {
-    const updated = members.filter((_, i) => i !== index);
-    setMembers(updated);
-  };
-
-  // Project handlers
   const handleAddProject = () => setProjects([...projects, ""]);
   const handleProjectChange = (index: number, value: string) => {
     const updated = [...projects];
@@ -75,46 +80,54 @@ export const TeamForm: React.FC<TeamFormProps> = ({
     setProjects(updated);
   };
   const handleRemoveProject = (index: number) => {
-    const updated = projects.filter((_, i) => i !== index);
-    setProjects(updated);
+    setProjects(projects.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!teamName.trim()) return toast.error("Team name is required.");
     if (!teamLead) return toast.error("Team Lead is required.");
-    if (members.some(m => !m)) return toast.error("All member slots must have a user selected.");
+    if (members.some((m) => !m))
+      return toast.error("All member slots must have a user selected.");
 
-    const TEAMLEAD_ROLE = "teamlead" as const;
-    const MEMBER_ROLE = "member" as const;
-
+    // Cast roles explicitly to match Member type
     const memberObjects: Member[] = [
-      { userId: teamLead, role: TEAMLEAD_ROLE },
-      ...members.map(m => ({ userId: m, role: MEMBER_ROLE }))
+      { userId: teamLead, role: "teamlead" as const },
+      ...members.map((m) => ({ userId: m, role: "member" as const })),
     ];
 
     const teamData: ITeam = {
-      _id: initialTeam?._id || crypto.randomUUID(),
+      _id: initialTeam?._id || generateObjectId(),
       name: teamName.trim(),
       members: memberObjects,
-      projects: projects.filter(p => p.trim() !== ""),
-      createdBy: initialTeam?.createdBy || currentUser.id,
+      projects: projects.filter((p) => p.trim() !== ""),
+      createdBy:
+        currentUser.id.length === 24 ? currentUser.id : generateObjectId(),
       createdAt: initialTeam?.createdAt || new Date(),
     };
 
-    await onSubmit(teamData);
+    try {
+      await onSubmit(teamData);
+      toast.success(
+        isEditing ? "Team updated successfully" : "Team created successfully"
+      );
+    } catch (err: unknown) {
+      if (err instanceof Error) toast.error(err.message);
+      else toast.error("Something went wrong");
+      console.error("Error submitting team:", err);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-
       {/* Team Name */}
       <div>
         <label className="font-medium text-gray-700">Team Name</label>
         <input
           type="text"
           value={teamName}
-          onChange={e => setTeamName(e.target.value)}
+          onChange={(e) => setTeamName(e.target.value)}
           placeholder="Team Name"
           className="border p-2 rounded w-full"
           required
@@ -126,12 +139,14 @@ export const TeamForm: React.FC<TeamFormProps> = ({
         <label className="font-medium text-gray-700">Team Lead</label>
         <select
           value={teamLead}
-          onChange={e => setTeamLead(e.target.value)}
+          onChange={(e) => setTeamLead(e.target.value)}
           className="border p-2 rounded w-full"
           required
         >
-          <option value="" disabled>Select Team Lead</option>
-          {users.map(u => (
+          <option value="" disabled>
+            Select Team Lead
+          </option>
+          {users.map((u) => (
             <option key={u.id} value={u.id}>
               {u.name} ({u.email || u.id})
             </option>
@@ -139,7 +154,7 @@ export const TeamForm: React.FC<TeamFormProps> = ({
         </select>
       </div>
 
-      {/* Members selection field */}
+      {/* Members */}
       <div>
         <label className="font-medium text-gray-700">Members</label>
         <div
@@ -148,13 +163,12 @@ export const TeamForm: React.FC<TeamFormProps> = ({
         >
           {members.length === 0
             ? "Click to select members"
-            : members.map(id => users.find(u => u.id === id)?.name).join(", ")}
+            : members
+                .map((id) => users.find((u) => u.id === id)?.name)
+                .join(", ")}
         </div>
-
-        {/* Dropdown */}
         {dropdownOpen && (
           <div className="border mt-2 p-2 max-h-60 overflow-y-auto rounded bg-white space-y-1 shadow-md">
-            {/* Select All */}
             <div className="flex items-center gap-2 border-b pb-2 mb-2">
               <input
                 type="checkbox"
@@ -162,12 +176,14 @@ export const TeamForm: React.FC<TeamFormProps> = ({
                 onChange={handleSelectAll}
                 id="select-all"
               />
-              <label htmlFor="select-all" className="cursor-pointer font-semibold">
+              <label
+                htmlFor="select-all"
+                className="cursor-pointer font-semibold"
+              >
                 Select All
               </label>
             </div>
-
-            {users.map(u => (
+            {users.map((u) => (
               <div key={u.id} className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -191,32 +207,6 @@ export const TeamForm: React.FC<TeamFormProps> = ({
         )}
       </div>
 
-      {/* Auto-generated readonly member fields */}
-      {members.length > 0 && (
-        <div className="mt-2 space-y-2">
-          {members.map((m, i) => {
-            const user = users.find(u => u.id === m);
-            return (
-              <div key={i} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={user?.name || ""}
-                  readOnly
-                  className="border p-2 rounded flex-1 bg-gray-100"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveMember(i)}
-                  className="text-red-500 p-2"
-                >
-                  <FiTrash2 />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* Projects */}
       <div>
         <label className="font-medium text-gray-700">Projects</label>
@@ -225,7 +215,7 @@ export const TeamForm: React.FC<TeamFormProps> = ({
             <input
               type="text"
               value={p}
-              onChange={e => handleProjectChange(i, e.target.value)}
+              onChange={(e) => handleProjectChange(i, e.target.value)}
               placeholder="Project Name"
               className="border p-2 rounded flex-1"
             />

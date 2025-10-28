@@ -73,7 +73,7 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
   const fetchTeams = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/teams", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch("/api/teams/create", { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setTeams(Array.isArray(data.teams) ? data.teams : []);
     } catch (err) {
