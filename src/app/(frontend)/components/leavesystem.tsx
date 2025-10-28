@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { FiClock, FiCheckCircle, FiXCircle, FiChevronDown, FiChevronUp, FiSend } from "react-icons/fi";
+import { FiClock, FiCheckCircle, FiXCircle, FiChevronDown, FiChevronUp, FiSend, FiUsers } from "react-icons/fi";
+import { LeaveForm } from "./form/leaveform";
 
 interface Leave {
   _id: string;
@@ -13,16 +14,8 @@ interface Leave {
   endDate: string;
   reason: string;
   status: "pending" | "approved" | "rejected";
-  approvers?: {
-    teamLead?: string | null;
-    hr?: string | null;
-  };
-  approverComments?: {
-    approver: string;
-    action: "approve" | "reject";
-    comment?: string;
-    date: string;
-  }[];
+  approvers?: { teamLead?: string | null; hr?: string | null };
+  approverComments?: { approver: string; action: "approve" | "reject"; comment?: string; date: string }[];
   createdAt: string;
 }
 
@@ -36,108 +29,100 @@ const LeaveRequestPage: React.FC<Props> = ({ userRole }) => {
   const [expandedLeaveId, setExpandedLeaveId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showForm, setShowForm] = useState(false);
   const itemsPerPage = 10;
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const storedName = typeof window !== "undefined" ? localStorage.getItem("userName") : "";
+  const storedEmail = typeof window !== "undefined" ? localStorage.getItem("userEmail") : "";
 
   const fetchLeaves = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Please log in again.");
-        setLoading(false);
-        return;
-      }
+      if (!token) return toast.error("Please log in again."), setLoading(false);
 
-      const res = await fetch("/api/user/profile/request/leave", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const res = await fetch("/api/user/profile/request/leave", { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error(`Failed to fetch leaves (${res.status})`);
 
       const data = await res.json();
-      if (Array.isArray(data.leaves)) {
-        setLeaves(
-          data.leaves.sort(
-            (a: Leave, b: Leave) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          )
-        );
-      } else setLeaves([]);
+      setLeaves(Array.isArray(data.leaves)
+        ? data.leaves.sort((a: Leave, b: Leave) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        : []
+      );
     } catch (err) {
       console.error(err);
       toast.error("Could not load leave requests.");
       setLeaves([]);
-    } finally {
-      setLoading(false);
-      setCurrentPage(1);
-    }
+    } finally { setLoading(false); setCurrentPage(1); }
   };
 
-  useEffect(() => {
-    fetchLeaves();
-  }, []);
+  useEffect(() => { fetchLeaves(); }, []);
 
-  const handleToggleExpand = (leaveId: string) => {
-    setExpandedLeaveId((prev) => (prev === leaveId ? null : leaveId));
-  };
+  const handleToggleExpand = (id: string) => setExpandedLeaveId(prev => prev === id ? null : id);
 
   const getStatusClasses = (status: Leave["status"]) => {
     switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-300";
-      case "approved":
-        return "bg-green-100 text-green-800 border-green-300";
-      case "rejected":
-        return "bg-red-100 text-red-800 border-red-300";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-300";
+      case "pending": return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "approved": return "bg-green-100 text-green-800 border-green-300";
+      case "rejected": return "bg-red-100 text-red-800 border-red-300";
+      default: return "bg-gray-100 text-gray-800 border-gray-300";
     }
   };
 
   const getStatusIcon = (status: Leave["status"]) => {
     switch (status) {
-      case "pending":
-        return <FiClock className="w-4 h-4 mr-1" />;
-      case "approved":
-        return <FiCheckCircle className="w-4 h-4 mr-1" />;
-      case "rejected":
-        return <FiXCircle className="w-4 h-4 mr-1" />;
-      default:
-        return null;
+      case "pending": return <FiClock className="w-4 h-4 mr-1" />;
+      case "approved": return <FiCheckCircle className="w-4 h-4 mr-1" />;
+      case "rejected": return <FiXCircle className="w-4 h-4 mr-1" />;
+      default: return null;
     }
   };
 
-  // Filtering & pagination
-  const filteredLeaves = leaves.filter((l) => (filter === "all" ? true : l.status === filter));
+  const filteredLeaves = leaves.filter(l => filter === "all" ? true : l.status === filter);
   const totalPages = Math.ceil(filteredLeaves.length / itemsPerPage);
   const paginatedLeaves = filteredLeaves.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  const formatDate = (d: string) => new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 
   return (
-    <div className="p-4 sm:p-8 min-h-screen font-sans">
-      <Toaster position="top-right" />
-      <h1 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-teal-500 pl-4">Leave Requests</h1>
+    <div className="p-4 sm:p-8 min-h-screen font-sans relative">
+      <Toaster position="top-center" />
 
-      {/* Filters */}
-      <div className="mb-4 flex flex-wrap gap-2">
-        {(["all", "pending", "approved", "rejected"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => { setFilter(f); setCurrentPage(1); }}
-            className={`px-4 py-2 rounded-full text-sm font-medium ${
-              filter === f ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <FiUsers /> My Leave Requests
+        </h2>
+        <button onClick={() => setShowForm(true)} className="mt-2 sm:mt-0 bg-green-600 text-white px-6 py-2 rounded-xl hover:bg-green-700 transition">
+          + Create Request Leave
+        </button>
       </div>
 
+      {/* Filters */}
+      {/* Header */}
+<div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+  <div></div>
+  {/* Filters on the right */}
+  <div className="mt-4 sm:mt-0 flex items-center space-x-2">
+    {(["all", "pending", "approved", "rejected"] as const).map(f => (
+      <button
+        key={f}
+        onClick={() => { setFilter(f); setCurrentPage(1); }}
+        className={`px-4 py-2 rounded-full text-sm font-medium ${
+          filter === f ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+        }`}
+      >
+        {f.charAt(0).toUpperCase() + f.slice(1)}
+      </button>
+    ))}
+  </div>
+</div>
+
+
+      {/* Leave Table */}
       {loading ? (
         <div className="flex justify-center items-center h-40 text-gray-600">
-          <FiClock className="w-6 h-6 animate-spin mr-2 text-indigo-500" />
-          Loading leave requests...
+          <FiClock className="w-6 h-6 animate-spin mr-2 text-indigo-500" /> Loading leave requests...
         </div>
       ) : paginatedLeaves.length === 0 ? (
         <div className="text-center p-10 mt-10 border border-dashed border-gray-300 rounded-xl bg-white shadow-lg max-w-5xl mx-auto">
@@ -146,7 +131,7 @@ const LeaveRequestPage: React.FC<Props> = ({ userRole }) => {
           <p className="text-gray-500">You don’t have any leave requests yet.</p>
         </div>
       ) : (
-        <div className="max-w-5xl mx-auto overflow-x-auto bg-white rounded-2xl shadow-2xl border border-gray-200">
+        <div className="max-w-7xl mx-auto overflow-x-auto bg-white rounded-2xl shadow-xl border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-100">
               <tr>
@@ -158,14 +143,12 @@ const LeaveRequestPage: React.FC<Props> = ({ userRole }) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {paginatedLeaves.map((leave, index) => {
+              {paginatedLeaves.map((leave, idx) => {
                 const isExpanded = expandedLeaveId === leave._id;
                 return (
                   <React.Fragment key={leave._id}>
                     <tr
-                      className={`cursor-pointer transition-all duration-200 ${
-                        isExpanded ? "bg-indigo-50/70" : index % 2 === 0 ? "bg-white hover:bg-gray-50" : "bg-gray-50 hover:bg-gray-100"
-                      }`}
+                      className={`cursor-pointer transition-all duration-200 ${isExpanded ? "bg-indigo-50/70" : idx % 2 === 0 ? "bg-white hover:bg-gray-50" : "bg-gray-50 hover:bg-gray-100"}`}
                       onClick={() => handleToggleExpand(leave._id)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -191,7 +174,7 @@ const LeaveRequestPage: React.FC<Props> = ({ userRole }) => {
                     </tr>
 
                     {isExpanded && (
-                      <tr className="bg-white border-t border-indigo-200/50 shadow-inner">
+                      <tr className="bg-gray-50 border-t border-indigo-200/50 shadow-inner">
                         <td colSpan={5} className="p-6">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="md:col-span-1 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -202,14 +185,8 @@ const LeaveRequestPage: React.FC<Props> = ({ userRole }) => {
                             <div className="md:col-span-1 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
                               <p className="font-bold text-gray-800 mb-2">Approvers:</p>
                               <div className="space-y-1 text-sm">
-                                <p className="flex justify-between">
-                                  <span className="text-indigo-800 font-medium">Team Lead:</span>
-                                  <span className="text-gray-700">{leave.approvers?.teamLead || "N/A"}</span>
-                                </p>
-                                <p className="flex justify-between">
-                                  <span className="text-indigo-800 font-medium">HR:</span>
-                                  <span className="text-gray-700">{leave.approvers?.hr || "N/A"}</span>
-                                </p>
+                                <p className="flex justify-between"><span className="text-indigo-800 font-medium">Team Lead:</span><span className="text-gray-700">{leave.approvers?.teamLead || "N/A"}</span></p>
+                                <p className="flex justify-between"><span className="text-indigo-800 font-medium">HR:</span><span className="text-gray-700">{leave.approvers?.hr || "N/A"}</span></p>
                               </div>
                             </div>
 
@@ -243,14 +220,34 @@ const LeaveRequestPage: React.FC<Props> = ({ userRole }) => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="p-4 flex justify-center items-center">
-              <button onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))} disabled={currentPage === 1} className="px-4 py-2 border rounded-l bg-gray-200 hover:bg-gray-300">Prev</button>
+            <div className="flex justify-center items-center p-4 space-x-2">
+              <button onClick={() => setCurrentPage(p => Math.max(p-1,1))} disabled={currentPage===1} className="px-4 py-2 border rounded-l bg-gray-200 hover:bg-gray-300">Prev</button>
               <span className="px-4 py-2 border-t border-b">{currentPage}</span>
-              <button onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="px-4 py-2 border rounded-r bg-gray-200 hover:bg-gray-300">Next</button>
+              <button onClick={() => setCurrentPage(p => Math.min(p+1,totalPages))} disabled={currentPage===totalPages} className="px-4 py-2 border rounded-r bg-gray-200 hover:bg-gray-300">Next</button>
             </div>
           )}
         </div>
       )}
+
+      {/* Slide-in Leave Form */}
+      {showForm && token && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowForm(false)} />
+          <div className="ml-auto w-full max-w-xl h-full flex flex-col bg-white shadow-2xl rounded-l-2xl animate-slideInRight z-50">
+            <LeaveForm
+              initialData={{ name: storedName || "", email: storedEmail || "", leaveType: "", startDate: "", endDate: "", reason: "" }}
+              token={token}
+              onClose={() => setShowForm(false)}
+              onSubmitSuccess={() => { setShowForm(false); fetchLeaves(); }}
+            />
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .animate-slideInRight { transform: translateX(100%); opacity: 0; animation: slideInRight 0.4s forwards cubic-bezier(0.4,0,0.2,1); }
+        @keyframes slideInRight { to { transform: translateX(0); opacity:1; } }
+      `}</style>
     </div>
   );
 };

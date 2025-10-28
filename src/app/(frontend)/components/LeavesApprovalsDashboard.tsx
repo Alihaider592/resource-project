@@ -75,7 +75,7 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
     setExpandedLeaveId((prev) => (prev === leaveId ? null : leaveId));
   };
 
-  // -------------------- Fetch leaves (only own requests) --------------------
+  // -------------------- Fetch leaves --------------------
   useEffect(() => {
     const fetchLeaves = async () => {
       setLoading(true);
@@ -88,21 +88,13 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
         }
 
         const res = await fetch("/api/user/profile/request/leave", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!res.ok) {
-          throw new Error(`Failed to fetch leaves (${res.status})`);
-        }
+        if (!res.ok) throw new Error(`Failed to fetch leaves (${res.status})`);
 
         const data = await res.json();
-        if (Array.isArray(data.leaves)) {
-          setLeaves(data.leaves);
-        } else {
-          setLeaves([]);
-        }
+        setLeaves(Array.isArray(data.leaves) ? data.leaves : []);
       } catch (error) {
         console.error("Error fetching leaves:", error);
         toast.error("Could not load your leave requests.");
@@ -124,6 +116,7 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
     try {
       setActionLoading(leaveId);
       const token = localStorage.getItem("token");
+      const approverName = localStorage.getItem("userName") || "Unknown";
 
       const res = await fetch("/api/user/profile/request/leave", {
         method: "PATCH",
@@ -134,8 +127,9 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
         body: JSON.stringify({
           leaveId,
           action,
-          role: userRole,
           comment: comment[leaveId] || "",
+          role: userRole,
+          approverName, // ✅ Include approverName
         }),
       });
 
@@ -342,61 +336,54 @@ const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
                               )}
                           </div>
 
-                          {userRole !== "user" &&
-                            leave.status === "pending" && (
-                              <div className="mt-6 pt-4 border-t border-gray-200 space-y-3">
-                                <h4 className="text-lg font-bold text-gray-800">
-                                  Your Action
-                                </h4>
-                                <textarea
-                                  placeholder="Add comment (required for rejection)"
-                                  value={comment[leave._id] || ""}
-                                  onChange={(e) =>
-                                    setComment({
-                                      ...comment,
-                                      [leave._id]: e.target.value,
-                                    })
-                                  }
-                                  rows={2}
-                                  className="w-full border-2 border-gray-300 rounded-xl p-3 text-base focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-shadow"
-                                />
-                                <div className="flex gap-4">
-                                  <button
-                                    disabled={actionLoading === leave._id}
-                                    onClick={() =>
-                                      handleAction(leave._id, "approve")
-                                    }
-                                    className="flex items-center justify-center w-full px-4 py-3 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 disabled:opacity-50 transition-all"
-                                  >
-                                    {actionLoading === leave._id ? (
-                                      <>
-                                        <FiClock className="w-5 h-5 mr-2 animate-spin" />{" "}
-                                        Processing...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <FiCheckCircle className="w-5 h-5 mr-2" />{" "}
-                                        Approve
-                                      </>
-                                    )}
-                                  </button>
+                          {userRole !== "user" && leave.status === "pending" && (
+                            <div className="mt-6 pt-4 border-t border-gray-200 space-y-3">
+                              <h4 className="text-lg font-bold text-gray-800">
+                                Your Action
+                              </h4>
+                              <textarea
+                                placeholder="Add comment (required for rejection)"
+                                value={comment[leave._id] || ""}
+                                onChange={(e) =>
+                                  setComment({
+                                    ...comment,
+                                    [leave._id]: e.target.value,
+                                  })
+                                }
+                                rows={2}
+                                className="w-full border-2 border-gray-300 rounded-xl p-3 text-base focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-shadow"
+                              />
+                              <div className="flex gap-4">
+                                <button
+                                  disabled={actionLoading === leave._id}
+                                  onClick={() => handleAction(leave._id, "approve")}
+                                  className="flex items-center justify-center w-full px-4 py-3 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 disabled:opacity-50 transition-all"
+                                >
+                                  {actionLoading === leave._id ? (
+                                    <>
+                                      <FiClock className="w-5 h-5 mr-2 animate-spin" /> Processing...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FiCheckCircle className="w-5 h-5 mr-2" /> Approve
+                                    </>
+                                  )}
+                                </button>
 
-                                  <button
-                                    disabled={
-                                      actionLoading === leave._id ||
-                                      !comment[leave._id] ||
-                                      comment[leave._id].trim() === ""
-                                    }
-                                    onClick={() =>
-                                      handleAction(leave._id, "reject")
-                                    }
-                                    className="flex items-center justify-center w-full px-4 py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 disabled:opacity-50 transition-all"
-                                  >
-                                    <FiXCircle className="w-5 h-5 mr-2" /> Reject
-                                  </button>
-                                </div>
+                                <button
+                                  disabled={
+                                    actionLoading === leave._id ||
+                                    !comment[leave._id] ||
+                                    comment[leave._id].trim() === ""
+                                  }
+                                  onClick={() => handleAction(leave._id, "reject")}
+                                  className="flex items-center justify-center w-full px-4 py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 disabled:opacity-50 transition-all"
+                                >
+                                  <FiXCircle className="w-5 h-5 mr-2" /> Reject
+                                </button>
                               </div>
-                            )}
+                            </div>
+                          )}
 
                           {hasActed && (
                             <div

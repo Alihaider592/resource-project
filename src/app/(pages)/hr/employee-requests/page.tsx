@@ -6,7 +6,7 @@ import Link from "next/link";
 
 const requestTypes = [
   { name: "Leaves", icon: <FiFileText size={24} />, href: "/hr/leaves" },
-  { name: "Work From Home", icon: <FiCoffee size={24} />, href: "/hr/employee-requests/wfh" },
+  { name: "Work From Home", icon: <FiCoffee size={24} />, href: "/hr/wfh" },
   { name: "Home Loan", icon: <FiHome size={24} />, href: "/hr/employee-requests/homeloan" },
 ];
 

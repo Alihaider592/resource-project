@@ -93,36 +93,28 @@ export default function TeamLeadDashboardPage() {
           </motion.div>
         ))}
       </div>
-
-      {/* Leave Table */}
-      <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="bg-white rounded-xl shadow-lg p-6 mb-10">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <ClipboardList className="w-6 h-6 text-blue-600" /> Team Leave Requests
-        </h2>
-        <TeamLeadLeaveTable leaves={leaves} />
-      </motion.div>
-
       {/* Tasks */}
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="bg-white rounded-xl shadow-lg p-6 mb-10">
         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
           <ListTodo className="w-6 h-6 text-green-600" /> Team Tasks
         </h2>
         <ul className="space-y-3">
-          {tasks.map((task, idx) => (
-            <li key={idx} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-              <span className="font-medium text-gray-800">{task.title}</span>
-              <span className={`text-sm px-3 py-1 rounded-full font-semibold ${
-                task.status === "Completed"
-                  ? "bg-green-100 text-green-700"
-                  : task.status === "In Progress"
-                  ? "bg-yellow-100 text-yellow-700"
-                  : "bg-gray-200 text-gray-700"
-              }`}>
-                {task.status}
-              </span>
-            </li>
-          ))}
-        </ul>
+  {tasks.map((task: Task, idx: number) => (
+    <li key={idx} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+      <span className="font-medium text-gray-800">{task.title}</span>
+      <span className={`text-sm px-3 py-1 rounded-full font-semibold ${
+        task.status === "Completed"
+          ? "bg-green-100 text-green-700"
+          : task.status === "In Progress"
+          ? "bg-yellow-100 text-yellow-700"
+          : "bg-gray-200 text-gray-700"
+      }`}>
+        {task.status}
+      </span>
+    </li>
+  ))}
+</ul>
+
       </motion.div>
 
       {/* Projects */}

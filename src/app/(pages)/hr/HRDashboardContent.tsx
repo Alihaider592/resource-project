@@ -124,7 +124,7 @@ export default function HRDashboard({ userName }: HRDashboardProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 md:p-10 lg:p-12">
+    <div className="min-h-screen ">
       {/* Header */}
       <motion.h1 
         initial={{ opacity: 0, y: -20 }} 
