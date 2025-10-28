@@ -89,20 +89,35 @@ export async function GET(req: NextRequest) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "") as {
       id: string;
       email?: string;
+      role?: "user" | "teamlead" | "hr"; // optional role if stored in JWT
     };
 
-    // ✅ Fetch leaves for only this user (either by userId or email)
-    const leaves = await LeaveRequest.find({
-      $or: [{ userId: decoded.id }, { email: decoded.email }],
-    })
-      .sort({ createdAt: -1 })
-      .lean();
+    const url = new URL(req.url);
+    const fetchAll = url.searchParams.get("all") === "true";
+
+    let leaves;
+
+    if (fetchAll) {
+      // Only allow HR or TeamLead to fetch all leaves
+      if (decoded.role === "hr" || decoded.role === "teamlead") {
+        leaves = await LeaveRequest.find().sort({ createdAt: -1 }).lean();
+      } else {
+        return NextResponse.json(
+          { message: "Unauthorized to view all requests." },
+          { status: 403 }
+        );
+      }
+    } else {
+      // Default: only own leaves
+      leaves = await LeaveRequest.find({
+        $or: [{ userId: decoded.id }, { email: decoded.email }],
+      })
+        .sort({ createdAt: -1 })
+        .lean();
+    }
 
     return NextResponse.json({
-      message:
-        leaves.length > 0
-          ? "✅ Leaves fetched successfully"
-          : "No leave requests found.",
+      message: leaves.length > 0 ? "✅ Leaves fetched successfully" : "No leave requests found.",
       leaves,
     });
   } catch (error) {

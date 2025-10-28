@@ -1,10 +1,16 @@
-// src/app/(backend)/models/WorkFromHome.ts
-import mongoose, { Schema, model, Document } from "mongoose";
+import mongoose, { Schema, model, models, Document } from "mongoose";
 
 interface Approval {
   status: "approved" | "rejected";
   reason?: string;
   approver: string;
+  date: Date;
+}
+
+interface ApproverComment {
+  approver: string;
+  action: "approve" | "reject";
+  comment?: string;
   date: Date;
 }
 
@@ -16,9 +22,10 @@ export interface IWorkFromHome extends Document {
   reason: string;
   status: "pending" | "approved" | "rejected";
   approvals: {
-    teamlead?: Approval;
-    hr?: Approval;
+    teamlead?: Approval | null;
+    hr?: Approval | null;
   };
+  approverComments: ApproverComment[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +37,13 @@ const ApprovalSchema = new Schema<Approval>({
   date: { type: Date, required: true },
 });
 
+const ApproverCommentSchema = new Schema<ApproverComment>({
+  approver: { type: String, required: true },
+  action: { type: String, enum: ["approve", "reject"], required: true },
+  comment: { type: String, default: "" },
+  date: { type: Date, required: true },
+});
+
 const WorkFromHomeSchema = new Schema<IWorkFromHome>(
   {
     name: { type: String, required: true },
@@ -37,13 +51,23 @@ const WorkFromHomeSchema = new Schema<IWorkFromHome>(
     date: { type: String, required: true },
     workType: { type: String, required: true },
     reason: { type: String, required: true },
-    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
     approvals: {
       teamlead: { type: ApprovalSchema, default: null },
       hr: { type: ApprovalSchema, default: null },
     },
+    // ✅ Always initialize to an empty array
+    approverComments: { type: [ApproverCommentSchema], default: [] },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.WorkFromHome || model<IWorkFromHome>("WorkFromHome", WorkFromHomeSchema);
+// ✅ Safe export pattern for Next.js hot reloads
+const WorkFromHomeModel =
+  models?.WorkFromHome || model<IWorkFromHome>("WorkFromHome", WorkFromHomeSchema);
+
+export default WorkFromHomeModel;

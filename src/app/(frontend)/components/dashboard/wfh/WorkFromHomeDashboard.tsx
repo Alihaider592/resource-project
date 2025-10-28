@@ -1,15 +1,27 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import {
   FiClock,
   FiCheckCircle,
   FiXCircle,
-  FiUsers,
+  FiSend,
+  FiChevronDown,
+  FiChevronUp,
+  FiFilter,
   FiCalendar,
-  FiRefreshCcw,
+  FiChevronLeft,
+  FiChevronRight,
+  FiUsers,
 } from "react-icons/fi";
+
+interface ApproverComment {
+  approver: string;
+  action: "approve" | "reject";
+  comment?: string;
+  date: string;
+}
 
 interface WFHRequest {
   _id: string;
@@ -18,34 +30,38 @@ interface WFHRequest {
   date: string;
   workType: string;
   reason: string;
-  role: "user" | "teamlead" | "hr";
   status: "pending" | "approved" | "rejected";
   createdAt?: string;
+  approverComments?: ApproverComment[];
 }
 
 interface WorkFromHomeListProps {
   user: { name: string; email: string; role: "user" | "teamlead" | "hr" };
+  // Optional prop if you want to force reload from parent
+  refreshKey?: number;
 }
 
-export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
+export default function WorkFromHomeList({ user, refreshKey }: WorkFromHomeListProps) {
   const [requests, setRequests] = useState<WFHRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [comments, setComments] = useState<{ [key: string]: string }>({});
 
-  // Fetch all requests
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
+
+  // -------------------- Fetch Requests --------------------
   const fetchRequests = async () => {
     try {
       setLoading(true);
-
-      const res = await fetch(
-        `/api/user/profile/request/wfh/get?email=${user.email}&role=${user.role}`
-      );
+      const res = await fetch(`/api/user/profile/request/wfh/get?email=${user.email}&role=${user.role}`);
       const data = await res.json();
-
       if (!data.success) throw new Error(data.message);
-
       setRequests(data.requests || []);
-    } catch (error) {
-      console.error("❌ Failed to load WFH requests:", error);
+    } catch (err) {
+      console.error("❌ Failed to load WFH requests:", err);
       toast.error("Failed to load requests");
     } finally {
       setLoading(false);
@@ -54,133 +70,285 @@ export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
 
   useEffect(() => {
     fetchRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refreshKey]);
 
-  // Approve or Reject (only HR or TeamLead)
+  // -------------------- Approve / Reject --------------------
   const handleAction = async (id: string, action: "approve" | "reject") => {
     if (user.role === "user") {
       toast.error("You are not authorized to perform this action.");
       return;
     }
 
+    if (action === "reject" && (!comments[id] || comments[id].trim() === "")) {
+      toast.error("Please provide a rejection reason.");
+      return;
+    }
+
     try {
-      // ✅ Use your existing action file route
-      const res = await fetch(
-        `/api/user/profile/request/wfh/action/${id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, approver: user.email }),
-        }
-      );
+      setActionLoading(id);
+      const res = await fetch(`/api/user/profile/request/wfh/action/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          approver: user.email,
+          role: user.role,
+          reason: comments[id] || "",
+        }),
+      });
 
       const data = await res.json();
-
       if (data.success) {
         toast.success(`Request ${action}d successfully`);
         fetchRequests();
+        setComments((prev) => ({ ...prev, [id]: "" }));
+        setExpandedId(null);
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Failed to process request");
       }
-    } catch (error) {
-      console.error("❌ Action error:", error);
+    } catch (err) {
+      console.error("❌ Action error:", err);
       toast.error("Something went wrong while updating the request");
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  if (loading)
-    return <p className="text-center text-gray-500 mt-10">Loading...</p>;
+  // -------------------- Helpers --------------------
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "bg-green-100 text-green-800 border-green-300";
+      case "rejected":
+        return "bg-red-100 text-red-800 border-red-300";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-300";
+    }
+  };
 
-  if (!requests || requests.length === 0)
-    return <p className="text-center text-gray-500 mt-10">No requests found</p>;
+  const filteredRequests = filter === "all" ? requests : requests.filter((r) => r.status === filter);
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedRequests = filteredRequests.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setExpandedId(null);
+      setCurrentPage(page);
+    }
+  };
+
+  // -------------------- UI --------------------
+  <div className="p-4 sm:p-8 min-h-screen font-sans max-w-7xl mx-auto">
+  {/* Header with filter buttons */}
+  <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+    <h2 className="text-2xl font-bold flex items-center gap-2">
+      <FiUsers />{" "}
+      {filter === "all"
+        ? "All Work From Home Requests"
+        : filter === "pending"
+        ? "Pending Requests"
+        : filter === "approved"
+        ? "Approved Requests"
+        : "Rejected Requests"}
+    </h2>
+
+    {/* Filter buttons */}
+    <div className="mt-4 sm:mt-0 flex space-x-2">
+      {(["all", "pending", "approved", "rejected"] as const).map((status) => (
+        <button
+          key={status}
+          onClick={() => {
+            setFilter(status);
+            setCurrentPage(1);
+          }}
+          className={`px-3 py-2 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-300
+            ${
+              filter === status
+                ? "bg-indigo-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+        >
+          {status === "all"
+            ? "All Requests"
+            : status.charAt(0).toUpperCase() + status.slice(1)}
+        </button>
+      ))}
+    </div>
+  </div>
+</div>
+
+  if (!filteredRequests.length)
+    return (
+      <div className="text-center p-10 mt-10 border border-dashed border-gray-300 rounded-xl bg-white max-w-5xl mx-auto">
+        <FiSend className="w-10 h-10 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-700">No Requests Found</h3>
+        <p className="text-gray-500">No WFH requests match this filter.</p>
+      </div>
+    );
 
   return (
-    <div className="bg-white shadow rounded-xl p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <FiUsers /> Work From Home Requests
-        </h2>
-        <button
-          onClick={fetchRequests}
-          className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-md"
-        >
-          <FiRefreshCcw /> Refresh
-        </button>
-      </div>
+    <>
+      <Toaster position="top-center" />
+      <div className="p-4 sm:p-8 min-h-screen font-sans max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <FiUsers /> Work From Home Requests
+          </h2>
+          <div className="mt-4 sm:mt-0 flex items-center space-x-2">
+            <FiFilter className="text-gray-600" />
+            <div className="flex space-x-2">
+  {(["all", "pending", "approved", "rejected"] as const).map((status) => (
+    <button
+      key={status}
+      onClick={() => {
+        setFilter(status);
+        setCurrentPage(1);
+      }}
+      className={`px-3 py-2 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-300
+        ${
+          filter === status
+            ? "bg-indigo-600 text-white"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+        }`}
+    >
+      {status === "all"
+        ? "All Requests"
+        : status.charAt(0).toUpperCase() + status.slice(1)}
+    </button>
+  ))}
+</div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-200 rounded-lg text-sm">
-          <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="p-2 border-b">Name</th>
-              <th className="p-2 border-b">Email</th>
-              <th className="p-2 border-b">Date</th>
-              <th className="p-2 border-b">Work Type</th>
-              <th className="p-2 border-b">Reason</th>
-              <th className="p-2 border-b text-center">Status</th>
-              {(user.role === "teamlead" || user.role === "hr") && (
-                <th className="p-2 border-b text-center">Actions</th>
-              )}
-            </tr>
-          </thead>
+          </div>
+        </div>
 
-          <tbody>
-            {requests.map((req) => (
-              <tr key={req._id} className="hover:bg-gray-50">
-                <td className="p-2 border-b">{req.name}</td>
-                <td className="p-2 border-b">{req.email}</td>
-                <td className="p-2 border-b flex items-center gap-2">
-                  <FiCalendar /> {req.date}
-                </td>
-                <td className="p-2 border-b">{req.workType}</td>
-                <td className="p-2 border-b">{req.reason}</td>
-
-                <td className="p-2 border-b text-center">
-                  {req.status === "pending" && (
-                    <span className="text-yellow-500 flex justify-center items-center gap-1">
-                      <FiClock /> Pending
-                    </span>
-                  )}
-                  {req.status === "approved" && (
-                    <span className="text-green-600 flex justify-center items-center gap-1">
-                      <FiCheckCircle /> Approved
-                    </span>
-                  )}
-                  {req.status === "rejected" && (
-                    <span className="text-red-600 flex justify-center items-center gap-1">
-                      <FiXCircle /> Rejected
-                    </span>
-                  )}
-                </td>
-
-                {(user.role === "teamlead" || user.role === "hr") && (
-                  <td className="p-2 border-b text-center">
-                    {req.status === "pending" ? (
-                      <div className="flex gap-2 justify-center">
-                        <button
-                          onClick={() => handleAction(req._id, "approve")}
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleAction(req._id, "reject")}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 italic">No actions</span>
-                    )}
-                  </td>
-                )}
+        {/* Table */}
+        <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Work Type</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody className="bg-white divide-y divide-gray-100">
+              {paginatedRequests.map((req) => {
+                const isExpanded = expandedId === req._id;
+                const latestReject = req.approverComments?.slice().reverse().find((c) => c.action === "reject");
+                const canApprove = user.role === "teamlead" || user.role === "hr";
+
+                return (
+                  <React.Fragment key={req._id}>
+                    <tr
+                      className={`cursor-pointer transition-all duration-200 ${isExpanded ? "bg-indigo-50/70" : "hover:bg-gray-50"}`}
+                      onClick={() => setExpandedId(isExpanded ? null : req._id)}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-gray-900">{req.name}</div>
+                        <div className="text-xs text-gray-500">{req.email}</div>
+                      </td>
+                      <td className="px-6 py-4 text-indigo-600 font-medium">{req.workType}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700 flex items-center gap-1">
+                        <FiCalendar className="w-4 h-4" /> {req.date}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(req.status)}`}>
+                          {req.status === "pending" && <FiClock className="w-4 h-4 mr-1" />}
+                          {req.status === "approved" && <FiCheckCircle className="w-4 h-4 mr-1" />}
+                          {req.status === "rejected" && <FiXCircle className="w-4 h-4 mr-1" />}
+                          {req.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button className="text-indigo-600 hover:text-indigo-800 flex items-center justify-end w-full">
+                          {isExpanded ? "Collapse" : "View Details"}
+                          {isExpanded ? <FiChevronUp className="ml-1" /> : <FiChevronDown className="ml-1" />}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {isExpanded && (
+                      <tr className="bg-gray-50">
+                        <td colSpan={5} className="p-6 space-y-3">
+                          <p className="font-bold text-gray-800">Reason:</p>
+                          <p className="text-gray-700 italic">{req.reason}</p>
+
+                          {req.status === "rejected" && latestReject && (
+                            <div className="bg-red-50 border border-red-300 rounded-xl p-3">
+                              <p className="text-red-700 font-bold">Rejection Reason:</p>
+                              <p className="text-red-600 italic">{latestReject.comment || "No reason provided"}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Rejected by <strong>{latestReject.approver}</strong> on {new Date(latestReject.date).toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+
+                          {canApprove && req.status === "pending" && (
+                            <div className="flex flex-col gap-2 mt-2">
+                              <textarea
+                                placeholder="Enter comment (required for rejection)"
+                                value={comments[req._id] || ""}
+                                onChange={(e) => setComments({ ...comments, [req._id]: e.target.value })}
+                                className="flex-1 border rounded-xl p-2 text-sm focus:ring-2 focus:ring-indigo-300"
+                              />
+                              <div className="flex gap-4">
+                              <button
+                                disabled={actionLoading === req._id}
+                                onClick={() => handleAction(req._id, "approve")}
+                                className="bg-green-600 text-white py-2 px-4 w-[50%] rounded-lg hover:bg-green-700 disabled:opacity-50"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                disabled={actionLoading === req._id}
+                                onClick={() => handleAction(req._id, "reject")}
+                                className="bg-red-600 text-white py-3 px-4 w-[50%] rounded-lg hover:bg-red-700 disabled:opacity-50"
+                              >
+                                Reject
+                              </button>
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center p-4 bg-gray-50 border-t">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center text-sm text-gray-600 hover:text-indigo-600 disabled:opacity-50"
+              >
+                <FiChevronLeft className="mr-1" /> Previous
+              </button>
+              <span className="text-gray-700 text-sm">
+                Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center text-sm text-gray-600 hover:text-indigo-600 disabled:opacity-50"
+              >
+                Next <FiChevronRight className="ml-1" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

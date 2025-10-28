@@ -1,215 +1,306 @@
-"use client";
+// "use client";
 
-import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import {
-  FiClock,
-  FiCheckCircle,
-  FiXCircle,
-  FiUsers,
-  FiCalendar,
-  FiRefreshCcw,
-  FiChevronLeft,
-  FiChevronRight,
-} from "react-icons/fi";
+// import React, { useEffect, useState } from "react";
+// import toast, { Toaster } from "react-hot-toast";
+// import {
+//   FiClock,
+//   FiCheckCircle,
+//   FiXCircle,
+//   FiSend,
+//   FiChevronDown,
+//   FiChevronUp,
+//   FiFilter,
+// } from "react-icons/fi";
 
-interface WFHRequest {
-  _id: string;
-  name: string;
-  email: string;
-  date: string;
-  workType: string;
-  reason: string;
-  role: "user" | "teamlead" | "hr";
-  status: "pending" | "approved" | "rejected";
-  createdAt?: string;
-}
+// interface Leave {
+//   _id: string;
+//   name: string;
+//   email: string;
+//   leaveType: string;
+//   startDate: string;
+//   endDate: string;
+//   reason: string;
+//   status: "pending" | "approved" | "rejected";
+//   approvers: {
+//     teamLead?: string | null;
+//     hr?: string | null;
+//   };
+//   approverStatus?: { [key: string]: "approve" | "reject" };
+//   approverComments?: {
+//     approver: string;
+//     action: "approve" | "reject";
+//     comment?: string;
+//     date: string;
+//   }[];
+// }
 
-interface WorkFromHomeListProps {
-  user: { name: string; email: string; role: "user" | "teamlead" | "hr" };
-}
+// interface Props {
+//   userRole: "teamlead" | "hr" | "user";
+// }
 
-export default function WorkFromHomeList({ user }: WorkFromHomeListProps) {
-  const [requests, setRequests] = useState<WFHRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+// const LeaveApprovalDashboard: React.FC<Props> = ({ userRole }) => {
+//   const [leaves, setLeaves] = useState<Leave[]>([]);
+//   const [loading, setLoading] = useState(true);
+//   const [actionLoading, setActionLoading] = useState<string | null>(null);
+//   const [comment, setComment] = useState<{ [key: string]: string }>({});
+//   const [expandedLeaveId, setExpandedLeaveId] = useState<string | null>(null);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5; // number of requests per page
-  const totalPages = Math.ceil(requests.length / pageSize);
+//   // 🆕 Filter state
+//   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
 
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(
-        `/api/user/profile/request/wfh/get?email=${user.email}&role=${user.role}`
-      );
-      const data = await res.json();
+//   // -------------------- UI Helpers --------------------
+//   const getStatusClasses = (status: Leave["status"]) => {
+//     switch (status) {
+//       case "pending":
+//         return "bg-yellow-100 text-yellow-800 border-yellow-300";
+//       case "approved":
+//         return "bg-green-100 text-green-800 border-green-300";
+//       case "rejected":
+//         return "bg-red-100 text-red-800 border-red-300";
+//       default:
+//         return "bg-gray-100 text-gray-800 border-gray-300";
+//     }
+//   };
 
-      if (!data.success) throw new Error(data.message);
-      setRequests(data.requests || []);
-    } catch (error) {
-      console.error("❌ Failed to load WFH requests:", error);
-      toast.error("Failed to load requests");
-    } finally {
-      setLoading(false);
-    }
-  };
+//   const getStatusIcon = (status: Leave["status"]) => {
+//     switch (status) {
+//       case "pending":
+//         return <FiClock className="w-4 h-4 mr-1" />;
+//       case "approved":
+//         return <FiCheckCircle className="w-4 h-4 mr-1" />;
+//       case "rejected":
+//         return <FiXCircle className="w-4 h-4 mr-1" />;
+//       default:
+//         return null;
+//     }
+//   };
 
-  useEffect(() => {
-    fetchRequests();
-  }, []);
+//   const handleToggleExpand = (leaveId: string) => {
+//     setExpandedLeaveId((prev) => (prev === leaveId ? null : leaveId));
+//   };
 
-  const handleAction = async (id: string, action: "approve" | "reject") => {
-    if (user.role === "user") {
-      toast.error("You are not authorized to perform this action.");
-      return;
-    }
+//   // -------------------- Fetch leaves (only own requests) --------------------
+//   useEffect(() => {
+//     const fetchLeaves = async () => {
+//       setLoading(true);
+//       try {
+//         const token = localStorage.getItem("token");
+//         if (!token) {
+//           toast.error("Please log in again.");
+//           setLoading(false);
+//           return;
+//         }
 
-    try {
-      const res = await fetch(`/api/user/profile/request/wfh/action/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, approver: user.email }),
-      });
+//         const res = await fetch("/api/user/profile/request/leave", {
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//           },
+//         });
 
-      const data = await res.json();
-      if (data.success) {
-        toast.success(`Request ${action}d successfully`);
-        fetchRequests();
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      console.error("❌ Action error:", error);
-      toast.error("Something went wrong while updating the request");
-    }
-  };
+//         if (!res.ok) throw new Error(`Failed to fetch leaves (${res.status})`);
 
-  // Pagination helpers
-  const paginatedRequests = requests.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+//         const data = await res.json();
+//         setLeaves(Array.isArray(data.leaves) ? data.leaves : []);
+//       } catch (error) {
+//         console.error("Error fetching leaves:", error);
+//         toast.error("Could not load your leave requests.");
+//         setLeaves([]);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchLeaves();
+//   }, []);
 
-  const nextPage = () =>
-    setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev));
-  const prevPage = () =>
-    setCurrentPage((prev) => (prev > 1 ? prev - 1 : prev));
+//   // -------------------- Handle approve/reject --------------------
+//   const handleAction = async (leaveId: string, action: "approve" | "reject") => {
+//     if (action === "reject" && (!comment[leaveId] || comment[leaveId].trim() === "")) {
+//       toast.error("Please provide a comment before rejecting.");
+//       return;
+//     }
 
-  if (loading)
-    return <p className="text-center text-gray-500 mt-10">Loading...</p>;
+//     try {
+//       setActionLoading(leaveId);
+//       const token = localStorage.getItem("token");
 
-  if (!requests || requests.length === 0)
-    return <p className="text-center text-gray-500 mt-10">No requests found</p>;
+//       const res = await fetch("/api/user/profile/request/leave", {
+//         method: "PATCH",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({
+//           leaveId,
+//           action,
+//           role: userRole,
+//           comment: comment[leaveId] || "",
+//         }),
+//       });
 
-  return (
-    <div className="bg-white shadow rounded-xl p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <FiUsers /> Work From Home Requests
-        </h2>
-        <button
-          onClick={fetchRequests}
-          className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-md"
-        >
-          <FiRefreshCcw /> Refresh
-        </button>
-      </div>
+//       const data = await res.json();
 
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-200 rounded-lg text-sm">
-          <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="p-2 border-b">Name</th>
-              <th className="p-2 border-b">Email</th>
-              <th className="p-2 border-b">Date</th>
-              <th className="p-2 border-b">Work Type</th>
-              <th className="p-2 border-b">Reason</th>
-              <th className="p-2 border-b text-center">Status</th>
-              {(user.role === "teamlead" || user.role === "hr") && (
-                <th className="p-2 border-b text-center">Actions</th>
-              )}
-            </tr>
-          </thead>
+//       if (res.ok) {
+//         setLeaves((prev) =>
+//           prev.map((l) => (l._id === leaveId ? data.leave : l))
+//         );
+//         setComment({ ...comment, [leaveId]: "" });
+//         setExpandedLeaveId(null);
+//         toast.success(`Leave request ${action}d successfully!`);
+//       } else {
+//         toast.error(data.message || "Failed to update leave.");
+//       }
+//     } catch (err) {
+//       console.error("Error updating leave:", err);
+//       toast.error("An unexpected error occurred.");
+//     } finally {
+//       setActionLoading(null);
+//     }
+//   };
 
-          <tbody>
-            {paginatedRequests.map((req) => (
-              <tr key={req._id} className="hover:bg-gray-50">
-                <td className="p-2 border-b">{req.name}</td>
-                <td className="p-2 border-b">{req.email}</td>
-                <td className="p-2 border-b flex items-center gap-2">
-                  <FiCalendar /> {req.date}
-                </td>
-                <td className="p-2 border-b">{req.workType}</td>
-                <td className="p-2 border-b">{req.reason}</td>
-                <td className="p-2 border-b text-center">
-                  {req.status === "pending" && (
-                    <span className="text-yellow-500 flex justify-center items-center gap-1">
-                      <FiClock /> Pending
-                    </span>
-                  )}
-                  {req.status === "approved" && (
-                    <span className="text-green-600 flex justify-center items-center gap-1">
-                      <FiCheckCircle /> Approved
-                    </span>
-                  )}
-                  {req.status === "rejected" && (
-                    <span className="text-red-600 flex justify-center items-center gap-1">
-                      <FiXCircle /> Rejected
-                    </span>
-                  )}
-                </td>
-                {(user.role === "teamlead" || user.role === "hr") && (
-                  <td className="p-2 border-b text-center">
-                    {req.status === "pending" ? (
-                      <div className="flex gap-2 justify-center">
-                        <button
-                          onClick={() => handleAction(req._id, "approve")}
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleAction(req._id, "reject")}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 italic">No actions</span>
-                    )}
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+//   // -------------------- Filtered leaves --------------------
+//   const filteredLeaves =
+//     filter === "all"
+//       ? leaves
+//       : leaves.filter((leave) => leave.status === filter);
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 mt-4">
-          <button
-            onClick={prevPage}
-            disabled={currentPage === 1}
-            className="p-2 bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FiChevronLeft />
-          </button>
-          <span className="text-gray-700 font-medium">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={nextPage}
-            disabled={currentPage === totalPages}
-            className="p-2 bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FiChevronRight />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+//   // -------------------- Loading / Empty States --------------------
+//   if (loading)
+//     return (
+//       <div className="flex justify-center items-center h-40">
+//         <FiClock className="w-6 h-6 text-indigo-500 animate-spin mr-2" />
+//         <p className="text-gray-600 font-medium">Loading leave requests...</p>
+//       </div>
+//     );
+
+//   if (!filteredLeaves.length)
+//     return (
+//       <div className="text-center p-10 mt-10 border border-dashed border-gray-300 rounded-xl bg-white shadow-lg max-w-5xl mx-auto">
+//         <FiSend className="w-10 h-10 text-gray-400 mx-auto mb-4" />
+//         <h3 className="text-lg font-semibold text-gray-700">No Leaves Found</h3>
+//         <p className="text-gray-500">No leave requests match this filter.</p>
+//       </div>
+//     );
+
+//   // -------------------- Main UI --------------------
+//   return (
+//     <>
+//       <Toaster position="top-center" />
+//       <div className="p-4 sm:p-8 min-h-screen font-sans">
+//         <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+//           <h1 className="text-3xl font-bold text-gray-800 border-l-4 border-teal-500 pl-4">
+//             Leave Approval Dashboard
+//           </h1>
+
+//           {/* 🆕 Filter Dropdown */}
+//           <div className="mt-4 sm:mt-0 flex items-center space-x-2">
+//             <FiFilter className="text-gray-600" />
+//             <select
+//               value={filter}
+//               onChange={(e) =>
+//                 setFilter(e.target.value as "all" | "pending" | "approved" | "rejected")
+//               }
+//               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none"
+//             >
+//               <option value="all">All Requests</option>
+//               <option value="pending">Pending</option>
+//               <option value="approved">Approved</option>
+//               <option value="rejected">Rejected</option>
+//             </select>
+//           </div>
+//         </div>
+
+//         <div className="max-w-5xl mx-auto overflow-x-auto bg-white rounded-2xl shadow-2xl border border-gray-200">
+//           <table className="min-w-full divide-y divide-gray-200">
+//             <thead className="bg-gray-100">
+//               <tr>
+//                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+//                   Employee
+//                 </th>
+//                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+//                   Type
+//                 </th>
+//                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+//                   Dates
+//                 </th>
+//                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+//                   Status
+//                 </th>
+//                 <th className="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
+//                   Action
+//                 </th>
+//               </tr>
+//             </thead>
+//             <tbody className="bg-white divide-y divide-gray-100">
+//               {filteredLeaves.map((leave, index) => {
+//                 const isExpanded = expandedLeaveId === leave._id;
+//                 const approverDecision = leave.approverStatus?.[userRole];
+//                 const hasActed = !!approverDecision;
+
+//                 return (
+//                   <React.Fragment key={leave._id}>
+//                     <tr
+//                       className={`transition-all duration-200 cursor-pointer ${
+//                         isExpanded
+//                           ? "bg-indigo-50/70"
+//                           : index % 2 === 0
+//                           ? "bg-white hover:bg-gray-50"
+//                           : "bg-gray-50 hover:bg-gray-100"
+//                       }`}
+//                       onClick={() => handleToggleExpand(leave._id)}
+//                     >
+//                       <td className="px-6 py-4 whitespace-nowrap">
+//                         <div className="text-sm font-semibold text-gray-900">
+//                           {leave.name}
+//                         </div>
+//                         <div className="text-xs text-gray-500">{leave.email}</div>
+//                       </td>
+//                       <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 font-medium">
+//                         {leave.leaveType}
+//                       </td>
+//                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+//                         {new Date(leave.startDate).toLocaleDateString()} -{" "}
+//                         {new Date(leave.endDate).toLocaleDateString()}
+//                       </td>
+//                       <td className="px-6 py-4 whitespace-nowrap">
+//                         <span
+//                           className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full border ${getStatusClasses(
+//                             leave.status
+//                           )}`}
+//                         >
+//                           {getStatusIcon(leave.status)}
+//                           {leave.status.toUpperCase()}
+//                         </span>
+//                       </td>
+//                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+//                         <button className="flex items-center justify-end text-indigo-600 hover:text-indigo-800 transition-colors w-full">
+//                           {isExpanded ? "Collapse" : "View Details"}
+//                           {isExpanded ? (
+//                             <FiChevronUp className="w-5 h-5 ml-1" />
+//                           ) : (
+//                             <FiChevronDown className="w-5 h-5 ml-1" />
+//                           )}
+//                         </button>
+//                       </td>
+//                     </tr>
+
+//                     {isExpanded && (
+//                       <tr className="bg-white border-t border-indigo-200/50 shadow-inner">
+//                         <td colSpan={5} className="p-6">
+//                           {/* Existing details (Reason, Approvers, Comments, Action buttons) */}
+//                           {/* --- keep same content as before --- */}
+//                           {/* For brevity, you can keep your original expanded row content here */}
+//                         </td>
+//                       </tr>
+//                     )}
+//                   </React.Fragment>
+//                 );
+//               })}
+//             </tbody>
+//           </table>
+//         </div>
+//       </div>
+//     </>
+//   );
+// };
+
+// export default LeaveApprovalDashboard;
