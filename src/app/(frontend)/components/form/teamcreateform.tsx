@@ -23,24 +23,45 @@ export const TeamForm: React.FC<TeamFormProps> = ({
 }) => {
   const [teamName, setTeamName] = useState(initialTeam?.name || "");
   const [projects, setProjects] = useState<string[]>(initialTeam?.projects || [""]);
-
-  // Separate state for team lead and other members
   const [teamLead, setTeamLead] = useState<string>(
     initialTeam?.members.find(m => m.role === "teamlead")?.userId || ""
   );
+
+  // Members
   const [members, setMembers] = useState<string[]>(
     initialTeam
       ? initialTeam.members.filter(m => m.role === "member").map(m => m.userId)
       : []
   );
 
-  // Member handlers
-  const handleAddMember = () => setMembers([...members, ""]);
-  const handleMemberChange = (index: number, value: string) => {
-    const updated = [...members];
-    updated[index] = value;
-    setMembers(updated);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [tempSelected, setTempSelected] = useState<string[]>(members);
+
+  const toggleDropdown = () => {
+    setTempSelected(members);
+    setDropdownOpen(prev => !prev);
   };
+
+  const handleCheckboxToggle = (userId: string) => {
+    setTempSelected(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  };
+
+  // Select all / deselect all
+  const handleSelectAll = () => {
+    if (tempSelected.length === users.length) {
+      setTempSelected([]);
+    } else {
+      setTempSelected(users.map(u => u.id));
+    }
+  };
+
+  const handleDone = () => {
+    setMembers(tempSelected);
+    setDropdownOpen(false);
+  };
+
   const handleRemoveMember = (index: number) => {
     const updated = members.filter((_, i) => i !== index);
     setMembers(updated);
@@ -58,15 +79,12 @@ export const TeamForm: React.FC<TeamFormProps> = ({
     setProjects(updated);
   };
 
-  // Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!teamName.trim()) return toast.error("Team name is required.");
     if (!teamLead) return toast.error("Team Lead is required.");
     if (members.some(m => !m)) return toast.error("All member slots must have a user selected.");
 
-    // ✅ Use constants with `as const` for role types
     const TEAMLEAD_ROLE = "teamlead" as const;
     const MEMBER_ROLE = "member" as const;
 
@@ -89,6 +107,7 @@ export const TeamForm: React.FC<TeamFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+
       {/* Team Name */}
       <div>
         <label className="font-medium text-gray-700">Team Name</label>
@@ -120,40 +139,83 @@ export const TeamForm: React.FC<TeamFormProps> = ({
         </select>
       </div>
 
-      {/* Members */}
+      {/* Members selection field */}
       <div>
         <label className="font-medium text-gray-700">Members</label>
-        {members.map((m, i) => (
-          <div key={i} className="flex gap-2 mt-2">
-            <select
-              value={m}
-              onChange={e => handleMemberChange(i, e.target.value)}
-              className="border p-2 rounded flex-1"
-            >
-              <option value="" disabled>Select Member</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>
+        <div
+          className="border p-2 rounded cursor-pointer bg-white"
+          onClick={toggleDropdown}
+        >
+          {members.length === 0
+            ? "Click to select members"
+            : members.map(id => users.find(u => u.id === id)?.name).join(", ")}
+        </div>
+
+        {/* Dropdown */}
+        {dropdownOpen && (
+          <div className="border mt-2 p-2 max-h-60 overflow-y-auto rounded bg-white space-y-1 shadow-md">
+            {/* Select All */}
+            <div className="flex items-center gap-2 border-b pb-2 mb-2">
+              <input
+                type="checkbox"
+                checked={tempSelected.length === users.length}
+                onChange={handleSelectAll}
+                id="select-all"
+              />
+              <label htmlFor="select-all" className="cursor-pointer font-semibold">
+                Select All
+              </label>
+            </div>
+
+            {users.map(u => (
+              <div key={u.id} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={tempSelected.includes(u.id)}
+                  onChange={() => handleCheckboxToggle(u.id)}
+                  id={`member-${u.id}`}
+                />
+                <label htmlFor={`member-${u.id}`} className="cursor-pointer">
                   {u.name} ({u.email || u.id})
-                </option>
-              ))}
-            </select>
+                </label>
+              </div>
+            ))}
             <button
               type="button"
-              onClick={() => handleRemoveMember(i)}
-              className="text-red-500 p-2"
+              onClick={handleDone}
+              className="mt-2 bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
             >
-              <FiTrash2 />
+              Done
             </button>
           </div>
-        ))}
-        <button
-          type="button"
-          onClick={handleAddMember}
-          className="mt-2 text-indigo-600 flex items-center gap-1"
-        >
-          <FiPlus /> Add Member
-        </button>
+        )}
       </div>
+
+      {/* Auto-generated readonly member fields */}
+      {members.length > 0 && (
+        <div className="mt-2 space-y-2">
+          {members.map((m, i) => {
+            const user = users.find(u => u.id === m);
+            return (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={user?.name || ""}
+                  readOnly
+                  className="border p-2 rounded flex-1 bg-gray-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveMember(i)}
+                  className="text-red-500 p-2"
+                >
+                  <FiTrash2 />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Projects */}
       <div>
