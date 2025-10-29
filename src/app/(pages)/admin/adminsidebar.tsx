@@ -12,6 +12,7 @@ import {
   FiPlus,
   FiGrid,
   FiUser,
+  FiBriefcase,
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { handleLogout } from "@/utils/logout";
@@ -95,6 +96,14 @@ export default function AdminDashboardLayout({ children }: Props) {
           >
             <FiPlus size={20} />
             {isSidebarOpen && <span>Add Users</span>}
+          </Link>
+
+          <Link
+            href="/admin/teams"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors"
+          >
+            <FiBriefcase size={20} />
+            {isSidebarOpen && <span>Teams</span>}
           </Link>
 
           <Link

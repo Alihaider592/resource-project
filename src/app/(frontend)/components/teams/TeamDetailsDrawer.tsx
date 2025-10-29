@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { FiX, FiUsers, FiUser, FiCode, FiBriefcase } from "react-icons/fi";
 import { IUser, Member, ITeam } from "@/app/(backend)/models/types";
 
@@ -22,8 +23,8 @@ const isPopulatedUser = (value: unknown): value is PopulatedUser =>
   "_id" in value &&
   typeof (value as { _id?: unknown })._id === "string";
 
-// --- Utility to get member display string (name only) ---
-const getMemberName = (member: Member, users: IUser[]): string => {
+// --- Utility to get member object ---
+const getUserByMember = (member: Member, users: IUser[]): IUser | null => {
   const rawUserId = member.userId;
   const userIdString = isPopulatedUser(rawUserId)
     ? rawUserId._id
@@ -31,18 +32,22 @@ const getMemberName = (member: Member, users: IUser[]): string => {
     ? rawUserId
     : "";
 
-  const user = users.find((u) => u.id === userIdString);
-  return user ? user.name : "Unknown User";
+  return users.find((u) => u.id === userIdString) || null;
 };
 
 // --- Structured Team Details Modal Component ---
 export const TeamDetailsDrawer: React.FC<Props> = ({ team, users, onClose }) => {
+  const router = useRouter();
   const leadMember = team.members.find((m) => m.role === "teamlead");
   const otherMembers = team.members.filter((m) => m.role !== "teamlead");
 
+  const handleProfileClick = (userId: string) => {
+    onClose(); // Close the drawer
+    router.push(`/user/profile/${userId}`); // ✅ Navigate to the correct frontend route
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300" 
@@ -53,7 +58,6 @@ export const TeamDetailsDrawer: React.FC<Props> = ({ team, users, onClose }) => 
       <div 
         className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden transform transition-all duration-300 scale-100 opacity-100"
       >
-        
         {/* Header */}
         <div className="flex justify-between items-center bg-green-600 text-white px-6 py-4 border-b border-green-700">
           <div className="flex items-center gap-3">
@@ -71,16 +75,21 @@ export const TeamDetailsDrawer: React.FC<Props> = ({ team, users, onClose }) => 
 
         {/* Content */}
         <div className="p-6 sm:p-8 space-y-6">
-          
           {/* Team Lead */}
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg shadow-inner">
             <h3 className="flex items-center gap-2 text-base font-bold text-green-700 uppercase tracking-wider mb-2">
               <FiUser className="w-4 h-4" /> Team Lead
             </h3>
             {leadMember ? (
-              <p className="text-lg font-semibold text-gray-800">
-                {getMemberName(leadMember, users)}
-              </p>
+              <button
+                onClick={() => {
+                  const user = getUserByMember(leadMember, users);
+                  if (user) handleProfileClick(user.id);
+                }}
+                className="text-lg font-semibold text-gray-800 hover:text-green-700 transition"
+              >
+                {getUserByMember(leadMember, users)?.name || "Unknown User"}
+              </button>
             ) : (
               <p className="text-gray-500 italic">No dedicated team lead assigned.</p>
             )}
@@ -93,14 +102,18 @@ export const TeamDetailsDrawer: React.FC<Props> = ({ team, users, onClose }) => 
             </h3>
             {otherMembers.length > 0 ? (
               <div className="flex flex-wrap gap-3">
-                {otherMembers.map((m, i) => (
-                  <span
-                    key={`${team._id}-member-${i}`}
-                    className="inline-flex items-center px-3 py-1 text-sm font-medium bg-white text-gray-700 rounded-full border border-gray-300 shadow-sm transition hover:shadow-md"
-                  >
-                    {getMemberName(m, users)}
-                  </span>
-                ))}
+                {otherMembers.map((m, i) => {
+                  const user = getUserByMember(m, users);
+                  return (
+                    <button
+                      key={`${team._id}-member-${i}`}
+                      onClick={() => user && handleProfileClick(user.id)}
+                      className="inline-flex items-center px-3 py-1 text-sm font-medium bg-white text-gray-700 rounded-full border border-gray-300 shadow-sm transition hover:shadow-md hover:bg-gray-100"
+                    >
+                      {user?.name || "Unknown User"}
+                    </button>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-gray-500 italic">This team has no additional members.</p>
