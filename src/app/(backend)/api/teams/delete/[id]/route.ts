@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDatabase from "@/app/(backend)/lib/db";
 import Team from "@/app/(backend)/models/teams";
+import { Types } from "mongoose";
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const teamId = params.id;
+    const { id } = params;
+
+    // Validate ObjectId
+    if (!Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid team ID" }, { status: 400 });
+    }
+
     await connectDatabase();
-    const deleted = await Team.findByIdAndDelete(teamId);
-    if (!deleted) return NextResponse.json({ error: "Team not found" }, { status: 404 });
+
+    const deleted = await Team.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
     return NextResponse.json({ message: "Team deleted successfully" });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Server Error";

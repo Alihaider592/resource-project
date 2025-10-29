@@ -119,14 +119,25 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
   }, [fetchUsers, fetchTeams]);
 
   const deleteTeam = async (id: string) => {
-    if (!window.confirm("Are you sure you want to permanently delete this team?")) return;
-    try {
-      const res = await fetch(`/api/teams/delete/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-      if (res.ok) { toast.success(data.message); fetchTeams(); }
-      else toast.error(data.error || "Failed to delete team");
-    } catch (error) { toast.error("Failed to delete team due to network error"); }
-  };
+  if (!window.confirm("Are you sure you want to permanently delete this team?")) return;
+  try {
+    const res = await fetch(`/api/teams/delete/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast.success(data.message);
+      fetchTeams();
+    } else {
+      toast.error(data.error || "Failed to delete team");
+    }
+  } catch (err) {
+    toast.error("Network error while deleting team");
+    console.error(err);
+  }
+};
+
 
   const startEdit = (team: ITeam) => { setEditingTeam(team); setShowForm(true); };
   const startCreate = () => { setEditingTeam(null); setShowForm(true); };
@@ -244,17 +255,19 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
           )}
         </Menu.Item>
         <Menu.Item>
-          {({ active }: { active: boolean }) => (
-            <button
-              onClick={() => deleteTeam(team._id)}
-              className={`group flex w-full items-center px-2 py-2 text-sm rounded-md ${
-                active ? "bg-red-100 text-red-900" : "text-gray-700"
-              }`}
-            >
-              <FiTrash2 className="w-4 h-4 mr-2" /> Delete
-            </button>
-          )}
-        </Menu.Item>
+  {({ active }: { active: boolean }) => (
+    <button
+      type="button" // make sure it's explicitly a button
+      onClick={() => deleteTeam(team._id)} // team._id is a string
+      className={`group flex w-full items-center px-2 py-2 text-sm rounded-md ${
+        active ? "bg-red-100 text-red-900" : "text-gray-700"
+      }`}
+    >
+      <FiTrash2 className="w-4 h-4 mr-2" /> Delete
+    </button>
+  )}
+</Menu.Item>
+
         <Menu.Item>
           {({ active }: { active: boolean }) => (
             <button

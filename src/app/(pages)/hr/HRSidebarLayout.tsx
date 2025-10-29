@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, ReactNode } from "react";
-import { FiUsers, FiFileText, FiSettings, FiLogOut, FiMenu, FiGrid, FiUser, FiPlus } from "react-icons/fi";
+import { FiUsers, FiFileText, FiSettings,FiBriefcase, FiLogOut, FiMenu, FiGrid, FiUser, FiPlus } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { handleLogout } from "@/utils/logout";
 import { useRouter, usePathname } from "next/navigation";
@@ -25,6 +25,7 @@ export default function HRSidebarLayout({ children }: Props) {
     { name: "Dashboard", icon: <FiGrid size={20} />, href: "/hr" },
     { name: "Profile", icon: <FiUser size={20} />, href: "/hr/Profile" },
     { name: "Add Employee", icon: <FiPlus size={20} />, href: "/hr/addemployee" },
+    { name: "Teams", icon: <FiBriefcase size={20} />, href: "/hr/teams" },
     { name: "Manage Employees", icon: <FiUsers size={20} />, href: "/hr/manage" },
     { name: "Attendance", icon: <FiFileText size={20} />, href: "/hr/attendance" },
     { name: "Reports", icon: <FiFileText size={20} />, href: "/hr/reports" },
