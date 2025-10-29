@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDatabase from "@/app/(backend)/lib/db";
-import Team from "@/app/(backend)/models/report";
+import Team from "@/app/(backend)/models/teams";
+
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const { name, members, projects } = await req.json();
-  await connectDatabase();
   try {
+    const teamId = params.id;
+    const { name, members, projects } = await req.json();
+    if (!name || !members) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+
+    await connectDatabase();
     const updatedTeam = await Team.findByIdAndUpdate(
-      params.id,
+      teamId,
       { name, members, projects },
       { new: true }
     );
-    return NextResponse.json({ message: "Team updated successfully", team: updatedTeam });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to update team" }, { status: 500 });
+
+    if (!updatedTeam) return NextResponse.json({ error: "Team not found" }, { status: 404 });
+
+    return NextResponse.json(updatedTeam, { status: 200 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

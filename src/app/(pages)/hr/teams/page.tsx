@@ -1,5 +1,5 @@
 "use client"; 
-import { TeamDashboard } from "@/app/(frontend)/components/teamlist";
+import { TeamDashboard } from "@/app/(frontend)/components/teamlist"; 
 
 const currentUser = { id: "admin1", role: "hr" }; 
 
