@@ -4,11 +4,10 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { FiPlus, FiTrash2, FiX } from "react-icons/fi";
 import { ITeam, IUser, Member } from "@/app/(backend)/models/types";
-import { Types } from "mongoose";
 
 interface TeamFormProps {
-  currentUser: { id: string; role: string }; // must be MongoDB ObjectId string
-  users: IUser[]; // IUser must include `id: string` field
+  currentUser: { id: string; role: string }; 
+  users: IUser[]; 
   initialTeam?: ITeam;
   onSubmit?: (updatedTeam: ITeam) => Promise<void>;
   onCancel?: () => void;
@@ -20,6 +19,7 @@ export const TeamForm: React.FC<TeamFormProps> = ({
   users,
   initialTeam,
   onCancel,
+  onSubmit,
   isEditing = false,
 }) => {
   // -------------------------
@@ -85,55 +85,59 @@ export const TeamForm: React.FC<TeamFormProps> = ({
   // -------------------------
   // Submit handler
   // -------------------------
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Only updated handleSubmit part
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!teamName.trim()) return toast.error("Team name is required.");
-    if (!teamLead) return toast.error("Team Lead is required.");
+  if (!teamName.trim()) return toast.error("Team name is required.");
+  if (!teamLead) return toast.error("Team Lead is required.");
 
-    // Build Member objects
-const memberObjects: Member[] = [
-  { userId: teamLead, role: "teamlead" as const },  
-  ...members.map((m) => ({ userId: m, role: "member" as const })),
-];
+  // Build Member objects with exact literal types
+  const memberObjects: Member[] = [
+    { userId: teamLead.toString(), role: "teamlead" as const },
+    ...members.map((m) => ({ userId: m.toString(), role: "member" as const })),
+  ];
 
-
-const teamData = {
-  name: teamName.trim(),
-  members: memberObjects,
-  projects: projects.filter((p) => p.trim() !== ""),
-  createdBy: currentUser.id,
-};
-
-
-    try {
-      setLoading(true);
-
-      const res = await fetch("/api/teams/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...teamData,
-          userRole: currentUser.role,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create team");
-
-      toast.success(isEditing ? "✅ Team updated!" : "✅ Team created!");
-      setTeamName("");
-      setProjects([""]);
-      setTeamLead("");
-      setMembers([]);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
-      toast.error(`❌ ${msg}`);
-      console.error("Error creating team:", err);
-    } finally {
-      setLoading(false);
-    }
+  // Removed client-side currentUser.id check
+  const teamData = {
+    name: teamName.trim(),
+    members: memberObjects,
+    projects: projects.filter((p) => p.trim() !== ""),
+    createdBy: currentUser.id.toString(),
   };
+
+  try {
+    setLoading(true);
+
+    const res = await fetch("/api/teams/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...teamData,
+        userRole: currentUser.role,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to create team");
+
+    toast.success(isEditing ? "✅ Team updated!" : "✅ Team created!");
+
+    if (onSubmit) await onSubmit(teamData as ITeam);
+
+    // Reset form
+    setTeamName("");
+    setProjects([""]);
+    setTeamLead("");
+    setMembers([]);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Something went wrong";
+    toast.error(`❌ ${msg}`);
+    console.error("Error creating team:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // -------------------------
   // Render

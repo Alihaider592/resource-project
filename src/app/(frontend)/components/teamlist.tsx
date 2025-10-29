@@ -1,9 +1,17 @@
 // src/app/(frontend)/components/teamlist.tsx
 "use client";
+
 import React, { useEffect, useState, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { 
-  FiUsers, FiEdit, FiClock, FiTrash2, FiCode, FiX, FiCheckCircle, FiCheck 
+import {
+  FiUsers,
+  FiEdit,
+  FiClock,
+  FiTrash2,
+  FiCode,
+  FiX,
+  FiCheckCircle,
+  FiCheck,
 } from "react-icons/fi";
 import { ITeam, IUser, Member } from "@/app/(backend)/models/types";
 import { TeamForm } from "./form/teamcreateform";
@@ -20,25 +28,30 @@ interface IBackendUser {
 // Map backend role to frontend allowed roles
 const mapRole = (role: string): IUser["role"] => {
   switch (role.toLowerCase()) {
-    case "user": return "user";
-    case "teamlead": return "teamlead";
-    case "hr": return "hr";
-    case "admin": return "admin";
-    default: return "user";
+    case "user":
+      return "user";
+    case "teamlead":
+      return "teamlead";
+    case "hr":
+      return "hr";
+    case "admin":
+      return "admin";
+    default:
+      return "user";
   }
+};
+
+// Show member name and role using actual user role
+const getMemberDetails = (member: Member, users: IUser[]): string => {
+  const user = users.find((u) => u.id === member.userId);
+  if (!user) return "Unknown User";
+  const role = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+  return `${user.name} (${role})`;
 };
 
 interface Props {
   currentUser: { id: string; role: string };
 }
-
-// Show member name and role using actual user role
-const getMemberDetails = (member: Member, users: IUser[]): string => {
-  const user = users.find(u => u.id === member.userId);
-  if (!user) return "Unknown User";
-  const role = user.role.charAt(0).toUpperCase() + user.role.slice(1); 
-  return `${user.name} (${role})`; 
-};
 
 export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
   const [teams, setTeams] = useState<ITeam[]>([]);
@@ -48,7 +61,9 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
+  // -------------------------
   // Fetch users
+  // -------------------------
   const fetchUsers = async () => {
     try {
       const res = await fetch("/api/addusers", { headers: { Authorization: `Bearer ${token}` } });
@@ -69,17 +84,21 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
     }
   };
 
+  // -------------------------
   // Fetch teams
+  // -------------------------
   const fetchTeams = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/teams/create", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch("/api/teams/list", { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
-      setTeams(Array.isArray(data.teams) ? data.teams : []);
+      setTeams(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
       toast.error("Network error while fetching teams");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -87,6 +106,9 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
     fetchTeams();
   }, [token]);
 
+  // -------------------------
+  // Delete team
+  // -------------------------
   const deleteTeam = async (id: string) => {
     if (!confirm("Are you sure you want to delete this team?")) return;
     try {
@@ -104,6 +126,9 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
     }
   };
 
+  // -------------------------
+  // Edit team
+  // -------------------------
   const startEdit = (team: ITeam) => setEditingTeam(team);
   const stopEdit = () => setEditingTeam(null);
 
@@ -112,11 +137,15 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
       const res = await fetch(`/api/teams/update/${updatedTeam._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(updatedTeam),
+        body: JSON.stringify({
+          name: updatedTeam.name,
+          members: updatedTeam.members,
+          projects: updatedTeam.projects,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success(data.message);
+        toast.success("Team updated successfully");
         stopEdit();
         fetchTeams();
       } else toast.error(data.error || "Failed to update team");
@@ -125,11 +154,14 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
     }
   };
 
+  // -------------------------
+  // Process teams for display
+  // -------------------------
   const processedTeams = useMemo(() => {
     return teams.map(team => ({
       ...team,
-      memberStrings: team.members.map(m => getMemberDetails(m, users)),
-      projectStrings: team.projects,
+      memberStrings: team.members?.map(m => getMemberDetails(m, users)) || [],
+      projectStrings: team.projects || [],
     }));
   }, [teams, users]);
 
@@ -145,6 +177,9 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
       </div>
     );
 
+  // -------------------------
+  // Render
+  // -------------------------
   return (
     <div className="p-4 sm:p-8 min-h-screen bg-gray-50 font-sans">
       <Toaster position="top-right" />
@@ -196,13 +231,10 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
                   {processedTeams.map(team => (
                     <tr key={team._id} className="hover:bg-indigo-50/50 transition duration-150">
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">{team.name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs overflow-hidden overflow-ellipsis">
+                      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs overflow-hidden">
                         <div className="flex flex-wrap gap-2">
                           {team.memberStrings.map((memberString, idx) => (
-                            <span 
-                              key={team.members[idx].userId} 
-                              className="inline-flex items-center px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full"
-                            >
+                            <span key={team.members[idx].userId} className="inline-flex items-center px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
                               <FiCheck className="w-3 h-3 mr-1 text-green-600" /> {memberString}
                             </span>
                           ))}

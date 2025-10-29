@@ -1,80 +1,46 @@
-import mongoose, { Schema, Document, Model, Types } from "mongoose";
+import { Schema, model, models, Types } from "mongoose";
 
-// ==========================
-// Member Interface
-// ==========================
+// -------------------------
+// Interfaces
+// -------------------------
 export interface Member {
-  userId: Types.ObjectId; // ✅ ObjectId reference to AddUser
+  userId: Types.ObjectId; // Use Types.ObjectId for MongoDB references
   role: "teamlead" | "member";
 }
 
-// ==========================
-// Team Interfaces
-// ==========================
-export interface ITeamBase {
+export interface ITeam {
   name: string;
   members: Member[];
   projects: string[];
-  createdBy: Types.ObjectId; // ✅ Reference to AddUser
-  status: "pending" | "approved" | "rejected";
+  createdBy: Types.ObjectId; // Use ObjectId
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export interface ITeamDocument extends ITeamBase, Document {
-  _id: Types.ObjectId;
-}
-
-// ==========================
-// Member Subschema
-// ==========================
+// -------------------------
+// Schemas
+// -------------------------
 const MemberSchema = new Schema<Member>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "AddUser", required: true },
-    role: {
-      type: String,
-      enum: ["teamlead", "member"],
-      required: true,
-    },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    role: { type: String, enum: ["teamlead", "member"], required: true },
   },
-  { _id: false }
+  { _id: false } // No separate _id for members
 );
 
-// ==========================
-// Team Schema
-// ==========================
-const TeamSchema = new Schema<ITeamDocument>(
+const TeamSchema = new Schema<ITeam>(
   {
-    name: { type: String, required: true, trim: true },
+    name: { type: String, required: true },
     members: { type: [MemberSchema], required: true },
     projects: { type: [String], default: [] },
-    createdBy: { type: Schema.Types.ObjectId, ref: "AddUser", required: true },
-    status: {
-      type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
-    },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
-  {
-    timestamps: true, // ✅ Auto adds createdAt & updatedAt
-  }
+  { timestamps: true } // Automatically adds createdAt and updatedAt
 );
 
-// ==========================
-// Validation Middleware
-// ==========================
-TeamSchema.pre<ITeamDocument>("save", function (next) {
-  const leadCount = this.members.filter((m) => m.role === "teamlead").length;
-  if (leadCount !== 1) {
-    return next(new Error("A team must have exactly one teamlead."));
-  }
-  next();
-});
-
-// ==========================
-// Model Export
-// ==========================
-const Team: Model<ITeamDocument> =
-  mongoose.models.Team || mongoose.model<ITeamDocument>("Team", TeamSchema);
+// -------------------------
+// Model
+// -------------------------
+const Team = models.Team || model<ITeam>("Team", TeamSchema);
 
 export default Team;
