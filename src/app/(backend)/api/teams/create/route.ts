@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Team from "@/app/(backend)/models/teams";
 import connectDatabase from "@/app/(backend)/lib/db";
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 interface MemberInput {
   userId: string;
@@ -14,63 +14,89 @@ interface TeamInput {
   projects: string[];
   createdBy: string;
   userRole: string;
+  _id?: string;
+  createdAt?: Date;
 }
 
 export async function POST(req: NextRequest) {
-  const body: TeamInput = await req.json();
-  const { name, members, projects, createdBy, userRole } = body;
-
-  console.log("Received team creation request:", body);
-
-  // Authorization check
-  if (!["hr", "admin"].includes(userRole.toLowerCase())) {
-    console.log("Unauthorized attempt by userRole:", userRole);
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
-  await connectDatabase();
-  console.log("Database connected");
-
   try {
-    // Ensure exactly one teamlead
-    const leadCount = members.filter((m) => m.role === "teamlead").length;
-    console.log("Number of teamleads in request:", leadCount);
+    const body: TeamInput = await req.json();
+    const { name, members, projects, createdBy, userRole, _id, createdAt } = body;
 
+    console.log("🟦 Received team creation request:", body);
+
+    // ✅ Authorization check
+    if (!["hr", "admin"].includes(userRole.toLowerCase())) {
+      console.log("🚫 Unauthorized attempt by role:", userRole);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    // ✅ Connect to DB
+    await connectDatabase();
+    console.log("🟩 Database connected");
+
+    // ✅ Validate fields
+    if (!name || !members?.length) {
+      return NextResponse.json(
+        { error: "Team name and members are required." },
+        { status: 400 }
+      );
+    }
+
+    const leadCount = members.filter((m) => m.role === "teamlead").length;
     if (leadCount !== 1) {
-      console.log("Invalid number of teamleads:", leadCount);
       return NextResponse.json(
         { error: "A team must have exactly one teamlead." },
         { status: 400 }
       );
     }
 
-    // Convert string IDs to ObjectId
+    // ✅ Convert to ObjectIds
+    if (!Types.ObjectId.isValid(createdBy)) {
+      return NextResponse.json(
+        { error: `Invalid createdBy ID: ${createdBy}` },
+        { status: 400 }
+      );
+    }
+
+    const createdByObjectId = new Types.ObjectId(createdBy);
+
     const membersWithObjectId = members.map((m) => {
-      const obj = { userId: new Types.ObjectId(m.userId), role: m.role };
-      console.log("Converted member to ObjectId:", obj);
-      return obj;
+      if (!Types.ObjectId.isValid(m.userId)) {
+        throw new Error(`Invalid userId in members: ${m.userId}`);
+      }
+      return {
+        userId: new Types.ObjectId(m.userId),
+        role: m.role,
+      };
     });
 
-    // Create team request with status "pending"
+    // ✅ Always generate ObjectId-based string _id
+    const teamId = _id || new mongoose.Types.ObjectId().toString();
+
+    // ✅ Create new team
     const team = new Team({
+      _id: teamId,
       name,
       members: membersWithObjectId,
-      projects,
-      createdBy: new Types.ObjectId(createdBy),
-      status: "pending",
+      projects: projects || [],
+      createdBy: createdByObjectId,
+      createdAt: createdAt || new Date(),
+      status: userRole === "hr" ? "approved" : "pending",
     });
 
-    console.log("Saving team request:", team);
+    console.log("🟨 Saving team to DB:", team);
     await team.save();
-    console.log("Team saved successfully:", team._id);
 
-    return NextResponse.json({
-      message: "Team request created successfully",
-      team,
-    });
+    console.log("✅ Team created successfully:", team._id);
+
+    return NextResponse.json(
+      { message: "Team created successfully", team },
+      { status: 201 }
+    );
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : "Unknown error";
-    console.log("Error creating team:", errMsg);
+    console.error("❌ Error creating team:", errMsg);
     return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }
