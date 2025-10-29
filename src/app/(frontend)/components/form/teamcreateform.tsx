@@ -22,9 +22,6 @@ export const TeamForm: React.FC<TeamFormProps> = ({
   onSubmit,
   isEditing = false,
 }) => {
-  // -------------------------
-  // State
-  // -------------------------
   const [teamName, setTeamName] = useState(initialTeam?.name || "");
   const [projects, setProjects] = useState<string[]>(initialTeam?.projects || [""]);
   const [teamLead, setTeamLead] = useState<string>(
@@ -43,8 +40,9 @@ export const TeamForm: React.FC<TeamFormProps> = ({
   const [loading, setLoading] = useState(false);
 
   // -------------------------
-  // Dropdown logic
+  // Dropdown and utility logic (omitted for brevity, unchanged)
   // -------------------------
+
   const toggleDropdown = () => {
     setTempSelected(members);
     setDropdownOpen((prev) => !prev);
@@ -70,9 +68,6 @@ export const TeamForm: React.FC<TeamFormProps> = ({
     setMembers((prev) => prev.filter((i) => i !== id));
   };
 
-  // -------------------------
-  // Projects logic
-  // -------------------------
   const handleAddProject = () => setProjects([...projects, ""]);
   const handleProjectChange = (index: number, value: string) => {
     const updated = [...projects];
@@ -81,67 +76,67 @@ export const TeamForm: React.FC<TeamFormProps> = ({
   };
   const handleRemoveProject = (index: number) =>
     setProjects(projects.filter((_, i) => i !== index));
-
+    
   // -------------------------
-  // Submit handler
+  // handleSubmit with confirmed Guard Clause
   // -------------------------
-  // Only updated handleSubmit part
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
 
-  if (!teamName.trim()) return toast.error("Team name is required.");
-  if (!teamLead) return toast.error("Team Lead is required.");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  // Build Member objects with exact literal types
-  const memberObjects: Member[] = [
-    { userId: teamLead.toString(), role: "teamlead" as const },
-    ...members.map((m) => ({ userId: m.toString(), role: "member" as const })),
-  ];
+    if (!teamName.trim()) return toast.error("Team name is required.");
+    if (!teamLead) return toast.error("Team Lead is required.");
 
-  // Removed client-side currentUser.id check
-  const teamData = {
-    name: teamName.trim(),
-    members: memberObjects,
-    projects: projects.filter((p) => p.trim() !== ""),
-    createdBy: currentUser.id.toString(),
+    // ⭐ FINALIZED GUARD CLAUSE: Stops if ID is missing or empty.
+    if (!currentUser.id || currentUser.id.trim() === "") {
+        return toast.error("❌ Cannot submit: User session ID is invalid or missing.");
+    }
+    
+    const memberObjects: Member[] = [
+      { userId: teamLead.toString(), role: "teamlead" as const },
+      // Filter out the team lead from being a regular member
+      ...members
+        .filter(m => m !== teamLead) 
+        .map((m) => ({ userId: m.toString(), role: "member" as const })),
+    ];
+
+    const teamData = {
+      name: teamName.trim(),
+      members: memberObjects,
+      projects: projects.filter((p) => p.trim() !== ""),
+      createdBy: currentUser.id.toString(), // The value the API is rejecting
+    };
+    
+    try {
+      setLoading(true);
+
+      const res = await fetch("/api/teams/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(teamData),
+      });
+
+      const data = await res.json();
+      // LINE 128: The API returned an error, meaning the 'createdBy' ID was invalid.
+      if (!res.ok) throw new Error(data.error || "Failed to create team"); 
+
+      toast.success(isEditing ? "✅ Team updated!" : "✅ Team created!");
+
+      if (onSubmit) await onSubmit(teamData as ITeam);
+
+      setTeamName("");
+      setProjects([""]);
+      setTeamLead("");
+      setMembers([]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(`❌ ${msg}`);
+      console.error("Error creating team:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  try {
-    setLoading(true);
-
-    const res = await fetch("/api/teams/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...teamData,
-        userRole: currentUser.role,
-      }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to create team");
-
-    toast.success(isEditing ? "✅ Team updated!" : "✅ Team created!");
-
-    if (onSubmit) await onSubmit(teamData as ITeam);
-
-    // Reset form
-    setTeamName("");
-    setProjects([""]);
-    setTeamLead("");
-    setMembers([]);
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Something went wrong";
-    toast.error(`❌ ${msg}`);
-    console.error("Error creating team:", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // -------------------------
-  // Render
-  // -------------------------
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Team Name */}

@@ -1,7 +1,7 @@
 // src/app/(frontend)/components/teamlist.tsx
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
   FiUsers,
@@ -25,12 +25,17 @@ interface IBackendUser {
   avatar?: string;
 }
 
+// ⭐ TYPE FIX: Define a union type for userId to handle both string ID and populated object
+type PopulatedUser = { _id: string }; // Minimal interface for the populated object
+type MemberUserId = string | PopulatedUser;
+
 // Map backend role to frontend allowed roles
 const mapRole = (role: string): IUser["role"] => {
   switch (role.toLowerCase()) {
     case "user":
       return "user";
     case "teamlead":
+    case "team leader":
       return "teamlead";
     case "hr":
       return "hr";
@@ -43,7 +48,13 @@ const mapRole = (role: string): IUser["role"] => {
 
 // Show member name and role using actual user role
 const getMemberDetails = (member: Member, users: IUser[]): string => {
-  const user = users.find((u) => u.id === member.userId);
+  // Use PopulatedUser type to access _id safely without 'any'
+  const rawUserId = member.userId as MemberUserId; 
+  const userIdString = typeof rawUserId === 'object' && rawUserId !== null && (rawUserId as PopulatedUser)._id
+    ? (rawUserId as PopulatedUser)._id.toString()
+    : rawUserId ? rawUserId.toString() : '';
+    
+  const user = users.find((u) => u.id === userIdString);
   if (!user) return "Unknown User";
   const role = user.role.charAt(0).toUpperCase() + user.role.slice(1);
   return `${user.name} (${role})`;
@@ -62,9 +73,9 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   // -------------------------
-  // Fetch users
+  // Fetch users - Wrapped in useCallback
   // -------------------------
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch("/api/addusers", { headers: { Authorization: `Bearer ${token}` } });
       const data: IBackendUser[] = await res.json();
@@ -78,33 +89,34 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
         }));
         setUsers(mappedUsers);
       } else toast.error("Failed to fetch users");
-    } catch (err) {
-      console.error(err);
+    } catch (error) { // Changed 'err' to 'error' and used
+      console.error(error);
       toast.error("Network error while fetching users");
     }
-  };
+  }, [token]);
 
   // -------------------------
-  // Fetch teams
+  // Fetch teams - Wrapped in useCallback
   // -------------------------
-  const fetchTeams = async () => {
+  const fetchTeams = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/teams/list", { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setTeams(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
+    } catch (error) { // Changed 'err' to 'error' and used
+      console.error(error);
       toast.error("Network error while fetching teams");
     } finally {
       setLoading(false);
     }
-  };
-
+  }, [token]);
+  
+  // ⭐ EFFECT HOOK FIX: Added fetchUsers and fetchTeams to the dependency array
   useEffect(() => {
     fetchUsers();
     fetchTeams();
-  }, [token]);
+  }, [token, fetchUsers, fetchTeams]);
 
   // -------------------------
   // Delete team
@@ -121,7 +133,7 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
         toast.success(data.message);
         fetchTeams();
       } else toast.error(data.error || "Failed to delete team");
-    } catch (err) {
+    } catch (error) { // Changed 'err' to 'error' and used
       toast.error("Failed to delete team due to network error");
     }
   };
@@ -149,13 +161,13 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
         stopEdit();
         fetchTeams();
       } else toast.error(data.error || "Failed to update team");
-    } catch (err) {
+    } catch (error) { // Changed 'err' to 'error' and used
       toast.error("Failed to update team due to network error");
     }
   };
 
   // -------------------------
-  // Process teams for display
+  // Process teams for display (unchanged)
   // -------------------------
   const processedTeams = useMemo(() => {
     return teams.map(team => ({
@@ -233,17 +245,28 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser }) => {
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">{team.name}</td>
                       <td className="px-4 py-3 text-sm text-gray-700 max-w-xs overflow-hidden">
                         <div className="flex flex-wrap gap-2">
-                          {team.memberStrings.map((memberString, idx) => (
-                            <span key={team.members[idx].userId} className="inline-flex items-center px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
-                              <FiCheck className="w-3 h-3 mr-1 text-green-600" /> {memberString}
-                            </span>
-                          ))}
+                          {team.memberStrings.map((memberString, idx) => {
+                            // Defensive extraction for the key, avoiding 'any'
+                            const rawUserId = team.members[idx].userId as MemberUserId;
+                            const memberId = typeof rawUserId === 'object' && rawUserId !== null && (rawUserId as PopulatedUser)._id
+                              ? (rawUserId as PopulatedUser)._id.toString() 
+                              : rawUserId ? rawUserId.toString() : idx.toString(); 
+
+                            return (
+                              <span 
+                                key={`${team._id}-${memberId}`} 
+                                className="inline-flex items-center px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full"
+                              >
+                                <FiCheck className="w-3 h-3 mr-1 text-green-600" /> {memberString}
+                              </span>
+                            );
+                          })}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700 max-w-xs">
                         <div className="flex flex-wrap gap-2">
                           {team.projectStrings.map(project => (
-                            <span key={project} className="inline-flex items-center px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+                            <span key={`${team._id}-${project}`} className="inline-flex items-center px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
                               <FiCode className="w-3 h-3 mr-1" /> {project}
                             </span>
                           ))}
