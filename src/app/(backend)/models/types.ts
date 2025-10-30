@@ -12,10 +12,11 @@ export interface Member {
 }
 
 export interface ITeam {
-  _id: string;
+  _id: string;          // <-- this is required
   name: string;
   members: Member[];
   projects: string[];
   createdBy: string;
-  createdAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
 }
