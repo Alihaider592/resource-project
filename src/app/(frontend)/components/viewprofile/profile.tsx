@@ -133,7 +133,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
       if (!token) { setErrorMsg("Unauthorized. Please log in."); router.push("/login"); return; }
 
       const userId = params?.id ?? null;
-      const getApiUrl = (userId: string | null) => userType === "hr" ? userId ? `/api/hr/getusers/${userId}` : `/api/hr/getusers/me` : userId ? `/api/admin/getusers/${userId}` : `/api/admin/getusers/me`;
+      const getApiUrl = (userId: string | null) => userType === "hr" ? userId ? `/api/admin/getusers/${userId}` : `/api/admin/getusers/me` : userId ? `/api/admin/getusers/${userId}` : `/api/admin/getusers/me`;
 
       try {
         const res = await axios.get<{ user?: EmployeeProfileData; message?: string }>(getApiUrl(userId), { headers: { Authorization: `Bearer ${token}` } });
@@ -172,7 +172,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType = "admin" }) => {
     if (!token) { toast.error("Unauthorized. Please login."); router.push("/login"); return; }
 
     try {
-      const updateUrl = userType === "hr" ? `/api/hr/updateuser/${user._id}` : `/api/admin/updateuser/${user._id}`;
+      const updateUrl = userType === "hr" ? `/api/admin/updateuser/${user._id}` : `/api/admin/updateuser/${user._id}`;
       const dataToSubmit: Partial<EmployeeProfileData> = {};
 
       // ✅ Only send editable fields (exclude _id and other excluded keys)

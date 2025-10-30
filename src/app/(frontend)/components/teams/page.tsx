@@ -65,27 +65,33 @@ export const TeamDashboard: React.FC<Props> = ({ currentUser, users }) => {
   const stopEdit = () => setEditingTeam(null);
 
   // Handle update team submit
-  const handleEditSubmit = async (updatedTeam: ITeam) => {
-    try {
-      // Added Authorization header
-      const res = await fetch(`/api/teams/update/${updatedTeam._id}`, {
-        method: "PUT",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify(updatedTeam),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success(data.message);
-        stopEdit();
-        fetchTeams();
-      } else toast.error(data.error || "Failed to update team.");
-    } catch (error) {
-      toast.error("Failed to update team.");
+const handleEditSubmit = async (updatedTeam: ITeam) => {
+  try {
+    const res = await fetch(`/api/teams/update/${updatedTeam._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: updatedTeam.name,
+        members: updatedTeam.members,
+        projects: updatedTeam.projects,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      toast.success("Team updated successfully!");
+      stopEdit();
+      fetchTeams();
+    } else {
+      toast.error(data.error || "Failed to update team.");
     }
-  };
+  } catch (error) {
+    toast.error("Failed to update team.");
+  }
+};
 
   // Role-based access
   if (!["hr", "admin"].includes(currentUser.role)) {

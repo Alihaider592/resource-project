@@ -3,12 +3,17 @@ import connectDatabase from "@/app/(backend)/lib/db";
 import Team from "@/app/(backend)/models/teams";
 import { Types } from "mongoose";
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params?: { id?: string } }) {
   try {
-    const { id } = params;
+    // Try to get ID from params first, fallback to URL parsing
+    let id = params?.id;
+    if (!id) {
+      const url = new URL(req.url);
+      id = url.pathname.split("/").pop();
+    }
 
     // Validate ObjectId
-    if (!Types.ObjectId.isValid(id)) {
+    if (!id || !Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid team ID" }, { status: 400 });
     }
 

@@ -43,7 +43,7 @@ export const TeamDetailsDrawer: React.FC<Props> = ({ team, users, onClose }) => 
 
   const handleProfileClick = (userId: string) => {
     onClose(); // Close the drawer
-    router.push(`/user/profile/${userId}`); // ✅ Navigate to the correct frontend route
+    router.push(`/hr/Profile/${userId}`); // ✅ Navigate to the correct frontend route
   };
 
   return (
