@@ -122,11 +122,14 @@ export async function GET(req: NextRequest) {
 /* -------------------------------------------------------------------------- */
 export async function PATCH(req: NextRequest) {
   try {
+    // Connect to MongoDB
     await connectDatabase();
 
+    // Parse request body
     const body: PatchBody = await req.json();
     const { leaveId, action, comment, approverName, role } = body;
 
+    // Validate required fields
     if (!leaveId || !action || !approverName || !role) {
       return NextResponse.json(
         {
@@ -137,10 +140,13 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    // Find the leave request
     const leave = await LeaveRequest.findById(leaveId);
-    if (!leave)
+    if (!leave) {
       return NextResponse.json({ message: "Leave not found." }, { status: 404 });
+    }
 
+    // Rejection must have a comment
     if (action === "reject" && (!comment || comment.trim() === "")) {
       return NextResponse.json(
         { message: "Rejection reason is required when rejecting." },
@@ -148,15 +154,16 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // ✅ Update approvers info
+    // Update approvers info
     if (role === "teamlead") leave.approvers.teamLead = approverName;
     if (role === "hr") leave.approvers.hr = approverName;
 
-    // ✅ Update status tracking
+    // Update per-approver status
     leave.approverStatus = leave.approverStatus || {};
     leave.approverStatus[role] = action;
 
-    // ✅ Add comment
+    // Add approver comment
+    leave.approverComments = leave.approverComments || [];
     leave.approverComments.push({
       approver: approverName,
       action,
@@ -164,10 +171,11 @@ export async function PATCH(req: NextRequest) {
       date: new Date(),
     });
 
-    // ✅ Determine overall status
+    // Determine overall leave status
     const bothApproved =
       leave.approverStatus["teamlead"] === "approve" &&
       leave.approverStatus["hr"] === "approve";
+
     const anyRejected =
       leave.approverStatus["teamlead"] === "reject" ||
       leave.approverStatus["hr"] === "reject";
@@ -178,14 +186,15 @@ export async function PATCH(req: NextRequest) {
       ? "approved"
       : "pending";
 
+    // Save changes
     await leave.save();
 
     return NextResponse.json({
-      message: `✅ Leave ${action}d successfully`,
+      message: `Leave request ${action}d successfully`,
       leave,
     });
   } catch (error) {
-    console.error("❌ Error updating leave:", error);
+    console.error("Error updating leave:", error);
     return NextResponse.json(
       {
         message: "Server error while updating leave",
