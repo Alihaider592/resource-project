@@ -1,5 +1,5 @@
-import SalarySlipForm from "../(frontend)/components/SalarySlipForm";
+// import SalarySlipForm from "../(frontend)/components/SalarySlipForm";
 
-export default function SalarySlipsPage() {
-  return <SalarySlipForm />;
-}
+// export default function SalarySlipsPage() {
+//   return <SalarySlipForm />;
+// }

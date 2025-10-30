@@ -3,7 +3,7 @@ import SalarySlipForm from '@/app/(frontend)/components/SalarySlipForm';
 const page = () => {
   return (
     <div>
-      <SalarySlipForm role='admin'/>
+      <SalarySlipForm role='hr'/>
     </div>
   );
 }
