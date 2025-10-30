@@ -27,6 +27,7 @@
     "framer-motion": "^12.23.22",
     "icons": "^1.0.0",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.3",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.544.0",
     "mongoose": "^8.18.3",
@@ -47,6 +48,7 @@
     "tailwind-merge": "^3.3.1",
     "typewriter-effect": "^2.22.0",
     "undici": "^7.16.0",
+    "uuid": "^13.0.0",
     "ws": "^8.18.3"
   },
   "devDependencies": {
